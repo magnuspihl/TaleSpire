@@ -23,9 +23,9 @@ namespace LineOfSight
     [BepInDependency(RadialUIPlugin.Guid)]
     public class LineOfSightPlugin : DependencyUnityPlugin<LineOfSightPlugin>
     {
-        public const string PluginName = "LineOfSight Diagnostic Plugin";
+        public const string PluginName = "LineOfSight";
         public const string Guid = "org.talespire.plugins.lineofsight";
-        public const string Version = "0.0.1.0";
+        public const string Version = "1.0.0.0";
 
         private ConfigEntry<KeyboardShortcut> _toggleTrackingKey;
         private ConfigEntry<KeyboardShortcut> _staticHideVolumeKey;

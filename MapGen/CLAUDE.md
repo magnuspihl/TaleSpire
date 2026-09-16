@@ -1,7 +1,7 @@
 ## MapGen: Map Generation System
 
 ### Build
-Always build with `dotnet build -c Debug` (never `-c Release`). After any build, the user must **fully restart TaleSpire** before testing — stale DLLs cause the old code to stay loaded and produce wrong in-game results.
+Build with `dotnet build -c Debug` while developing, so there is only ever one output folder to deploy from. Release packages are built `-c Release` by `tools/package-mod.py`. After any build, the user must **fully restart TaleSpire** before testing — stale DLLs cause the old code to stay loaded and produce wrong in-game results.
 
 ### Pipeline overview
 
