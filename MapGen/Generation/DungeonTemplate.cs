@@ -229,13 +229,13 @@ namespace TaleSpireMapGen.Generation
             {
                 case 0: // Small
                     _gridW = _gridD = 44; _minPartition = 12; _minRoom = 5;
-                    _maxRoom = 14; _maxDepth = 4; _maxHubCandidates = 1; _loopBudget = 2; break;
+                    _maxRoom = 14; _maxDepth = 4; _maxHubCandidates = 2; _loopBudget = 2; break;
                 case 2: // Large
                     _gridW = _gridD = 88; _minPartition = 16; _minRoom = 6;
-                    _maxRoom = 22; _maxDepth = 6; _maxHubCandidates = 3; _loopBudget = 5; break;
+                    _maxRoom = 22; _maxDepth = 6; _maxHubCandidates = 5; _loopBudget = 5; break;
                 default: // Medium
                     _gridW = _gridD = 64; _minPartition = 14; _minRoom = 6;
-                    _maxRoom = 18; _maxDepth = 5; _maxHubCandidates = 2; _loopBudget = 4; break;
+                    _maxRoom = 18; _maxDepth = 5; _maxHubCandidates = 4; _loopBudget = 4; break;
             }
         }
 
@@ -478,13 +478,23 @@ namespace TaleSpireMapGen.Generation
             foreach (var r in spec.Rooms) avgArea += r.Width * r.Depth;
             avgArea /= spec.Rooms.Count;
 
-            var candidates = new List<RoomSpec>();
+            var eligible = new List<RoomSpec>();
             foreach (var r in spec.Rooms)
                 if (r.Width * r.Depth >= avgArea && Fits(r))
-                    candidates.Add(r);
-            candidates.Sort((a, b) => (b.Width * b.Depth).CompareTo(a.Width * a.Depth));
-            if (candidates.Count > _maxHubCandidates) candidates.RemoveRange(_maxHubCandidates, candidates.Count - _maxHubCandidates);
-            if (candidates.Count == 0) return;
+                    eligible.Add(r);
+            if (eligible.Count == 0) return;
+
+            // Take the largest eligible room as a seed, then its nearest neighbours — picking the
+            // N largest rooms outright scatters them across the map, and because the exterior
+            // shell rings the whole bounding box of a storey, a scattered upper floor becomes one
+            // enormous wall around mostly bare board. A cluster keeps the storey compact, so it
+            // reads as a self-contained upper level sitting on the part of the dungeon below it.
+            eligible.Sort((a, b) => (b.Width * b.Depth).CompareTo(a.Width * a.Depth));
+            var seed = eligible[0];
+            var candidates = eligible
+                .OrderBy(r => RoomDistSq(seed, r))
+                .Take(_maxHubCandidates)
+                .ToList();
 
             var hubLowerIds = new HashSet<string>();
             foreach (var c in candidates) hubLowerIds.Add(c.Id);
@@ -517,8 +527,11 @@ namespace TaleSpireMapGen.Generation
 
             foreach (var lower in candidates)
             {
-                float scaleW = 0.6f + (float)rng.NextDouble() * 0.2f;
-                float scaleD = 0.6f + (float)rng.NextDouble() * 0.2f;
+                // Close to the carrier's own footprint. Shrinking hard leaves a small box adrift
+                // in the middle of the storey's shell, which is most of why upper floors read as
+                // empty; it also costs the support the room is standing on.
+                float scaleW = 0.8f + (float)rng.NextDouble() * 0.15f;
+                float scaleD = 0.8f + (float)rng.NextDouble() * 0.15f;
                 int   hubW   = Math.Max(_minRoom, (int)Math.Round(lower.Width  * scaleW));
                 int   hubD   = Math.Max(_minRoom, (int)Math.Round(lower.Depth  * scaleD));
                 int   hubX   = lower.OriginX + (lower.Width  - hubW) / 2;
@@ -557,7 +570,18 @@ namespace TaleSpireMapGen.Generation
             // MinFloors >= 2 forces connection; otherwise 70% chance.
             double hubConnectChance = minFloors >= 2 ? 1.0 : 0.70;
             if (hubRooms.Count >= 2 && rng.NextDouble() < hubConnectChance)
-                ConnectRooms(hubRooms[0], hubRooms[1], spec.Connections, rng);
+            {
+                // Chain each hub to its nearest already-linked neighbour rather than joining only
+                // the first pair, or the storey ends up as one corridor plus a set of rooms that
+                // can only be reached by going back down the stairs.
+                var linked = new List<RoomSpec> { hubRooms[0] };
+                foreach (var next in hubRooms.Skip(1).OrderBy(h => RoomDistSq(hubRooms[0], h)))
+                {
+                    var nearest = linked.OrderBy(l => RoomDistSq(l, next)).First();
+                    ConnectRooms(nearest, next, spec.Connections, rng);
+                    linked.Add(next);
+                }
+            }
 
             // ── Phase 4: Isolated lower rooms (only reachable via upper floor) ──
             // The pendant rooms picked in Phase 1 are cut off from the ground network. Each
