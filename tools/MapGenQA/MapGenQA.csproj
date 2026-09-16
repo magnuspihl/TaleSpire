@@ -15,6 +15,15 @@
     <Compile Include="../../MapGen/Generation/*.cs" />
   </ItemGroup>
 
+  <!-- Same logical name the mod uses, because ProfileCatalog resolves profiles out of its own
+       assembly. Without this the harness loads an empty catalog and the multi-floor validators
+       pass vacuously — no profiles means no stairs to find fault with. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../../MapGen/tileset_profiles.json">
+      <LogicalName>TaleSpireMapGen.tileset_profiles.json</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>

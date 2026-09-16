@@ -98,12 +98,30 @@ namespace MapGenQA
 
         // ── commands ─────────────────────────────────────────────────────────
 
+        // An empty profile catalog does not fail any validator — it makes the generator fall back
+        // to hardcoded defaults and skip multi-floor entirely, so every stair check passes because
+        // there are no stairs. That is exactly how the profile-loading bug survived, so check the
+        // catalog is actually populated before trusting a green run.
+        private static bool Preflight()
+        {
+            var missing = ParseThemes("all").Where(t => ProfileCatalog.GetProfile(t) == null).ToList();
+            if (missing.Count == 0) return true;
+
+            Console.Error.WriteLine($"PREFLIGHT FAILED: no tileset profile for {missing.Count} theme(s): " +
+                                    string.Join(", ", missing));
+            Console.Error.WriteLine("The catalog is empty or incomplete, so multi-floor checks would " +
+                                    "pass vacuously. Refusing to report a green run.");
+            return false;
+        }
+
         private static int Fuzz(Dictionary<string, string> o)
         {
             var seeds  = ParseSeeds(Get(o, "seeds", "1-200")).ToList();
             var sizes  = Get(o, "sizes", "small,medium,large").Split(',').Select(ParseSize).ToList();
             var themes = ParseThemes(Get(o, "themes", "all"));
             int maxEx  = int.TryParse(Get(o, "examples", "3"), out var m) ? m : 3;
+
+            if (!Preflight()) return 1;
 
             Console.WriteLine($"fuzzing {seeds.Count} seeds x {sizes.Count} sizes x {themes.Length} themes " +
                               $"= {seeds.Count * sizes.Count * themes.Length} maps");

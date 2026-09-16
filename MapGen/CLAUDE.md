@@ -232,6 +232,13 @@ always reproducible with `render` or `cell`. Bugs 9-15 above were all found this
 them, #15 especially, are effectively invisible in a visual spot-check. Run it before shipping any
 generator change; 9000 maps takes about a minute.
 
+Because `ProfileCatalog` resolves `tileset_profiles.json` out of *its own assembly*, the harness
+must embed the same file under the same logical name (`TaleSpireMapGen.tileset_profiles.json`) —
+see `MapGenQA.csproj`. Without it the catalog is empty, the generator falls back to hardcoded
+defaults and skips multi-floor, and every stair validator passes because there are no stairs. A
+`Preflight()` in `fuzz` asserts a profile resolves for each theme and refuses to report a green
+run otherwise; keep that check honest if profile loading changes again.
+
 Two traps that made validators quietly useless, worth remembering when adding more:
 - **`map.At(y)` is an exact match.** Doors and inner-corner fillers live at `y + 0.5`, so a
   validator that walks "the tiles at y=0" silently misses both. `EnclosureLeak` takes the whole
