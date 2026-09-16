@@ -5,4 +5,10 @@
     <RootNamespace>TaleSpireMapGen</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="tileset_profiles.json">
+      <LogicalName>TaleSpireMapGen.tileset_profiles.json</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>

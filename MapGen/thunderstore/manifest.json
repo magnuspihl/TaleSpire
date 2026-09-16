@@ -1,0 +1,9 @@
+{
+  "name": "MapGen",
+  "version_number": "0.1.0",
+  "website_url": "https://github.com/magnuspihl/TaleSpire",
+  "description": "Procedural dungeon map generator — creates rooms, corridors, and multi-floor layouts as pasteable slabs.",
+  "dependencies": [
+    "bbepisTaleSpire-BepInExPack-5.4.22"
+  ]
+}
