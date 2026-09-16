@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaleSpire-LineOfSight", "TaleSpire-LineOfSight\TaleSpire-LineOfSight.csproj", "{50F7F29F-9429-4DFD-947A-FCD4E3ABF7E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LineOfSight", "LineOfSight\LineOfSight.csproj", "{50F7F29F-9429-4DFD-947A-FCD4E3ABF7E9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaleSpire-MapGen", "TaleSpire-MapGen\TaleSpire-MapGen.csproj", "{3DE23FBD-239A-4D03-98C3-961C2BF891D7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapGen", "MapGen\MapGen.csproj", "{3DE23FBD-239A-4D03-98C3-961C2BF891D7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C3545AAD-70B3-4A6A-BF8A-77B54AF0A6E1}"
 EndProject

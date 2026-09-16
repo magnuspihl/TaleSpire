@@ -7,8 +7,8 @@ Install only the ones you want.
 
 | Mod | What it does |
 | --- | --- |
-| [LineOfSight](TaleSpire-LineOfSight/) | Hides terrain a player's creature cannot see, with optional fog-of-war memory |
-| [MapGen](TaleSpire-MapGen/) | Generates dungeon layouts as pasteable slabs |
+| [LineOfSight](LineOfSight/) | Hides terrain a player's creature cannot see, with optional fog-of-war memory |
+| [MapGen](MapGen/) | Generates dungeon layouts as pasteable slabs |
 
 ## Installing
 
@@ -31,7 +31,7 @@ That builds every mod. Each one lands in its own `bin/Debug/` folder. To build j
 at its project:
 
 ```
-dotnet build TaleSpire-LineOfSight -c Debug
+dotnet build LineOfSight -c Debug
 ```
 
 Shared build settings live in `Directory.Build.props` at the root, so an individual mod's

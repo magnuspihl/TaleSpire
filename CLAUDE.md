@@ -7,8 +7,8 @@ shared at runtime; the sharing is all at build time.
 ```
 Directory.Build.props        shared build settings + the TaleSpire/BepInEx references
 TaleSpire.sln                every project, so `dotnet build` at the root builds them all
-TaleSpire-LineOfSight/       mod: hides terrain a player cannot see
-TaleSpire-MapGen/            mod: procedural map generation
+LineOfSight/                 mod: hides terrain a player cannot see
+MapGen/                      mod: procedural map generation
 tools/                       developer tools, not shipped to users
 ```
 
@@ -16,21 +16,18 @@ Per-mod guidance lives in that mod's own `CLAUDE.md`.
 
 ## Adding a mod
 
-Create a folder, add a `.csproj`, add it to the solution. The csproj only needs what is unique
-to the mod:
+Name the folder and the `.csproj` after the mod — `YourMod/YourMod.csproj` — and add it to the
+solution. The SDK then derives the assembly name and root namespace from the project file name,
+so a mod with no extra dependencies needs nothing at all:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <AssemblyName>TaleSpire-YourMod</AssemblyName>
-    <RootNamespace>YourMod</RootNamespace>
-  </PropertyGroup>
 </Project>
 ```
 
 `net48`, `LangVersion 9`, and the TaleSpire and BepInEx references are inherited from
-`Directory.Build.props` at the root. Add extra `PackageReference` entries for anything only that
-mod needs (RadialUI, SetInjectionFlag, and so on).
+`Directory.Build.props` at the root. Add `PackageReference` entries for anything only that mod
+needs (RadialUI, SetInjectionFlag, and so on).
 
 Use the `org.talespire.plugins.<name>` GUID convention in `[BepInPlugin]`, and keep each mod's
 GUID unique — BepInEx treats two different GUIDs as two different plugins and will load both.

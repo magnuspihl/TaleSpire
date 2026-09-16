@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>TaleSpire-MapGen</AssemblyName>
+    <!-- The source predates the folder rename and still declares namespace TaleSpireMapGen. -->
     <RootNamespace>TaleSpireMapGen</RootNamespace>
   </PropertyGroup>
 

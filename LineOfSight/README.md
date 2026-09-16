@@ -18,7 +18,7 @@ Optionally it behaves like fog of war: terrain stays visible once it has been se
 - [RadialUI](https://github.com/TaleSpire-Modding/RadialUI) 3.2.1 (from Thunderstore — NuGet stops
   at 3.1.3, which is too old to run on TaleSpire 1.6.0)
 
-Install by dropping `TaleSpire-LineOfSight.dll` into `BepInEx/plugins/`. Every client that should
+Install by dropping `LineOfSight.dll` into `BepInEx/plugins/`. Every client that should
 be affected needs the plugin — a player without it sees the map as normal.
 
 ## Using it

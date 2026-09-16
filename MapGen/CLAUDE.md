@@ -1,4 +1,4 @@
-## TaleSpire-MapGen: Map Generation System
+## MapGen: Map Generation System
 
 ### Build
 Always build with `dotnet build -c Debug` (never `-c Release`). After any build, the user must **fully restart TaleSpire** before testing — stale DLLs cause the old code to stay loaded and produce wrong in-game results.
