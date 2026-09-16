@@ -57,7 +57,13 @@ namespace TaleSpireMapGen.Generation
                 {
                     string json = File.ReadAllText(ProfilesPath);
                     // JSON shape: { "profiles": { "Pack Name": { "Folder Name": {...}, ... } } }
-                    var root = JsonConvert.DeserializeObject<ProfilesRoot>(json);
+                    // Curated profiles legitimately leave numeric fields null where a tileset has
+                    // no sensible value. Without Ignore, the first such null aborts the whole file
+                    // and every profile is lost, not just the incomplete one.
+                    var root = JsonConvert.DeserializeObject<ProfilesRoot>(json, new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                    });
                     if (root?.Profiles == null) return;
 
                     foreach (var pack in root.Profiles)
@@ -102,8 +108,14 @@ namespace TaleSpireMapGen.Generation
         {
             var p = GetProfile(theme);
             if (p != null)
-                return (p.WallHeight, p.FloorHeight, p.HasIntegratedFloorWall,
-                        p.InnerCornerStyle ?? "filler", p.StairType ?? "stackable", p.MinCeilingHeight);
+                // A profile may omit any numeric field. Zero wall height would stack every wall row
+                // at one elevation, so fall back rather than trusting an absent value.
+                return (p.WallHeight > 0 ? p.WallHeight : 2.5f,
+                        p.FloorHeight > 0 ? p.FloorHeight : 0.5f,
+                        p.HasIntegratedFloorWall,
+                        p.InnerCornerStyle ?? "filler",
+                        p.StairType ?? "stackable",
+                        p.MinCeilingHeight > 0 ? p.MinCeilingHeight : 2.5f);
             return (2.5f, 0.5f, TileCatalog.WallIncludesFloor(theme), "filler", "stackable", 2.5f);
         }
 

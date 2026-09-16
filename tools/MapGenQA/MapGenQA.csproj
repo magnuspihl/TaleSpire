@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <AssemblyName>MapGenQA</AssemblyName>
+    <RootNamespace>MapGenQA</RootNamespace>
+  </PropertyGroup>
+
+  <!-- The generator is compiled into this harness from source rather than referenced as a
+       built assembly: MapGen targets net48 against the game's Unity DLLs, which cannot load
+       here. Linking the sources means QA exercises the code that actually ships. -->
+  <ItemGroup>
+    <Compile Include="../../MapGen/Generation/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

@@ -305,7 +305,24 @@ namespace TaleSpireMapGen.Generation
             string stairType = profile.StairType ?? "";
             if (stairType != "stackable" && stairType != "mixed") return;
 
-            // ── Phase 1: Hub upper rooms above the largest lower rooms ──
+            // ── Phase 0: how tall the storey is, and how long that makes the stairs ──
+            // The shortest stack that still clears MinCeilingHeight. Deriving it from the
+            // tallest BSP room instead would raise the whole storey to suit one room, and the
+            // straight stair run needed to reach it would no longer fit inside any of them.
+            int upperWallRows = 1;
+            while (upperWallRows * profile.WallHeight + profile.FloorHeight < profile.MinCeilingHeight
+                   && upperWallRows < 8)
+                upperWallRows++;
+
+            // BuildStaircase climbs in 0.5 increments, one cell per step, starting one cell in
+            // from the wall — so the room must be this long on the axis it climbs.
+            int stairRun = (int)Math.Round(upperWallRows * profile.WallHeight / 0.5f);
+            bool Fits(RoomSpec r) => Math.Max(r.Width, r.Depth) >= stairRun + 3;
+
+            // ── Phase 1: choose which lower rooms will carry an upper room ──
+            // Hubs sit above the largest rooms; landings sit above pendant rooms cut off from
+            // the ground network. Both sets are decided before any geometry is fixed, because
+            // every upper room has to end up on one shared storey (see Phase 2).
             // Candidate count scales with dungeon size via _maxHubCandidates.
             float avgArea = 0f;
             foreach (var r in spec.Rooms) avgArea += r.Width * r.Depth;
@@ -313,11 +330,36 @@ namespace TaleSpireMapGen.Generation
 
             var candidates = new List<RoomSpec>();
             foreach (var r in spec.Rooms)
-                if (r.Width * r.Depth >= avgArea)
+                if (r.Width * r.Depth >= avgArea && Fits(r))
                     candidates.Add(r);
             candidates.Sort((a, b) => (b.Width * b.Depth).CompareTo(a.Width * a.Depth));
             if (candidates.Count > _maxHubCandidates) candidates.RemoveRange(_maxHubCandidates, candidates.Count - _maxHubCandidates);
             if (candidates.Count == 0) return;
+
+            var hubLowerIds = new HashSet<string>();
+            foreach (var c in candidates) hubLowerIds.Add(c.Id);
+
+            var pendants     = FindPendantRooms(spec, hubLowerIds).FindAll(Fits);
+            int isolateCount = pendants.Count > 0 ? Math.Min(pendants.Count, rng.Next(1, 3)) : 0;
+            var isolated     = pendants.GetRange(0, isolateCount);
+
+            // ── Phase 2: put the whole upper storey on one elevation ──
+            // Wall rows vary per room, so deriving each upper room's height from its own lower
+            // room scatters them across several elevations. The horizontal corridors joining
+            // them would then span storeys, and SlabBuilder would emit those corridors at the
+            // lower of the two heights — leaving open-ended corridors hanging in mid-air.
+            var carriers = new List<RoomSpec>(candidates);
+            carriers.AddRange(isolated);
+            foreach (var lower in carriers) lower.WallRows = upperWallRows;
+
+            // A ground room taller than the storey gap pushes its top wall row up through the
+            // upper floor, and the corridors that inherit its height do the same wherever they
+            // run. Shorter rooms are left alone — they only fall short of the ceiling.
+            foreach (var r in spec.Rooms)
+                if (r.WallRows > upperWallRows) r.WallRows = upperWallRows;
+
+            // Every BSP room sits at OriginY 0, so this one height serves the whole storey.
+            float upperY = upperWallRows * profile.WallHeight + profile.FloorHeight;
 
             int upperIdx  = spec.Rooms.Count;
             var vertConns = new List<VerticalConnection>();
@@ -325,22 +367,12 @@ namespace TaleSpireMapGen.Generation
 
             foreach (var lower in candidates)
             {
-                int lowerWallRows = lower.WallRows > 0 ? lower.WallRows : 1;
-                float floorToFloor = lowerWallRows * profile.WallHeight + profile.FloorHeight;
-                while (floorToFloor < profile.MinCeilingHeight && lowerWallRows < 8)
-                {
-                    lowerWallRows++;
-                    floorToFloor = lowerWallRows * profile.WallHeight + profile.FloorHeight;
-                }
-                lower.WallRows = lowerWallRows;
-
                 float scaleW = 0.6f + (float)rng.NextDouble() * 0.2f;
                 float scaleD = 0.6f + (float)rng.NextDouble() * 0.2f;
                 int   hubW   = Math.Max(_minRoom, (int)Math.Round(lower.Width  * scaleW));
                 int   hubD   = Math.Max(_minRoom, (int)Math.Round(lower.Depth  * scaleD));
                 int   hubX   = lower.OriginX + (lower.Width  - hubW) / 2;
                 int   hubZ   = lower.OriginZ + (lower.Depth  - hubD) / 2;
-                float hubY   = lower.OriginY + lowerWallRows * profile.WallHeight + profile.FloorHeight;
 
                 var hubRoom = new RoomSpec
                 {
@@ -350,7 +382,7 @@ namespace TaleSpireMapGen.Generation
                     Depth    = hubD,
                     OriginX  = hubX,
                     OriginZ  = hubZ,
-                    OriginY  = hubY,
+                    OriginY  = upperY,
                     WallRows = 1,
                 };
                 spec.Rooms.Add(hubRoom);
@@ -377,30 +409,16 @@ namespace TaleSpireMapGen.Generation
             if (hubRooms.Count >= 2 && rng.NextDouble() < hubConnectChance)
                 ConnectRooms(hubRooms[0], hubRooms[1], spec.Connections, rng);
 
-            // ── Phase 3: Isolated lower rooms (only reachable via upper floor) ──
-            // Find pendant nodes in the BSP connection graph — rooms with exactly one
-            // horizontal neighbour — and disconnect 1–2 of them from the lower network.
-            // Each gets a landing room above it connected back to a hub, making the
-            // only path: main floor → hub stairs → upper corridor → landing → stairs down.
-            var hubLowerIds = new HashSet<string>();
-            foreach (var vc in vertConns) hubLowerIds.Add(vc.LowerRoomId);
-
-            var pendants = FindPendantRooms(spec, hubLowerIds);
-            // At least 1 pendant required; only attempt if there are hub rooms to route through.
-            int isolateCount = (hubRooms.Count > 0 && pendants.Count > 0)
-                ? Math.Min(pendants.Count, rng.Next(1, 3))  // 1 or 2
-                : 0;
-
-            for (int i = 0; i < isolateCount; i++)
+            // ── Phase 4: Isolated lower rooms (only reachable via upper floor) ──
+            // The pendant rooms picked in Phase 1 are cut off from the ground network. Each
+            // gets a landing room above it connected back to a hub, making the only path:
+            // main floor → hub stairs → upper corridor → landing → stairs down.
+            foreach (var lower in isolated)
             {
-                var lower = pendants[i];
-
                 // Remove all horizontal connections to this room.
                 spec.Connections.RemoveAll(c => c.FromRoomId == lower.Id || c.ToRoomId == lower.Id);
 
                 // Landing room centred above the isolated lower room (50–70% of its footprint).
-                int   lowerWR = lower.WallRows > 0 ? lower.WallRows : 1;
-                float landY   = lower.OriginY + lowerWR * profile.WallHeight + profile.FloorHeight;
                 float sW      = 0.5f + (float)rng.NextDouble() * 0.2f;
                 float sD      = 0.5f + (float)rng.NextDouble() * 0.2f;
                 int   landW   = Math.Max(_minRoom, (int)Math.Round(lower.Width  * sW));
@@ -416,7 +434,7 @@ namespace TaleSpireMapGen.Generation
                     Depth    = landD,
                     OriginX  = landX,
                     OriginZ  = landZ,
-                    OriginY  = landY,
+                    OriginY  = upperY,
                     WallRows = 1,
                 };
                 spec.Rooms.Add(landing);

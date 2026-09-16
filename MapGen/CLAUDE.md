@@ -85,21 +85,33 @@ Additionally, `atFrom`/`atTo` flags suppress the wall note on the room-facing si
 
 When two corridors cross, the 4 diagonal cells each accumulate notes from both corridors in perpendicular directions — Phase 3 resolves these to inner corners.
 
-#### Phase 2.5 — strip the L-bend OC position from wallRots
-The vertical-leg tiles note the outer corner position as a straight wall. Strip it so Phase 3 doesn't place a wall there; Phase 4 places the correct corner tile.
+#### Phase 2.5 — claim the bend corners Phase 4 will fill
+An L-bend has two corner cells: the inner corner (IC) at `(X2-XStep, Z1+ZStep)` and the "near" outer corner (OC) at `(X2+XStep, Z1-ZStep)`. Both get noted as straight walls by leg tiles — the OC by the bend's own vertical leg, the IC by any *other* corridor passing nearby, since Phase 2's `NoteWall` only suppresses the IC for the corridor that owns the bend. Phase 3 would then place a wall underneath the corner tile Phase 4 places.
 
-**Exactly one OC per L-bend** — the "near" outer corner at `(X2+XStep, Z1-ZStep)`.
+Phase 2.5 decides up front exactly which cells Phase 4 will tile — recording them in `claimIC[i]` / `claimOC[i]` / `claimed4` — and strips **only those** from `wallRots`:
 
 ```csharp
 bool hasBend = (c.X1 != c.X2 && c.Z1 != c.Z2);
-if (!hasBend) continue;  // straight corridors have no OC
-int ocx = c.X2 + c.XStep, ocz = c.Z1 - c.ZStep;
-if (!globalFloors.Contains((ocx, ocz))) wallRots.Remove((ocx, ocz));
+if (!hasBend) continue;  // straight corridors have no bend corners
+foreach (var (cell, isIc) in new[] { ((icx, icz), true), ((ocx, ocz), false) })
+{
+    if (globalFloors.Contains(cell) || roomPositions.Contains(cell)) continue;
+    if (!claimed4.Add(cell)) continue;   // another bend already owns it
+    if (isIc) claimIC[i] = cell; else claimOC[i] = cell;
+    wallRots.Remove(cell);
+}
 ```
+
+**The claim and the emit must agree.** Stripping a cell Phase 4 then declines to fill leaves a hole in the corridor wall; letting two bends both emit into one cell produces duplicate corner tiles at different rotations — which the `Build()` dedupe does *not* catch, because its key includes rotation.
 
 **Critical guard: use `hasBend`, not `Z1==Z2`.** Using `Z1==Z2` incorrectly skips purely vertical straight corridors (`X1==X2`), which would then have their OC position incorrectly stripped and lose wall tiles.
 
 **Do NOT add a "far" OC** at `(X2+XStep, Z1+ZStep)`. This was tried and caused wrong/duplicate tiles inside straight wall columns. Revert immediately if re-added.
+
+#### Phase 2.6 — seal around the claimed inner corners
+Phase 4's IC lays a floor tile on a cell that is in no corridor's `Positions`, so Phase 2 never walked it and never noted walls around it. Normally harmless — the neighbouring leg tiles have already walled the same cells — but when a leg is **one tile long** the cell diagonally outside the bend is adjacent to no floor tile at all and is left as open void, so the corridor leaks into open space.
+
+For each claimed IC, note a wall facing away in any of the 4 directions whose cell is not a floor, not a room cell, not claimed, **and not already in `wallRots`**. That last guard matters: adding a second note to an existing wall would turn a straight run into an inner corner.
 
 #### Phase 2.7 — terminal corridor-end corner gaps
 Phase 2 only visits direct neighbors of floor tiles. The diagonal position where a corridor's end-cap wall meets its side wall is never adjacent to any floor tile and therefore receives no note. For example, when a straight corridor exits a room going west:
@@ -138,16 +150,15 @@ float icZOff = rots.Contains(ROT_SOUTH) ? 0.5f : 0f;
 `ROT_SOUTH` note = corridor is to the +Z side = filler shifts +0.5 in Z.
 
 #### Phase 4 — explicit L-bend inner and outer corners
-Only fires when `hasBend = true`.
+Emits exactly the cells Phase 2.5 claimed: `if (claimIC[i].HasValue)` / `if (claimOC[i].HasValue)`. Never re-derive the positions here — the claim is the single source of truth.
 
-**Inner corner** at `(X2-XStep, Z1+ZStep)` (the concave pocket of the bend):
-- Skip if it's a global floor tile (another corridor passes through)
+**Inner corner** (the concave pocket of the bend):
 - Sub-tile offsets: `icXOff = (XStep < 0) ? 0.5f : 0f`, `icZOff = (ZStep > 0) ? 0.5f : 0f`
-- Emits: floor tile + inner corner filler at `y+0.5f`
+- Emits a floor tile at the base row, then per `InnerCornerStyle`: `filler` → inner tile at the pocket quadrant, `y + row*wallHeight + 0.5f`; `separate_tile` → corner tile at the cell origin; `none` → nothing
 
-**Outer corner** at `(X2+XStep, Z1-ZStep)` (the convex outside of the bend):
+**Outer corner** (the convex outside of the bend):
 - `OuterCornerRot(XStep, ZStep)`: `(+,+)→E, (+,-)→S, (-,+)→N, (-,-)→W`
-- Emits: corner tile only (no floor tile underneath)
+- Emits: corner tiles only (no floor tile underneath), stacked to `WallRows`
 
 ---
 
@@ -177,12 +188,69 @@ Using `if (c.Z1 == c.Z2) continue` in Phase 2.5 is wrong. It skips horizontal co
 **8. "Far" outer corner causing duplicate tiles in walls**
 Adding a second OC at `(X2+XStep, Z1+ZStep)` was tried and caused visual regressions in straight wall columns. Only the near OC `(X2+XStep, Z1-ZStep)` is correct.
 
+**9. Whole profile catalog failing to load, silently**
+`tileset_profiles.json` has nulls in `wallHeight`, `floorHeight`, `stairType`, `minCeilingHeight` and `innerCornerStyle`. With non-nullable fields on `TilesetProfile`, Newtonsoft threw on the first null and **the entire file failed to deserialize** — `GetProfile()` then returned null for every theme, so `ApplyMultiFloor` and `BuildStaircase` both bailed and **stairs and multi-floor dungeons never generated at all**. Rooms and corridors still looked fine because `GetData` falls back to hardcoded defaults, which is why this went unnoticed for a long time. Fixed with `NullValueHandling.Ignore` plus defaults in `GetData`. One bad profile must never take down the catalog.
+
+**10. Phase 4 inner corner stacking on a Phase 3 wall**
+Phase 2 suppresses the IC note only for the corridor that *owns* the bend. A second corridor passing nearby still notes that cell, and Phase 3's wall then lands underneath the corner Phase 4 places there. Phase 2.5 must strip the IC position `(X2-XStep, Z1+ZStep)` too, not just the OC. Only visible on themes whose `innerCornerStyle` is `separate_tile` (Sewers) — with the default `filler` style the collision is there but invisible.
+
+**11. Two corridors bending into the same cell**
+Two corridors leaving the same room wall can elbow into one cell, each wanting its own Phase 4 corner. One corner fills the cell; the `claimed4` set lets the first bend claim it. The `Build()` dedupe does not save you here — its key includes rotation, and the two corners want different rotations.
+
+**12. Exterior shell bricking up corridors**
+`BuildExteriorShell` rings the room bounding box. A corridor can bulge outside that box and land on the ring, which both stacked tiles and walled the corridor off. The ring now skips any cell already occupied in the elevation band it covers.
+
+**13. Ground storey poking through the upper floor**
+`ApplyMultiFloor` raised only the *carrier* rooms to `upperWallRows`. A non-carrier BSP room with more wall rows — and every corridor inheriting its height — pushed its top wall row up through the upper storey. All ground rooms are now clamped to `upperWallRows`.
+
+**14. Stair runs climbing out through the far wall**
+`BuildStaircase` emits one cell per 0.5 of rise, so reaching a storey at y=8 is a 15-cell straight run. The storey height used to come from the tallest BSP room, which made runs longer than any room could hold; two such runs in facing rooms overlapped and produced duplicate stair tiles. `upperWallRows` is now the *shortest* stack clearing `MinCeilingHeight`, and rooms that still cannot hold the run are not chosen as carriers.
+
+**15. One-tile corridor legs leaking into open space**
+When an L-bend's horizontal leg is a single tile, the cell diagonally outside the bend borders no floor tile and gets no Phase 2 note — but Phase 4 still lays a floor on the inner corner next to it, so the dungeon interior opens straight into the void. Phase 2.6 seals it. This is invisible by eye in-game (you have to walk to that one cell) and was only ever found by the `EnclosureLeak` validator, which is why it survived so long.
+
 ---
 
+### Automated QA — `tools/MapGenQA`
+
+A net8.0 console app that runs the *shipped* generator headlessly. It links
+`MapGen/Generation/*.cs` directly (`<Compile Include=...>`) rather than referencing a built
+assembly, because MapGen targets net48 against the game's Unity DLLs. `UnityShim.cs` stubs the
+only two Unity touchpoints — `GUIUtility.systemCopyBuffer` and `UnityEngine.Debug`. **MapGen
+itself needs no changes to be testable**; keep it that way.
+
+```
+dotnet run -c Release -- fuzz   --seeds 1-1000 --sizes small,medium,large --themes all
+dotnet run -c Release -- render --seed 42 --size medium        # ASCII floor plan per storey
+dotnet run -c Release -- spec   --seed 42 --size medium        # rooms, connections, stairs
+dotnet run -c Release -- cell   --seed 42 --size medium --x 33 --z 32 --radius 2
+dotnet run -c Release -- slab   --seed 42 --size medium        # base64, ready to paste
+```
+
+`fuzz` exits non-zero on any failure and names the failing seed/size/theme, so a regression is
+always reproducible with `render` or `cell`. Bugs 9-15 above were all found this way — several of
+them, #15 especially, are effectively invisible in a visual spot-check. Run it before shipping any
+generator change; 9000 maps takes about a minute.
+
+Two traps that made validators quietly useless, worth remembering when adding more:
+- **`map.At(y)` is an exact match.** Doors and inner-corner fillers live at `y + 0.5`, so a
+  validator that walks "the tiles at y=0" silently misses both. `EnclosureLeak` takes the whole
+  band `[y, y+1)` instead.
+- **An inner corner is not a wall and not open floor.** It shares its cell with a floor tile and
+  blocks only the two faces its rotation names (rot 0 = NW = blocks N and W). Treating it as
+  passable invents leaks; treating it as solid hides them.
+
 ### Debugging tools
+
+**`tools/rig.py`** — drives the Odin steam-headless rig: `status`, `deploy <Mod> [--restart]`,
+`log [--follow] [--grep]`, `launch`, `shutdown`, `screenshot <out> [--crop] [--zoom]`,
+`clipboard --file|--text`, `paste`. Use it to put a `MapGenQA slab` output on the container
+clipboard and paste it onto a live board for the visual checks geometry assertions can't make.
+`shutdown` goes through the game's own quit dialog, which is the path that saves board state —
+never kill the process.
 
 **`tools/encode_slab.py`** — Generate a test slab from hardcoded placements. Includes `lbend_oc`, `single_corner`, `bend1_exact`, `bend2_exact` layouts. Output is a base64 string ready to paste into TaleSpire.
 
 **`tools/decode_slab.py`** — Decode a base64 slab string into readable tile list, or diff two slabs to see what was added/removed between versions.
 
-**In-code debug logging** — `SlabBuilder.DebugLog` is wired to BepInEx logger via `Plugin.Awake`. Active log tags: `[Phase2.5]`, `[Phase2.7]`, `[Phase3-wall]`, `[Phase3-inner]`, `[Phase4-OC]`, `[Phase4-OC-skip]`, `[TileDump]`. The TileDump section logs all tiles within 3 cells of hardcoded positions (13,17) and (23,35) — update these to match the area you're debugging.
+**In-code debug logging** — `SlabBuilder.DebugLog` is wired to BepInEx logger via `Plugin.Awake`. Active log tags: `[Phase2.5]`, `[Phase2.6]`, `[Phase2.7]`, `[Phase3-wall]`, `[Phase3-inner]`, `[Phase4-OC]`, `[Phase4-OC-skip]`, `[TileDump]`. The TileDump section logs all tiles within 3 cells of hardcoded positions (13,17) and (23,35) — update these to match the area you're debugging.
