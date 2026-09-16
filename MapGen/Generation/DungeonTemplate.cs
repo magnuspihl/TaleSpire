@@ -24,7 +24,15 @@ namespace TaleSpireMapGen.Generation
         private int _maxRoom        = 18;
         private int _maxDepth       = 5;
         private int _maxHubCandidates = 2;
-        private const int Padding   = 2;  // gap between partition edge and room edge
+        private int _loopBudget     = 2;
+        private const int Padding   = 1;  // gap between partition edge and room edge
+
+        // A loop corridor longer than this reads as a second route to somewhere else rather than
+        // a shortcut, so pairs further apart than this are not worth connecting.
+        private const int MaxLoopGap = 14;
+
+        // Fraction of what a partition could hold that a room must reach at minimum.
+        private const float RoomFill = 0.7f;
 
         // ──────────────────────────────────────────────────────────────────────
         // BSP node
@@ -75,8 +83,140 @@ namespace TaleSpireMapGen.Generation
             int minFloors = p.MinFloors > 0 ? p.MinFloors : 1;
             int maxFloors = p.MaxFloors > 0 ? p.MaxFloors : 2;
             ApplyMultiFloor(spec, rng, minFloors, maxFloors);
+            AddLoopConnections(spec, rng);
 
             return spec;
+        }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // Loop connections
+        // ──────────────────────────────────────────────────────────────────────
+
+        // BSP connects each subtree to its sibling exactly once, so the room graph is a spanning
+        // tree: every room but one is a dead end and play degenerates into explore-then-backtrack.
+        // This adds a few chords between rooms that are near in space but far apart in the graph,
+        // which is what turns a branch into a circuit.
+        //
+        // Runs after ApplyMultiFloor on purpose. Multi-floor picks which rooms go upstairs by
+        // looking for pendant rooms (exactly one connection), so adding chords first would starve
+        // it of candidates and cost stairs.
+        private void AddLoopConnections(LayoutSpec spec, Random rng)
+        {
+            if (_loopBudget <= 0 || spec.Rooms == null || spec.Rooms.Count < 4) return;
+
+            for (int added = 0; added < _loopBudget; added++)
+            {
+                var dist = GraphDistances(spec);
+                var best = LoopCandidates(spec)
+                    .Where(c => Detour(dist, c.a.Id, c.b.Id) >= 4)   // below this it is a triangle
+                    .OrderByDescending(c => Detour(dist, c.a.Id, c.b.Id))
+                    .ThenBy(c => c.gap)
+                    .FirstOrDefault();
+
+                if (best.a == null) return;
+                ConnectRooms(best.a, best.b, spec.Connections, rng);
+            }
+        }
+
+        // How far apart two rooms currently are in the room graph. int.MaxValue/2 keeps the
+        // arithmetic safe for rooms on separate components, which multi-floor can produce.
+        private static int Detour(Dictionary<string, Dictionary<string, int>> dist, string a, string b)
+        {
+            if (dist.TryGetValue(a, out var from) && from.TryGetValue(b, out int d)) return d;
+            return int.MaxValue / 2;
+        }
+
+        private static Dictionary<string, Dictionary<string, int>> GraphDistances(LayoutSpec spec)
+        {
+            var adj = new Dictionary<string, List<string>>();
+            void Link(string x, string y)
+            {
+                if (!adj.TryGetValue(x, out var l)) adj[x] = l = new List<string>();
+                if (!l.Contains(y)) l.Add(y);
+            }
+            foreach (var r in spec.Rooms) adj[r.Id] = new List<string>();
+            foreach (var c in spec.Connections ?? new List<Connection>())
+            { Link(c.FromRoomId, c.ToRoomId); Link(c.ToRoomId, c.FromRoomId); }
+            foreach (var v in spec.VerticalConnections ?? new List<VerticalConnection>())
+            { Link(v.LowerRoomId, v.UpperRoomId); Link(v.UpperRoomId, v.LowerRoomId); }
+
+            var all = new Dictionary<string, Dictionary<string, int>>();
+            foreach (var r in spec.Rooms)
+            {
+                var d = new Dictionary<string, int> { [r.Id] = 0 };
+                var q = new Queue<string>();
+                q.Enqueue(r.Id);
+                while (q.Count > 0)
+                {
+                    string cur = q.Dequeue();
+                    foreach (string nb in adj[cur])
+                        if (!d.ContainsKey(nb)) { d[nb] = d[cur] + 1; q.Enqueue(nb); }
+                }
+                all[r.Id] = d;
+            }
+            return all;
+        }
+
+        // Pairs that could take a straight corridor between facing walls: same storey, walls that
+        // overlap enough for a door, a short gap, and nothing in the way.
+        private IEnumerable<(RoomSpec a, RoomSpec b, int gap)> LoopCandidates(LayoutSpec spec)
+        {
+            var linked = new HashSet<(string, string)>();
+            foreach (var c in spec.Connections ?? new List<Connection>())
+            { linked.Add((c.FromRoomId, c.ToRoomId)); linked.Add((c.ToRoomId, c.FromRoomId)); }
+
+            var rooms = spec.Rooms;
+            for (int i = 0; i < rooms.Count; i++)
+            for (int j = i + 1; j < rooms.Count; j++)
+            {
+                var a = rooms[i];
+                var b = rooms[j];
+                if (a.OriginY != b.OriginY) continue;
+                if (linked.Contains((a.Id, b.Id))) continue;
+
+                // ConnectRooms needs three cells of wall to place a door away from the corners.
+                int zOv = Overlap(a.OriginZ, a.Depth, b.OriginZ, b.Depth);
+                int xOv = Overlap(a.OriginX, a.Width, b.OriginX, b.Width);
+
+                if (zOv >= 3)
+                {
+                    var (l, r) = a.OriginX < b.OriginX ? (a, b) : (b, a);
+                    int gap = r.OriginX - (l.OriginX + l.Width);
+                    if (gap >= 1 && gap <= MaxLoopGap &&
+                        !Blocked(spec, a, b, l.OriginX + l.Width, r.OriginX,
+                                 Math.Max(a.OriginZ, b.OriginZ),
+                                 Math.Min(a.OriginZ + a.Depth, b.OriginZ + b.Depth), a.OriginY))
+                        yield return (a, b, gap);
+                }
+                else if (xOv >= 3)
+                {
+                    var (n, s) = a.OriginZ < b.OriginZ ? (a, b) : (b, a);
+                    int gap = s.OriginZ - (n.OriginZ + n.Depth);
+                    if (gap >= 1 && gap <= MaxLoopGap &&
+                        !Blocked(spec, a, b, Math.Max(a.OriginX, b.OriginX),
+                                 Math.Min(a.OriginX + a.Width, b.OriginX + b.Width),
+                                 n.OriginZ + n.Depth, s.OriginZ, a.OriginY))
+                        yield return (a, b, gap);
+                }
+            }
+        }
+
+        private static int Overlap(int aStart, int aLen, int bStart, int bLen) =>
+            Math.Min(aStart + aLen, bStart + bLen) - Math.Max(aStart, bStart);
+
+        // A corridor driven through a third room would breach its wall without a door, which the
+        // enclosure checks treat — correctly — as a leak. Reject the pair instead.
+        private static bool Blocked(LayoutSpec spec, RoomSpec a, RoomSpec b,
+                                    int x0, int x1, int z0, int z1, float y)
+        {
+            foreach (var r in spec.Rooms)
+            {
+                if (r == a || r == b || r.OriginY != y) continue;
+                // Grown by one so a corridor grazing a room's wall ring still counts as blocked.
+                if (r.OriginX - 1 < x1 && r.OriginX + r.Width  + 1 > x0 &&
+                    r.OriginZ - 1 < z1 && r.OriginZ + r.Depth  + 1 > z0) return true;
+            }
+            return false;
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -89,13 +229,13 @@ namespace TaleSpireMapGen.Generation
             {
                 case 0: // Small
                     _gridW = _gridD = 44; _minPartition = 12; _minRoom = 5;
-                    _maxRoom = 14; _maxDepth = 4; _maxHubCandidates = 1; break;
+                    _maxRoom = 14; _maxDepth = 4; _maxHubCandidates = 1; _loopBudget = 2; break;
                 case 2: // Large
                     _gridW = _gridD = 88; _minPartition = 16; _minRoom = 6;
-                    _maxRoom = 22; _maxDepth = 6; _maxHubCandidates = 3; break;
+                    _maxRoom = 22; _maxDepth = 6; _maxHubCandidates = 3; _loopBudget = 5; break;
                 default: // Medium
                     _gridW = _gridD = 64; _minPartition = 14; _minRoom = 6;
-                    _maxRoom = 18; _maxDepth = 5; _maxHubCandidates = 2; break;
+                    _maxRoom = 18; _maxDepth = 5; _maxHubCandidates = 2; _loopBudget = 4; break;
             }
         }
 
@@ -149,8 +289,13 @@ namespace TaleSpireMapGen.Generation
             {
                 int maxW = Math.Min(_maxRoom, node.W - Padding * 2);
                 int maxD = Math.Min(_maxRoom, node.D - Padding * 2);
-                int roomW = rng.Next(_minRoom, Math.Max(_minRoom, maxW) + 1);
-                int roomD = rng.Next(_minRoom, Math.Max(_minRoom, maxD) + 1);
+
+                // Drawing uniformly from _minRoom leaves rooms sitting around the middle of what
+                // their partition can hold, so the exterior shell — which rings the whole bounding
+                // box — ends up enclosing more bare board than room. Raising the floor of the draw
+                // keeps the variation but stops rooms being small inside a large partition.
+                int roomW = rng.Next(LowerBound(maxW), Math.Max(_minRoom, maxW) + 1);
+                int roomD = rng.Next(LowerBound(maxD), Math.Max(_minRoom, maxD) + 1);
 
                 int spaceX = Math.Max(0, node.W - Padding * 2 - roomW);
                 int spaceZ = Math.Max(0, node.D - Padding * 2 - roomD);
@@ -289,6 +434,11 @@ namespace TaleSpireMapGen.Generation
         }
 
         private static int Clamp(int v, int lo, int hi) => v < lo ? lo : v > hi ? hi : v;
+
+        // Smallest room dimension worth drawing for a partition that could hold `max`, never
+        // below _minRoom and never above `max` itself.
+        private int LowerBound(int max) =>
+            Clamp((int)(max * RoomFill), _minRoom, Math.Max(_minRoom, max));
 
         // ──────────────────────────────────────────────────────────────────────
         // Multi-floor pass

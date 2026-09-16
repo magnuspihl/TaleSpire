@@ -13,6 +13,22 @@ LayoutSpec → SlabBuilder.Build() → List<(guid,x,y,z,rot)> → SlabEncoder.En
 
 ---
 
+### Layout shape — why the dungeon is not a tree
+
+`BuildConnections` walks the BSP and joins each subtree to its sibling exactly once, so on its own it produces a **spanning tree**: every room but one is a dead end, there is never a second route anywhere, and play is explore-a-branch-then-backtrack. Measured cyclomatic complexity was 0-1 across every seed.
+
+`AddLoopConnections` (`DungeonTemplate.cs`) adds a few chords afterwards. It only joins rooms that are on the same storey, have at least 3 cells of facing wall overlap (a door needs to sit away from both corners), sit within `MaxLoopGap`, and have no third room in the corridor band — a corridor driven through an unrelated room breaches its wall without a door, which `EnclosureLeak` correctly reports. Candidates are ranked by current **graph** distance, so a chord closes a long circuit instead of cutting a corner; pairs already within 4 hops are skipped as they only make a triangle. Budget is `_loopBudget`, per size preset. Typical result is 2 loops on small, 4 on medium, 5 on large.
+
+**Order matters: this must run after `ApplyMultiFloor`.** Multi-floor chooses which rooms go upstairs by looking for *pendant* rooms (exactly one connection), so adding chords first starves it of candidates and costs stairs.
+
+Two knobs control how much bare ground ends up inside the exterior shell, which rings the whole bounding box of a storey:
+- `Padding` — gap between a partition edge and its room. This is the dominant term, because it applies on **both** sides of every partition boundary: `Padding = 2` put a 4-cell gap between neighbouring rooms and held fill to ~40%. At 1 it is ~51%.
+- `RoomFill` — floor of the room-size draw, as a fraction of what the partition could hold. Drawing uniformly from `_minRoom` leaves small rooms inside large partitions.
+
+Changing either alters every generated map, so re-run the fuzzer rather than assuming.
+
+---
+
 ### TaleSpire coordinate system
 
 | Axis | Direction        | ASCII art |
