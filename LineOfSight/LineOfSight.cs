@@ -94,9 +94,11 @@ namespace LineOfSight
         private static FieldInfo _fmtUpdateMaskField;           // ComputeFogUpdateMaskTask._updateMask
         private static FieldInfo _fmtViewMapField;              // ComputeFogUpdateMaskTask._viewMap
 
-        // UpdateProcess() sets _zone=null before returning true; capture it in the Prefix
-        // (single-threaded Unity main loop — no lock needed)
+        // UpdateProcess() sets _zone=null and _viewMap=null before returning true; capture
+        // both in the Prefix (single-threaded Unity main loop — no lock needed)
         private static Zone _fogTaskPendingZone;
+        private static bool _fogTaskPendingViewMapSet;
+        private static bool _fogTaskPendingCubemapReady;
 
         private static int _diagnosticTaskCount;
         private static int _viewCaptureLogCount;
@@ -223,14 +225,32 @@ namespace LineOfSight
             }
         }
 
-        // Prefix: capture _zone before UpdateProcess() clears it (it sets _zone=null before returning true).
+        // Prefix: capture _zone and _viewMap facts before UpdateProcess() clears both.
         private static void FogTaskUpdateProcessPrefix(object __instance)
         {
             _fogTaskPendingZone = null;
+            _fogTaskPendingViewMapSet = false;
+            _fogTaskPendingCubemapReady = false;
             try
             {
                 if (_fmtZoneField != null)
                     _fogTaskPendingZone = _fmtZoneField.GetValue(__instance) as Zone;
+            }
+            catch { }
+            try
+            {
+                if (_fmtViewMapField != null)
+                {
+                    var vm = _fmtViewMapField.GetValue(__instance);
+                    if (vm != null)
+                    {
+                        _fogTaskPendingViewMapSet = true;
+                        var cubemapProp = vm.GetType().GetProperty("Cubemap",
+                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        var cubemap = cubemapProp?.GetValue(vm) as RenderTexture;
+                        _fogTaskPendingCubemapReady = cubemap != null && cubemap.IsCreated();
+                    }
+                }
             }
             catch { }
         }
@@ -285,18 +305,11 @@ namespace LineOfSight
                     string vmInfo = "vmField=null";
                     if (_fmtViewMapField != null)
                     {
-                        var vm = _fmtViewMapField.GetValue(__instance);
-                        if (vm == null)
-                        {
-                            vmInfo = "viewMap=NULL";
-                        }
-                        else
-                        {
-                            var cubemapProp = vm.GetType().GetProperty("Cubemap",
-                                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                            var cubemap = cubemapProp?.GetValue(vm) as RenderTexture;
-                            vmInfo = $"viewMap=ok cubemap={cubemap != null} created={cubemap?.IsCreated()}";
-                        }
+                        // _viewMap is already null here (UpdateProcess clears it before returning
+                        // true); read the facts captured in the prefix instead.
+                        vmInfo = _fogTaskPendingViewMapSet
+                            ? $"viewMap=ok cubemapReady={_fogTaskPendingCubemapReady}"
+                            : "viewMap=NULL";
                     }
 
                     var sb = new System.Text.StringBuilder();
