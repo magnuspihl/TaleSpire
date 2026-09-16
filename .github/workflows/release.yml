@@ -1,0 +1,43 @@
+name: Release
+
+# Each mod releases on its own, so tags name the mod they belong to:
+#   git tag LineOfSight-v1.0.0 && git push origin LineOfSight-v1.0.0
+on:
+  push:
+    tags:
+      - '*-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Read mod and version from the tag
+        id: tag
+        run: |
+          tag='${{ github.ref_name }}'
+          echo "mod=${tag%-v*}" >> "$GITHUB_OUTPUT"
+          echo "version=${tag##*-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build the Thunderstore package
+        run: |
+          python3 tools/package-mod.py '${{ steps.tag.outputs.mod }}' \
+            --expect-version '${{ steps.tag.outputs.version }}'
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create '${{ github.ref_name }}' \
+            dist/*.zip \
+            --title '${{ steps.tag.outputs.mod }} ${{ steps.tag.outputs.version }}' \
+            --notes "Upload the attached zip to [Thunderstore](https://thunderstore.io/c/talespire/create/), or install the DLL inside it manually into \`BepInEx/plugins/\`." \
+            --verify-tag

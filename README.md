@@ -12,8 +12,12 @@ Install only the ones you want.
 
 ## Installing
 
-Install BepInEx 5.4.x, then drop the mod's DLL into `BepInEx/plugins/`. Check the mod's own page
-for anything else it needs — some depend on other plugins.
+The easiest way is a mod manager — [r2modman](https://thunderstore.io/package/ebkr/r2modman/) or
+[Gale](https://thunderstore.io/c/talespire/p/Kesomannen/GaleModManager/) — which installs from
+Thunderstore and pulls in dependencies for you.
+
+By hand: install BepInEx 5.4.x, then drop the mod's DLL into `BepInEx/plugins/`. Check the mod's
+own page for anything else it needs — some depend on other plugins.
 
 Every client that should be affected needs the mod installed; a player without it sees the game
 as normal.
@@ -36,3 +40,11 @@ dotnet build LineOfSight -c Debug
 
 Shared build settings live in `Directory.Build.props` at the root, so an individual mod's
 `.csproj` contains only what is unique to it. See [CLAUDE.md](CLAUDE.md) for how to add a mod.
+
+To build a Thunderstore package:
+
+```
+python3 tools/package-mod.py LineOfSight
+```
+
+Pushing a `<Mod>-v<version>` tag does the same in CI and attaches the zip to a GitHub release.

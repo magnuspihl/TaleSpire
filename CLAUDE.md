@@ -35,13 +35,46 @@ GUID unique — BepInEx treats two different GUIDs as two different plugins and 
 ## Building
 
 `dotnet build -c Debug` at the repo root. Dependencies come from NuGet, so a fresh clone builds
-with no local TaleSpire install and no absolute paths.
+with no local TaleSpire install and no absolute paths. Develop against `Debug` so there is only
+one output folder to deploy from; `tools/package-mod.py` builds `Release` for published packages.
 
 After any build the user must **fully restart TaleSpire** before testing. The DLL is loaded once
 at launch and does not hot-reload — stale DLLs are a frequent source of apparent logic bugs.
 
 BepInEx also does not reload its config files while the game is running, so a changed keybind or
 setting needs a restart too.
+
+## Releasing
+
+Mods are published to [Thunderstore](https://thunderstore.io/c/talespire/), which is where the
+mod managers people actually use (r2modman, Gale) install from. A package is a flat zip of
+`manifest.json`, `icon.png`, `README.md` and the DLL.
+
+To make a mod publishable, add `<Mod>/thunderstore/manifest.json` and a 256x256
+`<Mod>/thunderstore/icon.png`. Dependencies in the manifest are full Thunderstore identifiers
+(`Namespace-Name-Version`) and must name the versions that actually run on TaleSpire 1.6.0, which
+are not always the ones the `.csproj` compiles against.
+
+Build a package locally with:
+
+```
+python3 tools/package-mod.py LineOfSight
+```
+
+Releases are cut per mod, by pushing a tag named `<Mod>-v<version>`:
+
+```
+git tag LineOfSight-v1.0.0 && git push origin LineOfSight-v1.0.0
+```
+
+That runs `.github/workflows/release.yml`, which packages the mod and attaches the zip to a
+GitHub release. Uploading to Thunderstore is still manual — a published version there cannot be
+deleted or replaced.
+
+The version lives in two places that must agree: `version_number` in the manifest and the
+`[BepInPlugin]` attribute. The packaging script refuses to build if they disagree, or if they
+disagree with the tag, because a package whose version differs from the one the game reports
+sends players chasing bugs in a build they are not running.
 
 ## Reference data
 

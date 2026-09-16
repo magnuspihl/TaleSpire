@@ -1,0 +1,11 @@
+{
+  "name": "LineOfSight",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/magnuspihl/TaleSpire",
+  "description": "Hides terrain a player's creature cannot see, with optional fog-of-war memory that persists per board.",
+  "dependencies": [
+    "bbepisTaleSpire-BepInExPack-5.4.22",
+    "brcoding-SetInjectionFlagPlugin-3.4.1",
+    "HolloFox_TS-RadialUIPlugin-3.2.1"
+  ]
+}
