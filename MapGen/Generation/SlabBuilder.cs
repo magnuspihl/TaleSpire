@@ -395,64 +395,120 @@ namespace TaleSpireMapGen.Generation
                 var wallTile   = TileCatalog.Get(theme, TileRole.Wall);
                 var cornerTile = TileCatalog.Get(theme, TileRole.Corner);
 
-                // Bounding box of all rooms at this Y level.
-                int minX = int.MaxValue, maxX = int.MinValue;
-                int minZ = int.MaxValue, maxZ = int.MinValue;
-                foreach (var room in yRooms)
-                {
-                    int rx = room.OriginX, rz = room.OriginZ;
-                    int rw = Math.Max(room.Width, 3), rd = Math.Max(room.Depth, 3);
-                    if (rx          < minX) minX = rx;
-                    if (rx + rw - 1 > maxX) maxX = rx + rw - 1;
-                    if (rz          < minZ) minZ = rz;
-                    if (rz + rd - 1 > maxZ) maxZ = rz + rd - 1;
-                }
-                if (minX == int.MaxValue) continue;
-
-                // Shell ring: 1 cell outside the room bounding box.
-                // Blank space between shell and inner room walls is hidden from outside.
-                int sx0 = minX - 1, sx1 = maxX + 1;
-                int sz0 = minZ - 1, sz1 = maxZ + 1;
-
-                // A corridor can bulge outside the bounding box and so land on the ring. Shelling
-                // over it both stacks tiles and bricks up the corridor, so the ring yields to
-                // anything already standing in the elevation band this shell occupies.
+                // One ring per *cluster* of nearby rooms, not one per elevation. A storey whose
+                // rooms are spread out — typically an upper floor, where rooms sit above whichever
+                // lower rooms were chosen to carry them — would otherwise get a single enormous
+                // wall around mostly bare board. A dense storey still clusters into one group, so
+                // ground floors are unaffected.
                 float bandTop = y + wallRows * wallHeight;
-                var   blocked = new HashSet<(int, int)>();
-                foreach (var t in out_)
-                    if (t.Y >= y - 0.01f && t.Y < bandTop - 0.01f)
-                        blocked.Add(((int)Math.Floor(t.X), (int)Math.Floor(t.Z)));
 
-                void Ring(TileEntry tile, int x, float wy, int z, int rot)
+                foreach (var cluster in ClusterRooms(yRooms, spec))
                 {
-                    if (!blocked.Contains((x, z))) out_.Add(Mk(tile, x, wy, z, rot));
-                }
+                    int minX = int.MaxValue, maxX = int.MinValue;
+                    int minZ = int.MaxValue, maxZ = int.MinValue;
+                    foreach (var room in cluster)
+                    {
+                        int rx = room.OriginX, rz = room.OriginZ;
+                        int rw = Math.Max(room.Width, 3), rd = Math.Max(room.Depth, 3);
+                        if (rx          < minX) minX = rx;
+                        if (rx + rw - 1 > maxX) maxX = rx + rw - 1;
+                        if (rz          < minZ) minZ = rz;
+                        if (rz + rd - 1 > maxZ) maxZ = rz + rd - 1;
+                    }
+                    if (minX == int.MaxValue) continue;
 
-                for (int row = 0; row < wallRows; row++)
-                {
-                    float wy = y + row * wallHeight;
+                    // Shell ring: 1 cell outside the room bounding box.
+                    // Blank space between shell and inner room walls is hidden from outside.
+                    int sx0 = minX - 1, sx1 = maxX + 1;
+                    int sz0 = minZ - 1, sz1 = maxZ + 1;
 
-                    // North edge (z = sz0) — NW corner, north walls, NE corner.
-                    Ring(cornerTile, sx0, wy, sz0, ROT_NORTH);
-                    for (int x = sx0 + 1; x < sx1; x++)
-                        Ring(wallTile, x, wy, sz0, ROT_NORTH);
-                    Ring(cornerTile, sx1, wy, sz0, ROT_EAST);
+                    // A corridor can bulge outside the bounding box and so land on the ring.
+                    // Shelling over it both stacks tiles and bricks up the corridor, so the ring
+                    // yields to anything already standing in the elevation band it occupies. This
+                    // is recomputed per cluster so a later ring also yields to an earlier one —
+                    // where two rings touch, the second must not add a wall at a different
+                    // rotation on a cell the first already filled.
+                    var blocked = new HashSet<(int, int)>();
+                    foreach (var t in out_)
+                        if (t.Y >= y - 0.01f && t.Y < bandTop - 0.01f)
+                            blocked.Add(((int)Math.Floor(t.X), (int)Math.Floor(t.Z)));
 
-                    // South edge (z = sz1) — SW corner, south walls, SE corner.
-                    Ring(cornerTile, sx0, wy, sz1, ROT_WEST);
-                    for (int x = sx0 + 1; x < sx1; x++)
-                        Ring(wallTile, x, wy, sz1, ROT_SOUTH);
-                    Ring(cornerTile, sx1, wy, sz1, ROT_SOUTH);
+                    void Ring(TileEntry tile, int x, float wy, int z, int rot)
+                    {
+                        if (!blocked.Contains((x, z))) out_.Add(Mk(tile, x, wy, z, rot));
+                    }
 
-                    // West edge (x = sx0) — between the two corners.
-                    for (int z = sz0 + 1; z < sz1; z++)
-                        Ring(wallTile, sx0, wy, z, ROT_WEST);
+                    for (int row = 0; row < wallRows; row++)
+                    {
+                        float wy = y + row * wallHeight;
 
-                    // East edge (x = sx1) — between the two corners.
-                    for (int z = sz0 + 1; z < sz1; z++)
-                        Ring(wallTile, sx1, wy, z, ROT_EAST);
+                        // North edge (z = sz0) — NW corner, north walls, NE corner.
+                        Ring(cornerTile, sx0, wy, sz0, ROT_NORTH);
+                        for (int x = sx0 + 1; x < sx1; x++)
+                            Ring(wallTile, x, wy, sz0, ROT_NORTH);
+                        Ring(cornerTile, sx1, wy, sz0, ROT_EAST);
+
+                        // South edge (z = sz1) — SW corner, south walls, SE corner.
+                        Ring(cornerTile, sx0, wy, sz1, ROT_WEST);
+                        for (int x = sx0 + 1; x < sx1; x++)
+                            Ring(wallTile, x, wy, sz1, ROT_SOUTH);
+                        Ring(cornerTile, sx1, wy, sz1, ROT_SOUTH);
+
+                        // West edge (x = sx0) — between the two corners.
+                        for (int z = sz0 + 1; z < sz1; z++)
+                            Ring(wallTile, sx0, wy, z, ROT_WEST);
+
+                        // East edge (x = sx1) — between the two corners.
+                        for (int z = sz0 + 1; z < sz1; z++)
+                            Ring(wallTile, sx1, wy, z, ROT_EAST);
+                    }
                 }
             }
+        }
+
+        // Rooms closer than this on both axes belong under one shell. Wide enough that a normally
+        // packed storey stays a single ring, narrow enough to separate rooms that only share a
+        // storey because they were placed above scattered carriers.
+        private const int ShellClusterGap = 8;
+
+        private static List<List<RoomSpec>> ClusterRooms(List<RoomSpec> rooms, LayoutSpec spec)
+        {
+            var parent = new int[rooms.Count];
+            for (int i = 0; i < parent.Length; i++) parent[i] = i;
+
+            int Find(int i) => parent[i] == i ? i : parent[i] = Find(parent[i]);
+
+            for (int i = 0; i < rooms.Count; i++)
+            for (int j = i + 1; j < rooms.Count; j++)
+            {
+                var a = rooms[i];
+                var b = rooms[j];
+                int dx = Math.Max(0, Math.Max(a.OriginX - (b.OriginX + b.Width),
+                                              b.OriginX - (a.OriginX + a.Width)));
+                int dz = Math.Max(0, Math.Max(a.OriginZ - (b.OriginZ + b.Depth),
+                                              b.OriginZ - (a.OriginZ + a.Depth)));
+                if (dx <= ShellClusterGap && dz <= ShellClusterGap)
+                    parent[Find(i)] = Find(j);
+            }
+
+            // Two rooms joined by a corridor must share a shell whatever the distance between
+            // them. Split them and the corridor runs between the two rings through open board,
+            // walled by neither.
+            var index = new Dictionary<string, int>();
+            for (int i = 0; i < rooms.Count; i++) index[rooms[i].Id] = i;
+            foreach (var c in spec.Connections ?? new List<Connection>())
+                if (index.TryGetValue(c.FromRoomId, out int fi) &&
+                    index.TryGetValue(c.ToRoomId,   out int ti))
+                    parent[Find(fi)] = Find(ti);
+
+            var groups = new Dictionary<int, List<RoomSpec>>();
+            for (int i = 0; i < rooms.Count; i++)
+            {
+                int root = Find(i);
+                if (!groups.TryGetValue(root, out var g)) groups[root] = g = new List<RoomSpec>();
+                g.Add(rooms[i]);
+            }
+            return groups.Values.ToList();
         }
 
         // ──────────────────────────────────────────────────────────────────────

@@ -34,6 +34,11 @@ namespace TaleSpireMapGen.Generation
         // Fraction of what a partition could hold that a room must reach at minimum.
         private const float RoomFill = 0.7f;
 
+        // How far a pendant room may sit from the nearest hub carrier and still be given a
+        // landing. Matches SlabBuilder's ShellClusterGap so the whole upper storey ends up under
+        // one shell.
+        private const int MaxLandingGap = 8;
+
         // ──────────────────────────────────────────────────────────────────────
         // BSP node
         // ──────────────────────────────────────────────────────────────────────
@@ -484,22 +489,35 @@ namespace TaleSpireMapGen.Generation
                     eligible.Add(r);
             if (eligible.Count == 0) return;
 
-            // Take the largest eligible room as a seed, then its nearest neighbours — picking the
-            // N largest rooms outright scatters them across the map, and because the exterior
-            // shell rings the whole bounding box of a storey, a scattered upper floor becomes one
-            // enormous wall around mostly bare board. A cluster keeps the storey compact, so it
-            // reads as a self-contained upper level sitting on the part of the dungeon below it.
+            // Grow a contiguous patch of carriers outward from the largest eligible room, taking
+            // each next room only if it touches the patch already chosen. Picking the N largest
+            // rooms outright — or even the N nearest the seed — scatters carriers across the map,
+            // and the storey's shell then rings a bounding box that is mostly bare board. Growing
+            // by adjacency keeps the upper floor as one compact, self-contained level standing on
+            // the part of the dungeon beneath it, and stops early rather than reaching for a
+            // distant room just to fill the quota.
             eligible.Sort((a, b) => (b.Width * b.Depth).CompareTo(a.Width * a.Depth));
-            var seed = eligible[0];
-            var candidates = eligible
-                .OrderBy(r => RoomDistSq(seed, r))
-                .Take(_maxHubCandidates)
-                .ToList();
+            var candidates = new List<RoomSpec> { eligible[0] };
+            while (candidates.Count < _maxHubCandidates)
+            {
+                var next = eligible
+                    .Where(r => !candidates.Contains(r))
+                    .Where(r => candidates.Any(c => RoomGap(r, c) <= MaxLandingGap))
+                    .OrderBy(r => candidates.Min(c => RoomDistSq(r, c)))
+                    .FirstOrDefault();
+                if (next == null) break;
+                candidates.Add(next);
+            }
 
             var hubLowerIds = new HashSet<string>();
             foreach (var c in candidates) hubLowerIds.Add(c.Id);
 
-            var pendants     = FindPendantRooms(spec, hubLowerIds).FindAll(Fits);
+            // A landing sits directly above the pendant it isolates, so a pendant on the far side
+            // of the map plants an upper room away from every hub. The corridor out to it then
+            // crosses bare board and the storey's shell has to stretch around both — which is the
+            // rest of why upper floors read as empty. Only pendants inside the hub cluster qualify.
+            var pendants = FindPendantRooms(spec, hubLowerIds)
+                .FindAll(p => Fits(p) && candidates.Any(c => RoomGap(p, c) <= MaxLandingGap));
             int isolateCount = pendants.Count > 0 ? Math.Min(pendants.Count, rng.Next(1, 3)) : 0;
             var isolated     = pendants.GetRange(0, isolateCount);
 
@@ -685,6 +703,17 @@ namespace TaleSpireMapGen.Generation
             float dx = (a.OriginX + a.Width  / 2f) - (b.OriginX + b.Width  / 2f);
             float dz = (a.OriginZ + a.Depth  / 2f) - (b.OriginZ + b.Depth  / 2f);
             return dx * dx + dz * dz;
+        }
+
+        // Gap between two footprints along the axis they are furthest apart on; 0 if they overlap.
+        // Matches how the exterior shell decides which rooms share a ring.
+        private static int RoomGap(RoomSpec a, RoomSpec b)
+        {
+            int dx = Math.Max(0, Math.Max(a.OriginX - (b.OriginX + b.Width),
+                                          b.OriginX - (a.OriginX + a.Width)));
+            int dz = Math.Max(0, Math.Max(a.OriginZ - (b.OriginZ + b.Depth),
+                                          b.OriginZ - (a.OriginZ + a.Depth)));
+            return Math.Max(dx, dz);
         }
     }
 }

@@ -27,6 +27,20 @@ Two knobs control how much bare ground ends up inside the exterior shell, which 
 
 Changing either alters every generated map, so re-run the fuzzer rather than assuming.
 
+### Upper floors must be one compact cluster
+
+An upper storey is meant to read as a self-contained level standing on the part of the dungeon beneath it. What made upper floors look empty was not room count — it was *spread*. Carriers picked as "the N largest rooms", or even "the N nearest the largest", land all over the map, and the exterior shell then rings a bounding box that is mostly bare board. Measured upper-floor fill was 24-26%; the ground floor is ~50%.
+
+Three rules keep the storey together, all in `ApplyMultiFloor` / `BuildExteriorShell`:
+
+- **Carriers grow by adjacency.** Start from the largest eligible room and add each next room only if it comes within `MaxLandingGap` of one already chosen. Stop early rather than reaching for a distant room to fill `_maxHubCandidates`. Fewer, closer carriers beat more, scattered ones.
+- **Landings obey the same gap.** A landing sits directly above the pendant room it isolates, so a pendant on the far side of the map plants an upper room away from every hub no matter how well the hubs cluster. Pendants outside the cluster are simply not isolated.
+- **One shell per cluster, not per elevation.** `ClusterRooms` unions rooms within `ShellClusterGap` on both axes, so a storey whose rooms genuinely sit apart gets a ring around each group instead of one enormous wall. It also unions any two rooms joined by a `Connection`, **which is load-bearing**: split a connected pair across two rings and the corridor between them runs through open board, walled by neither. And `blocked` is recomputed inside the cluster loop so a later ring yields to an earlier one — where two rings touch, the second must not put a wall at a different rotation on a cell the first already filled (`StackedWalls`).
+
+`MaxLandingGap` and `ShellClusterGap` are both 8 and are meant to agree: the layout aims for a cluster the shell will then recognise as one. Result is 41-52% upper fill at the cost of roughly one to two upper rooms per map.
+
+Still open: **type 2 upper floors** — balconies overlooking a double-height room below. These cannot be built from the same machinery, because an open balcony edge is exactly what `EnclosureLeak` exists to flag. They need the *lower* room to declare itself multi-level and the upper level to yield a hole around it, plus railing tiles, which none of Dungeon Cellar, MegaDungeon, Marble Palace or Sewers actually contain.
+
 ---
 
 ### TaleSpire coordinate system
