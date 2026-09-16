@@ -48,6 +48,7 @@ setting needs a restart too.
 
 ## Reference data
 
-`tile_catalog.json` and `build_tile_catalog.py` live in `/home/coder/TaleSpire-Binaries/`, not in
-this repo. Do not read `tile_catalog.json` into context — it is large reference data. Query it
-with grep or python when specific tile lookups are needed.
+`tile_catalog.json`, `tileset_profiles.json`, and the scripts that generate them
+(`build_tile_catalog.py`, `build_tileset_profiles.py`) live in `/home/coder/TaleSpire-Binaries/`,
+not in this repo. Do not read either JSON file into context — they are large reference data.
+Query them with grep or python when specific tile or profile lookups are needed.

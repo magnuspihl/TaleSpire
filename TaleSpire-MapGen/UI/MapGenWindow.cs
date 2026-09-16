@@ -13,7 +13,7 @@ namespace TaleSpireMapGen.UI
         // ──────────────────────────────────────────────────────────────────────
 
         private bool _visible = false;
-        private Rect _windowRect = new Rect(20, 20, 440, 540);
+        private Rect _windowRect = new Rect(20, 20, 440, 600);
 
         private readonly List<ITemplate> _templates = new List<ITemplate>
         {
@@ -25,6 +25,9 @@ namespace TaleSpireMapGen.UI
         private string _aiJson           = "";
         private string _seedText         = "0";
         private int    _themeIndex       = 0;
+        private int    _dungeonSize      = 1;  // 0=Small 1=Medium 2=Large
+        private int    _minFloors        = 1;
+        private int    _maxFloors        = 2;
         private string _statusLine       = "";
         private string _detailsLine      = "";
         private bool   _lastSuccess      = false;
@@ -122,6 +125,24 @@ namespace TaleSpireMapGen.UI
             _seedText = GUILayout.TextField(_seedText, GUILayout.Width(80));
             GUILayout.EndHorizontal();
 
+            // ── Dungeon settings (only for DungeonTemplate) ──────────────────
+            if (_templates[_selectedTemplate] is DungeonTemplate)
+            {
+                GUILayout.Space(6);
+                GUILayout.Label("Size:", _labelStyle);
+                _dungeonSize = GUILayout.SelectionGrid(_dungeonSize,
+                    new[] { "Small", "Medium", "Large" }, 3);
+
+                GUILayout.Space(4);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Min Floors:", _labelStyle, GUILayout.Width(76));
+                _minFloors = IntSpin(_minFloors, 1, _maxFloors);
+                GUILayout.Space(14);
+                GUILayout.Label("Max Floors:", _labelStyle, GUILayout.Width(76));
+                _maxFloors = IntSpin(_maxFloors, _minFloors, 2);
+                GUILayout.EndHorizontal();
+            }
+
             // ── Theme dropdown ───────────────────────────────────────────────
             GUILayout.Space(4);
             GUILayout.Label("Theme:", _labelStyle);
@@ -153,6 +174,15 @@ namespace TaleSpireMapGen.UI
             GUI.DragWindow();
         }
 
+        // ─ [–] N [+] spinner ─────────────────────────────────────────────────
+        private int IntSpin(int value, int min, int max)
+        {
+            if (GUILayout.Button("–", GUILayout.Width(20)) && value > min) value--;
+            GUILayout.Label(value.ToString(), _labelStyle, GUILayout.Width(16));
+            if (GUILayout.Button("+", GUILayout.Width(20)) && value < max) value++;
+            return value;
+        }
+
         // ──────────────────────────────────────────────────────────────────────
         // Generation
         // ──────────────────────────────────────────────────────────────────────
@@ -168,9 +198,12 @@ namespace TaleSpireMapGen.UI
 
             var parameters = new TemplateParams
             {
-                Seed   = seed,
-                Theme  = theme,
-                AiJson = _templates[_selectedTemplate] is AiTemplate ? _aiJson : null,
+                Seed        = seed,
+                Theme       = theme,
+                AiJson      = _templates[_selectedTemplate] is AiTemplate ? _aiJson : null,
+                DungeonSize = _dungeonSize,
+                MinFloors   = _minFloors,
+                MaxFloors   = _maxFloors,
             };
 
             try
@@ -188,9 +221,14 @@ namespace TaleSpireMapGen.UI
                 int connCount = spec.Connections?.Count ?? 0;
                 int tileCount = placements.Count;
 
+                var yLevels = new System.Collections.Generic.HashSet<float>();
+                foreach (var r in spec.Rooms ?? new System.Collections.Generic.List<RoomSpec>())
+                    yLevels.Add(r.OriginY);
+                string levelText = yLevels.Count > 1 ? $", {yLevels.Count} levels" : "";
+
                 _lastSuccess = true;
                 _statusLine  = "Copied to clipboard!";
-                _detailsLine = $"{roomCount} rooms, {connCount / 2} corridors, {tileCount} tiles";
+                _detailsLine = $"{roomCount} rooms, {connCount / 2} corridors, {tileCount} tiles{levelText}";
 
                 Debug.Log($"[MapGen] Slab ({tileCount} tiles): {slab.Substring(0, Math.Min(40, slab.Length))}...");
             }
