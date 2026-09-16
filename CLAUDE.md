@@ -48,7 +48,7 @@ setting needs a restart too.
 
 Mods are published to [Thunderstore](https://thunderstore.io/c/talespire/), which is where the
 mod managers people actually use (r2modman, Gale) install from. A package is a flat zip of
-`manifest.json`, `icon.png`, `README.md` and the DLL.
+`manifest.json`, `icon.png`, `README.md`, `LICENSE` and the DLL, uploaded under the `Magnus` team.
 
 To make a mod publishable, add `<Mod>/thunderstore/manifest.json` and a 256x256
 `<Mod>/thunderstore/icon.png`. Dependencies in the manifest are full Thunderstore identifiers

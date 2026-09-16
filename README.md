@@ -48,3 +48,7 @@ python3 tools/package-mod.py LineOfSight
 ```
 
 Pushing a `<Mod>-v<version>` tag does the same in CI and attaches the zip to a GitHub release.
+
+## License
+
+[MIT](LICENSE).
