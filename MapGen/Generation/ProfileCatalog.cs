@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using Newtonsoft.Json;
 
 namespace TaleSpireMapGen.Generation
@@ -37,7 +38,7 @@ namespace TaleSpireMapGen.Generation
 
     public static class ProfileCatalog
     {
-        private const string ProfilesPath = "/home/coder/TaleSpire-Binaries/tileset_profiles.json";
+        private const string EmbeddedResourceName = "TaleSpireMapGen.tileset_profiles.json";
 
         // _profiles[pack][folder] = TilesetProfile
         private static Dictionary<string, Dictionary<string, TilesetProfile>> _profiles;
@@ -51,11 +52,13 @@ namespace TaleSpireMapGen.Generation
                 if (_profiles != null) return;
                 _profiles = new Dictionary<string, Dictionary<string, TilesetProfile>>(StringComparer.OrdinalIgnoreCase);
 
-                if (!File.Exists(ProfilesPath)) return;
+                // Sidecar file takes precedence — drop a tileset_profiles.json next to the DLL
+                // to update profiles without rebuilding. Falls back to the bundled embedded copy.
+                string json = TryReadSidecarFile() ?? TryReadEmbeddedResource();
+                if (json == null) return;
 
                 try
                 {
-                    string json = File.ReadAllText(ProfilesPath);
                     // JSON shape: { "profiles": { "Pack Name": { "Folder Name": {...}, ... } } }
                     var root = JsonConvert.DeserializeObject<ProfilesRoot>(json);
                     if (root?.Profiles == null) return;
@@ -76,6 +79,34 @@ namespace TaleSpireMapGen.Generation
                     UnityEngine.Debug.LogWarning($"[ProfileCatalog] Failed to load profiles: {ex.Message}");
                 }
             }
+        }
+
+        private static string TryReadSidecarFile()
+        {
+            try
+            {
+                string dllDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string path = Path.Combine(dllDir, "tileset_profiles.json");
+                if (File.Exists(path))
+                    return File.ReadAllText(path);
+            }
+            catch { }
+            return null;
+        }
+
+        private static string TryReadEmbeddedResource()
+        {
+            try
+            {
+                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(EmbeddedResourceName))
+                {
+                    if (stream == null) return null;
+                    using (var reader = new StreamReader(stream))
+                        return reader.ReadToEnd();
+                }
+            }
+            catch { }
+            return null;
         }
 
         public static TilesetProfile GetProfile(string pack, string folder)
