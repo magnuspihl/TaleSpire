@@ -4,7 +4,7 @@
     python3 tools/package-mod.py LineOfSight [--output dist]
 
 Produces dist/<Mod>-<version>.zip, laid out the way Thunderstore expects: manifest.json,
-icon.png, README.md and the DLL all flat at the root of the archive.
+icon.png, README.md, LICENSE and the DLL all flat at the root of the archive.
 """
 
 import argparse
@@ -95,7 +95,8 @@ def main():
 
     icon = mod_dir / "thunderstore" / "icon.png"
     readme = mod_dir / "README.md"
-    for required in (icon, readme):
+    license_file = REPO / "LICENSE"
+    for required in (icon, readme, license_file):
         if not required.exists():
             fail(f"{required.relative_to(REPO)} is required in the package")
     check_icon(icon)
@@ -115,6 +116,7 @@ def main():
         zf.writestr("manifest.json", json.dumps(manifest, indent=2) + "\n")
         zf.write(icon, "icon.png")
         zf.write(readme, "README.md")
+        zf.write(license_file, "LICENSE")
         zf.write(dll, dll.name)
 
     print(f"{package.relative_to(REPO)}  ({package.stat().st_size} bytes)")
