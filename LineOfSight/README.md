@@ -49,6 +49,24 @@ GM mode itself is never affected — you are meant to see everything, so the boa
 binds clients that are actually playing. Switch yourself to player mode and hiding applies to
 you too; switch back and the whole map returns.
 
+### Who is actually hiding anything
+
+Hiding only works if the client doing the seeing has the plugin, so a board armed for line of
+sight is only as private as its least-equipped player. While you are in GM mode on an armed
+board, LineOfSight watches the rest of the table and puts a message on screen when a client is
+not hiding terrain — because it has no plugin, because its plugin is not applying the board
+setting, or because its plugin hit an error and said so. Only the GM sees these; players are
+never told anything.
+
+A client without the plugin cannot announce itself, so its absence is judged on silence: nothing
+is reported until it has stayed quiet for `Warnings.GraceSeconds` (two minutes by default), which
+is long enough that a player merely still loading the board is not mistaken for one who cannot
+hide anything. Errors a client *does* report are shown straight away, since those are not
+guesses. Each client is reported once per problem per board.
+
+If this is not useful to you — a table where you already know who has the plugin, say — turn
+`Warnings.WarnAboutClients` off.
+
 ### The block's menu
 
 Right-clicking the LineOfSight block gives you three buttons alongside TaleSpire's own:
@@ -101,6 +119,8 @@ reload it while the game is running, so restart after editing.
 | --- | --- | --- |
 | `Controls.ToggleTracking` | Ctrl+H | Local toggle, also switches GM/player mode |
 | `Behaviour.RememberSeenTerrain` | true | Local default, used when no LineOfSight block is present |
+| `Warnings.WarnAboutClients` | true | Warn you, as GM, about clients that are not hiding terrain |
+| `Warnings.GraceSeconds` | 120 | How long a client may stay silent before it is reported |
 
 Seen-terrain memory lives next to it, in `BepInEx/LineOfSight/`. Deleting a `.fog` file there is the
 same as resetting that board's fog for yourself.
@@ -130,6 +150,11 @@ plus a word of flags. TaleSpire never reads that field, and it is synced and sav
 board data — which is what lets the board itself carry the setting, with no separate channel
 between GM and players. Clearing the signature is what hands the block back to TaleSpire.
 
+Each client reports what its own hiding pass is doing as a Photon actor property, the same
+mechanism TaleSpire uses to distribute `ClientVersion` and `ClientMode`. The server caches those,
+so the report reaches the GM whichever order the two joined in, and a client that joins later is
+picked up without anyone asking it anything. The GM's watcher only reads them.
+
 ## Limitations
 
 - Hidden terrain leaves a dark footprint on the board mat, tracing the shape of the tiles that
@@ -141,3 +166,5 @@ between GM and players. Clearing the signature is what hands the block back to T
 - A full refresh takes about a second, because TaleSpire processes one zone per frame.
 - Board changes only save while the GM client is in GM mode. Arming the board and immediately
   quitting from player mode can lose the setting.
+- The warnings about under-equipped clients need the *GM* to have the plugin. If they do not,
+  nobody is listening and nothing is reported — there is no way around that.
