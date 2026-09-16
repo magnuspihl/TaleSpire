@@ -1,61 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
     <AssemblyName>TaleSpire-MapGen</AssemblyName>
     <RootNamespace>TaleSpireMapGen</RootNamespace>
-    <Nullable>disable</Nullable>
-    <LangVersion>9</LangVersion>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
-
-  <!-- BepInEx (local lib/) -->
-  <ItemGroup>
-    <Reference Include="BepInEx">
-      <HintPath>lib\BepInEx.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="0Harmony">
-      <HintPath>lib\0Harmony.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
-
-  <!-- Unity + TaleSpire DLLs -->
-  <ItemGroup>
-    <Reference Include="UnityEngine">
-      <HintPath>/home/coder/TaleSpire-Binaries/TaleSpire_Data/Managed/UnityEngine.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>/home/coder/TaleSpire-Binaries/TaleSpire_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>/home/coder/TaleSpire-Binaries/TaleSpire_Data/Managed/UnityEngine.IMGUIModule.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>/home/coder/TaleSpire-Binaries/TaleSpire_Data/Managed/UnityEngine.InputLegacyModule.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Bouncyrock.TaleSpire.DataModel.Runtime">
-      <HintPath>/home/coder/TaleSpire-Binaries/TaleSpire_Data/Managed/Bouncyrock.TaleSpire.DataModel.Runtime.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Bouncyrock.TaleSpire.Runtime">
-      <HintPath>/home/coder/TaleSpire-Binaries/TaleSpire_Data/Managed/Bouncyrock.TaleSpire.Runtime.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Bouncyrock.BouncePackage.TaleSpire.Runtime">
-      <HintPath>/home/coder/TaleSpire-Binaries/TaleSpire_Data/Managed/Bouncyrock.BouncePackage.TaleSpire.Runtime.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>/home/coder/TaleSpire-Binaries/TaleSpire_Data/Managed/Newtonsoft.Json.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
 
 </Project>

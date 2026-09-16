@@ -1,0 +1,7 @@
+<Project>
+
+  <!-- Deliberately empty. MSBuild stops at the nearest Directory.Build.props walking upward,
+       so this shadows the one at the repo root: tools are ordinary .NET console programs that
+       run in this workspace, not net48 mods loaded into the game. -->
+
+</Project>

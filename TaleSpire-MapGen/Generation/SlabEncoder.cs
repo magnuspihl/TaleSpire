@@ -85,7 +85,8 @@ namespace TaleSpireMapGen.Generation
         private static byte[] GzipCompress(byte[] data)
         {
             using var output = new MemoryStream();
-            using (var gz = new GZipStream(output, CompressionLevel.Optimal))
+            // Qualified because UnityEngine also defines a CompressionLevel.
+            using (var gz = new GZipStream(output, System.IO.Compression.CompressionLevel.Optimal))
                 gz.Write(data, 0, data.Length);
             return output.ToArray();
         }

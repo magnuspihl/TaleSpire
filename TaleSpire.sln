@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaleSpire-LineOfSight", "TaleSpire-LineOfSight\TaleSpire-LineOfSight.csproj", "{50F7F29F-9429-4DFD-947A-FCD4E3ABF7E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaleSpire-MapGen", "TaleSpire-MapGen\TaleSpire-MapGen.csproj", "{3DE23FBD-239A-4D03-98C3-961C2BF891D7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C3545AAD-70B3-4A6A-BF8A-77B54AF0A6E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inspect", "tools\Inspect\Inspect.csproj", "{15D36A90-E329-4620-9AD8-C658A34713E6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{50F7F29F-9429-4DFD-947A-FCD4E3ABF7E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50F7F29F-9429-4DFD-947A-FCD4E3ABF7E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50F7F29F-9429-4DFD-947A-FCD4E3ABF7E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50F7F29F-9429-4DFD-947A-FCD4E3ABF7E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DE23FBD-239A-4D03-98C3-961C2BF891D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DE23FBD-239A-4D03-98C3-961C2BF891D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DE23FBD-239A-4D03-98C3-961C2BF891D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DE23FBD-239A-4D03-98C3-961C2BF891D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15D36A90-E329-4620-9AD8-C658A34713E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15D36A90-E329-4620-9AD8-C658A34713E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15D36A90-E329-4620-9AD8-C658A34713E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15D36A90-E329-4620-9AD8-C658A34713E6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{15D36A90-E329-4620-9AD8-C658A34713E6} = {C3545AAD-70B3-4A6A-BF8A-77B54AF0A6E1}
+	EndGlobalSection
+EndGlobal

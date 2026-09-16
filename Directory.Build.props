@@ -1,0 +1,23 @@
+<Project>
+
+  <!-- Shared by every mod in this repo. Each mod folder holds only what is unique to it:
+       its own PackageReferences and its plugin source. -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+    <!-- A mod ships as the single DLL the user drops into BepInEx/plugins. TaleSpire and
+         BepInEx are already loaded by the game, so nothing they provide may be copied
+         alongside it. -->
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TaleSpire" Version="1.6.0" />
+    <PackageReference Include="Talespire.BepInEx" Version="5.4.22" />
+  </ItemGroup>
+
+</Project>
