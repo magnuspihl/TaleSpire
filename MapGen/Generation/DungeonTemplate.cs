@@ -87,7 +87,8 @@ namespace TaleSpireMapGen.Generation
 
             int minFloors = p.MinFloors > 0 ? p.MinFloors : 1;
             int maxFloors = p.MaxFloors > 0 ? p.MaxFloors : 2;
-            ApplyMultiFloor(spec, rng, minFloors, maxFloors);
+            string upperTheme = string.IsNullOrEmpty(p.UpperTheme) ? theme : p.UpperTheme;
+            ApplyMultiFloor(spec, rng, minFloors, maxFloors, upperTheme);
             AddLoopConnections(spec, rng);
 
             return spec;
@@ -449,7 +450,12 @@ namespace TaleSpireMapGen.Generation
         // Multi-floor pass
         // ──────────────────────────────────────────────────────────────────────
 
-        private void ApplyMultiFloor(LayoutSpec spec, Random rng, int minFloors, int maxFloors)
+        // `upperTheme` may differ from the ground theme — a dungeon basement under a castle keep.
+        // Only the rooms and corridors *on* the upper storey take it. The storey's height is still
+        // measured in the lower theme's tiles, because the stair stands in the lower room; the run
+        // length needs both themes, since it has to arrive on the upper theme's floor surface.
+        private void ApplyMultiFloor(LayoutSpec spec, Random rng, int minFloors, int maxFloors,
+                                     string upperTheme)
         {
             if (maxFloors < 2) return;
 
@@ -460,32 +466,41 @@ namespace TaleSpireMapGen.Generation
             string stairType = profile.StairType ?? "";
             if (stairType != "stackable" && stairType != "mixed") return;
 
+            // Decide against a second storey here rather than in SlabBuilder. Committing to one
+            // and then finding no stair tile to place leaves an upper floor with no way up.
+            if (!TileCatalog.HasTile(theme, TileRole.Stairs)) return;
+
             // ── Phase 0: how tall the storey is, and how long that makes the stairs ──
             // The shortest stack that still clears MinCeilingHeight. Deriving it from the
             // tallest BSP room instead would raise the whole storey to suit one room, and the
             // straight stair run needed to reach it would no longer fit inside any of them.
+            // This is a headroom check against the profile's curated figures, deliberately kept
+            // distinct from TileCatalog.StoreyHeight: MinCeilingHeight is curated against the same
+            // curated WallHeight/FloorHeight, so mixing in the placed tile's real height would
+            // compare two different measurements.
             int upperWallRows = 1;
             while (upperWallRows * profile.WallHeight + profile.FloorHeight < profile.MinCeilingHeight
                    && upperWallRows < 8)
                 upperWallRows++;
 
-            // BuildStaircase climbs in 0.5 increments, one cell per step, starting one cell in
-            // from the wall — so the room must be this long on the axis it climbs.
-            int stairRun = (int)Math.Round(upperWallRows * profile.WallHeight / 0.5f);
-            bool Fits(RoomSpec r) => Math.Max(r.Width, r.Depth) >= stairRun + 3;
+            // The run occupies one cell per tread, and needs a clear landing cell at each end
+            // inside the wall ring — so wall + landing + run + landing + wall.
+            int stairRun = TileCatalog.StairStepCount(theme, upperWallRows, upperTheme);
+            bool Fits(RoomSpec r) => Math.Max(r.Width, r.Depth) >= stairRun + 4;
 
             // ── Phase 1: choose which lower rooms will carry an upper room ──
             // Hubs sit above the largest rooms; landings sit above pendant rooms cut off from
             // the ground network. Both sets are decided before any geometry is fixed, because
             // every upper room has to end up on one shared storey (see Phase 2).
             // Candidate count scales with dungeon size via _maxHubCandidates.
-            float avgArea = 0f;
-            foreach (var r in spec.Rooms) avgArea += r.Width * r.Depth;
-            avgArea /= spec.Rooms.Count;
-
+            // Every room that can hold a stair run is eligible; area only decides which one seeds
+            // the cluster (the sort below). Filtering by area *before* growing starved the cluster:
+            // on a map whose above-average rooms all sit more than MaxLandingGap apart, growth
+            // stopped at the seed and the upper storey came out as one room over a 1751-cell ground
+            // floor — the "upper floor is tiny" symptom.
             var eligible = new List<RoomSpec>();
             foreach (var r in spec.Rooms)
-                if (r.Width * r.Depth >= avgArea && Fits(r))
+                if (Fits(r))
                     eligible.Add(r);
             if (eligible.Count == 0) return;
 
@@ -497,7 +512,7 @@ namespace TaleSpireMapGen.Generation
             // the part of the dungeon beneath it, and stops early rather than reaching for a
             // distant room just to fill the quota.
             eligible.Sort((a, b) => (b.Width * b.Depth).CompareTo(a.Width * a.Depth));
-            var candidates = new List<RoomSpec> { eligible[0] };
+            var candidates = new List<RoomSpec> { BestClusterSeed(eligible) };
             while (candidates.Count < _maxHubCandidates)
             {
                 var next = eligible
@@ -537,7 +552,7 @@ namespace TaleSpireMapGen.Generation
                 if (r.WallRows > upperWallRows) r.WallRows = upperWallRows;
 
             // Every BSP room sits at OriginY 0, so this one height serves the whole storey.
-            float upperY = upperWallRows * profile.WallHeight + profile.FloorHeight;
+            float upperY = TileCatalog.StoreyHeight(theme, upperWallRows);
 
             int upperIdx  = spec.Rooms.Count;
             var vertConns = new List<VerticalConnection>();
@@ -552,13 +567,21 @@ namespace TaleSpireMapGen.Generation
                 float scaleD = 0.8f + (float)rng.NextDouble() * 0.15f;
                 int   hubW   = Math.Max(_minRoom, (int)Math.Round(lower.Width  * scaleW));
                 int   hubD   = Math.Max(_minRoom, (int)Math.Round(lower.Depth  * scaleD));
+
+                // The stair surfaces inside this room, so the room has to be long enough on the
+                // climb axis to hold the run plus its two landings. Shrinking the carrier by 80-95%
+                // can undercut that even though the lower room passed Fits.
+                bool climbOnZ = lower.Depth >= lower.Width;
+                if (climbOnZ) hubD = Math.Max(hubD, Math.Min(lower.Depth, stairRun + 4));
+                else          hubW = Math.Max(hubW, Math.Min(lower.Width, stairRun + 4));
+
                 int   hubX   = lower.OriginX + (lower.Width  - hubW) / 2;
                 int   hubZ   = lower.OriginZ + (lower.Depth  - hubD) / 2;
 
                 var hubRoom = new RoomSpec
                 {
                     Id       = $"room_{upperIdx++}",
-                    Theme    = lower.Theme,
+                    Theme    = upperTheme,
                     Width    = hubW,
                     Depth    = hubD,
                     OriginX  = hubX,
@@ -569,10 +592,10 @@ namespace TaleSpireMapGen.Generation
                 spec.Rooms.Add(hubRoom);
                 hubRooms.Add(hubRoom);
 
-                string climbDir = lower.Depth >= lower.Width
+                string climbDir = climbOnZ
                     ? (rng.Next(2) == 0 ? "north" : "south")
                     : (rng.Next(2) == 0 ? "east"  : "west");
-                (int sx, int sz) = StairOriginInRoom(lower, climbDir);
+                (int sx, int sz) = StairOriginInRoom(hubRoom, climbDir);
 
                 vertConns.Add(new VerticalConnection
                 {
@@ -615,13 +638,20 @@ namespace TaleSpireMapGen.Generation
                 float sD      = 0.5f + (float)rng.NextDouble() * 0.2f;
                 int   landW   = Math.Max(_minRoom, (int)Math.Round(lower.Width  * sW));
                 int   landD   = Math.Max(_minRoom, (int)Math.Round(lower.Depth  * sD));
+
+                // Same as the hubs: the run surfaces inside the landing, so the landing must be
+                // long enough on the climb axis to hold it.
+                bool climbOnZ = lower.Depth >= lower.Width;
+                if (climbOnZ) landD = Math.Max(landD, Math.Min(lower.Depth, stairRun + 4));
+                else          landW = Math.Max(landW, Math.Min(lower.Width, stairRun + 4));
+
                 int   landX   = lower.OriginX + (lower.Width  - landW) / 2;
                 int   landZ   = lower.OriginZ + (lower.Depth  - landD) / 2;
 
                 var landing = new RoomSpec
                 {
                     Id       = $"room_{upperIdx++}",
-                    Theme    = lower.Theme,
+                    Theme    = upperTheme,
                     Width    = landW,
                     Depth    = landD,
                     OriginX  = landX,
@@ -631,10 +661,10 @@ namespace TaleSpireMapGen.Generation
                 };
                 spec.Rooms.Add(landing);
 
-                string climbDir = lower.Depth >= lower.Width
+                string climbDir = climbOnZ
                     ? (rng.Next(2) == 0 ? "north" : "south")
                     : (rng.Next(2) == 0 ? "east"  : "west");
-                (int sx, int sz) = StairOriginInRoom(lower, climbDir);
+                (int sx, int sz) = StairOriginInRoom(landing, climbDir);
 
                 vertConns.Add(new VerticalConnection
                 {
@@ -684,18 +714,56 @@ namespace TaleSpireMapGen.Generation
             return result;
         }
 
-        // Returns the stair origin inside a room for a given climb direction.
-        // The origin is placed on the interior edge opposite the climb direction so the
-        // stair chain runs toward the wall and doesn't start outside the room.
+        // The bottom tread's cell, given the room the run lives in and how many treads it has.
+        // Measured against the *upper* room: the run surfaces through a stairwell in that room's
+        // floor, so it has to sit inside its interior rather than breach its wall ring.
+        // Inset by two rather than one so a clear landing cell is left at both ends — flush against
+        // the wall, the bottom tread faced straight into it.
         private static (int x, int z) StairOriginInRoom(RoomSpec room, string climbDir)
         {
+            int w = Math.Max(room.Width, 3), d = Math.Max(room.Depth, 3);
+            int cx = room.OriginX + w / 2, cz = room.OriginZ + d / 2;
             switch (climbDir?.ToLowerInvariant())
             {
-                case "north": return (room.OriginX + room.Width / 2, room.OriginZ + room.Depth - 2);
-                case "south": return (room.OriginX + room.Width / 2, room.OriginZ + 1);
-                case "east":  return (room.OriginX + 1,              room.OriginZ + room.Depth / 2);
-                default:      return (room.OriginX + room.Width - 2, room.OriginZ + room.Depth / 2);
+                case "north": return (cx, room.OriginZ + d - 3);
+                case "south": return (cx, room.OriginZ + 2);
+                case "east":  return (room.OriginX + 2,     cz);
+                default:      return (room.OriginX + w - 3, cz);
             }
+        }
+
+        // The largest room of whichever group of mutually reachable rooms can carry the most
+        // upper floor. Seeding from the largest room on the map instead strands the cluster when
+        // that room is the one off in a corner: growth only reaches rooms within MaxLandingGap, so
+        // the storey above comes out as a single room however many carriers were budgeted for.
+        // A group is scored on the carriers it could actually supply, not its total size — three
+        // big rooms beat eight small ones when only four of them will be used.
+        private RoomSpec BestClusterSeed(List<RoomSpec> eligible)
+        {
+            var parent = new int[eligible.Count];
+            for (int i = 0; i < parent.Length; i++) parent[i] = i;
+            int Find(int i) => parent[i] == i ? i : parent[i] = Find(parent[i]);
+
+            for (int i = 0; i < eligible.Count; i++)
+                for (int j = i + 1; j < eligible.Count; j++)
+                    if (RoomGap(eligible[i], eligible[j]) <= MaxLandingGap)
+                        parent[Find(i)] = Find(j);
+
+            var groups = new Dictionary<int, List<RoomSpec>>();
+            for (int i = 0; i < eligible.Count; i++)
+            {
+                int root = Find(i);
+                if (!groups.TryGetValue(root, out var g)) groups[root] = g = new List<RoomSpec>();
+                g.Add(eligible[i]);
+            }
+
+            return groups.Values
+                .OrderByDescending(g => g.Select(r => r.Width * r.Depth)
+                                         .OrderByDescending(a => a)
+                                         .Take(_maxHubCandidates).Sum())
+                .First()
+                .OrderByDescending(r => r.Width * r.Depth)
+                .First();
         }
 
         private static float RoomDistSq(RoomSpec a, RoomSpec b)

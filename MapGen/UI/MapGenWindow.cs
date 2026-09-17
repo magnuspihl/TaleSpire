@@ -25,6 +25,8 @@ namespace TaleSpireMapGen.UI
         private string _aiJson           = "";
         private string _seedText         = "0";
         private int    _themeIndex       = 0;
+        private int    _upperThemeIndex  = -1; // -1 = same as ground
+        private int    _themeTab         = 0;  // 0=ground, 1=upper
         private int    _dungeonSize      = 1;  // 0=Small 1=Medium 2=Large
         private int    _minFloors        = 1;
         private int    _maxFloors        = 2;
@@ -32,7 +34,8 @@ namespace TaleSpireMapGen.UI
         private string _detailsLine      = "";
         private bool   _lastSuccess      = false;
 
-        private Vector2 _aiScroll = Vector2.zero;
+        private Vector2 _aiScroll    = Vector2.zero;
+        private Vector2 _themeScroll = Vector2.zero;
 
         // Styles — created lazily after the skin is available
         private GUIStyle _labelStyle;
@@ -143,12 +146,42 @@ namespace TaleSpireMapGen.UI
                 GUILayout.EndHorizontal();
             }
 
-            // ── Theme dropdown ───────────────────────────────────────────────
+            // ── Theme list ───────────────────────────────────────────────────
+            // Scrolled rather than laid out in full: the catalog grew from 3 themes to 20, and a
+            // column of 20 buttons is taller than the window. Ground and upper storeys share the
+            // one list through a tab, because two stacked lists would not fit either.
             GUILayout.Space(4);
-            GUILayout.Label("Theme:", _labelStyle);
             string[] themes = TileCatalog.KnownThemes;
-            _themeIndex = Mathf.Clamp(_themeIndex, 0, themes.Length - 1);
-            _themeIndex = GUILayout.SelectionGrid(_themeIndex, themes, 1);
+
+            bool twoStorey = _templates[_selectedTemplate] is DungeonTemplate && _maxFloors >= 2;
+            if (twoStorey)
+                _themeTab = GUILayout.SelectionGrid(_themeTab,
+                    new[] { "Ground theme", "Upper theme" }, 2);
+            else
+                _themeTab = 0;
+
+            if (twoStorey && _themeTab == 1)
+            {
+                // "Same as ground" is prepended, so the upper list is offset by one from `themes`.
+                var choices = new string[themes.Length + 1];
+                choices[0] = "— same as ground —";
+                themes.CopyTo(choices, 1);
+
+                _themeScroll = GUILayout.BeginScrollView(_themeScroll,
+                    GUILayout.Height(150), GUILayout.MaxWidth(428));
+                int sel = GUILayout.SelectionGrid(
+                    Mathf.Clamp(_upperThemeIndex + 1, 0, choices.Length - 1), choices, 2);
+                GUILayout.EndScrollView();
+                _upperThemeIndex = sel - 1;
+            }
+            else
+            {
+                _themeIndex = Mathf.Clamp(_themeIndex, 0, themes.Length - 1);
+                _themeScroll = GUILayout.BeginScrollView(_themeScroll,
+                    GUILayout.Height(150), GUILayout.MaxWidth(428));
+                _themeIndex = GUILayout.SelectionGrid(_themeIndex, themes, 2);
+                GUILayout.EndScrollView();
+            }
 
             GUILayout.Space(8);
 
@@ -196,10 +229,15 @@ namespace TaleSpireMapGen.UI
                 ? themes[_themeIndex]
                 : "Dungeon Cellar";
 
+            string upperTheme = (_upperThemeIndex >= 0 && _upperThemeIndex < themes.Length)
+                ? themes[_upperThemeIndex]
+                : null;
+
             var parameters = new TemplateParams
             {
                 Seed        = seed,
                 Theme       = theme,
+                UpperTheme  = upperTheme,
                 AiJson      = _templates[_selectedTemplate] is AiTemplate ? _aiJson : null,
                 DungeonSize = _dungeonSize,
                 MinFloors   = _minFloors,

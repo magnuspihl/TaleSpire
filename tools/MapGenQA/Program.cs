@@ -19,8 +19,10 @@ namespace MapGenQA
                     "fuzz"   => Fuzz(opt),
                     "render" => Render(opt),
                     "slab"   => Slab(opt),
+                    "rooms"  => Rooms(opt),
                     "spec"   => Spec(opt),
                     "cell"   => Cell(opt),
+                    "tiles"  => Tiles(opt),
                     _        => Unknown(args[0]),
                 };
             }
@@ -42,19 +44,30 @@ namespace MapGenQA
             MapGenQA — headless QA for the MapGen generator
 
               fuzz   [--seeds 1-200] [--sizes small,medium,large] [--themes all] [--examples 3]
+                     [--mixed]
                      Generate every combination and run all validators. Exit 1 if any fail.
+                     --mixed gives each map a different theme upstairs than downstairs.
 
-              render [--seed 42] [--size medium] [--theme "Dungeon Cellar"]
+              render [--seed 42] [--size medium] [--theme "Dungeon Cellar"] [--upper "Castle Fortified"]
                      Print ASCII floor plans for one map.
 
-              slab   [--seed 42] [--size medium] [--theme "Dungeon Cellar"]
+              slab   [--seed 42] [--size medium] [--theme "Dungeon Cellar"] [--upper "Castle Fortified"]
                      Print the base64 slab for one map, ready to paste into TaleSpire.
+
+              rooms  --themes "A,B,C" [--w 5] [--d 5] [--rows 2] [--doors]
+                     Print one base64 slab holding one plain room per theme, side by side, for
+                     comparing tile picks in game. --doors joins neighbouring rooms so each one
+                     gets a door, which is the only way the door role becomes visible.
 
               spec   [--seed 42] [--size medium] [--theme "Dungeon Cellar"]
                      Print the room / connection / stair spec behind one map.
 
               cell   [--seed 42] [--size medium] --x 54 --z 6 [--radius 1]
                      Print every tile near one cell, and which room footprint covers it.
+
+              tiles  [--themes all]
+                     Print what each role resolves to per theme, with the heights every
+                     elevation in the builder is derived from.
             """);
 
         // ── options ──────────────────────────────────────────────────────────
@@ -121,24 +134,37 @@ namespace MapGenQA
             var themes = ParseThemes(Get(o, "themes", "all"));
             int maxEx  = int.TryParse(Get(o, "examples", "3"), out var m) ? m : 3;
 
+            // --mixed pairs every theme with a *different* one upstairs, which is the case a
+            // uniform sweep cannot reach: a castle keep over a dungeon basement puts two wall
+            // heights, two stair pitches and two door sets in one map.
+            bool mixed = o.ContainsKey("mixed");
+
             if (!Preflight()) return 1;
 
             Console.WriteLine($"fuzzing {seeds.Count} seeds x {sizes.Count} sizes x {themes.Length} themes " +
-                              $"= {seeds.Count * sizes.Count * themes.Length} maps");
+                              $"= {seeds.Count * sizes.Count * themes.Length} maps"
+                              + (mixed ? " (mixed ground/upper themes)" : ""));
 
             var failures = Validators.All.ToDictionary(v => v.Name, _ => new List<string>());
             int generated = 0, crashed = 0;
 
             foreach (int seed in seeds)
             foreach (int size in sizes)
-            foreach (string theme in themes)
+            for (int ti = 0; ti < themes.Length; ti++)
             {
+                string theme = themes[ti];
+                // Offset by the seed so a given theme meets every other one across a run, rather
+                // than always being paired with its neighbour in the list.
+                string upper = mixed && themes.Length > 1
+                    ? themes[(ti + 1 + seed % (themes.Length - 1)) % themes.Length]
+                    : null;
+
                 GeneratedMap map;
-                try { map = GeneratedMap.Generate(seed, size, theme); generated++; }
+                try { map = GeneratedMap.Generate(seed, size, theme, upper); generated++; }
                 catch (Exception ex)
                 {
                     crashed++;
-                    failures["DuplicateTile"].Add($"seed={seed} size={size} theme='{theme}' GENERATOR THREW: {ex.Message}");
+                    failures["DuplicateTile"].Add($"seed={seed} size={size} theme='{theme}' upper='{upper}' GENERATOR THREW: {ex.Message}");
                     continue;
                 }
 
@@ -178,7 +204,8 @@ namespace MapGenQA
             GeneratedMap.Generate(
                 int.TryParse(Get(o, "seed", "42"), out var s) ? s : 42,
                 ParseSize(Get(o, "size", "medium")),
-                Get(o, "theme", "Dungeon Cellar"));
+                Get(o, "theme", "Dungeon Cellar"),
+                Get(o, "upper", null));
 
         private static int Render(Dictionary<string, string> o)
         {
@@ -193,6 +220,34 @@ namespace MapGenQA
                 foreach (string f in found) Console.WriteLine(f);
             }
             else Console.WriteLine("no validator findings for this map");
+            return 0;
+        }
+
+        // What a theme actually resolves to, role by role, with the heights every elevation in the
+        // builder is derived from. A wall and a corner of different heights cannot stack on one
+        // pitch, so seeing the numbers side by side is usually enough to explain a geometry fault.
+        private static int Tiles(Dictionary<string, string> o)
+        {
+            var themes = Get(o, "themes", null) is string s && s != "all"
+                ? s.Split(',').Select(t => t.Trim()).ToList()
+                : TileCatalog.KnownThemes.ToList();
+
+            foreach (string theme in themes)
+            {
+                int rows = 1;
+                Console.WriteLine($"── {theme}  combo={TileCatalog.WallIncludesFloor(theme)} " +
+                                  $"wallPitch={TileCatalog.WallPitch(theme)} " +
+                                  $"floorThick={TileCatalog.FloorThickness(theme)} " +
+                                  $"storey={TileCatalog.StoreyHeight(theme, rows)} " +
+                                  $"stairRise={TileCatalog.StairRise(theme)} " +
+                                  $"steps={TileCatalog.StairStepCount(theme, rows, theme)}");
+                foreach (TileRole role in Enum.GetValues(typeof(TileRole)).Cast<TileRole>())
+                {
+                    TileEntry e;
+                    try { e = TileCatalog.Get(theme, role); } catch { continue; }
+                    Console.WriteLine($"     {role,-12} h={e.Height,-5} {e.Size,-5} {e.Name}");
+                }
+            }
             return 0;
         }
 
@@ -242,6 +297,57 @@ namespace MapGenQA
             return 0;
         }
 
+        // Which tile is right for a role is a question only the rig can answer, and a whole
+        // generated map is a bad place to ask it: the candidate is buried among corridors and the
+        // themes cannot be compared without regenerating between pastes. A row of plain rooms,
+        // one per theme, puts every candidate on screen at once. Drive it with
+        // tools/pick-probe.py, which synthesises one throwaway theme per candidate.
+        private static int Rooms(Dictionary<string, string> o)
+        {
+            var themes = Get(o, "themes", TileCatalog.DefaultTheme)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToArray();
+            int w    = int.TryParse(Get(o, "w", "5"), out var ww) ? ww : 5;
+            int d    = int.TryParse(Get(o, "d", "5"), out var dd) ? dd : 5;
+            int rows = int.TryParse(Get(o, "rows", "2"), out var rr) ? rr : 2;
+
+            var spec = new LayoutSpec { Rooms = new List<RoomSpec>() };
+            for (int i = 0; i < themes.Length; i++)
+                spec.Rooms.Add(new RoomSpec
+                {
+                    Id = $"room_{i}", Theme = themes[i],
+                    Width = w, Depth = d, WallRows = rows,
+                    // Inset by one cell: the exterior shell is built outside the wall ring, and
+                    // at the origin it would land on -1, which the encoder packs unsigned and
+                    // TaleSpire then rejects as a whole.
+                    OriginX = 1 + i * (w + 2), OriginZ = 1, OriginY = 0,
+                });
+
+            // A door tile is only placed where a connection lands, so a row of unconnected rooms
+            // says nothing about the door role. Joining neighbours puts a door in each room's
+            // facing wall. Offsets count from the first interior cell, so a wall of depth d has
+            // its middle at (d-2)/2.
+            if (o.ContainsKey("doors"))
+            {
+                spec.Connections = new List<Connection>();
+                for (int i = 0; i + 1 < themes.Length; i++)
+                {
+                    spec.Connections.Add(new Connection
+                    {
+                        FromRoomId = $"room_{i}", ToRoomId = $"room_{i + 1}",
+                        WallSide = "east", Offset = (d - 2) / 2,
+                    });
+                    spec.Connections.Add(new Connection
+                    {
+                        FromRoomId = $"room_{i + 1}", ToRoomId = $"room_{i}",
+                        WallSide = "west", Offset = (d - 2) / 2,
+                    });
+                }
+            }
+
+            Console.WriteLine(SlabEncoder.Encode(SlabBuilder.Build(spec)));
+            return 0;
+        }
+
         private static int Slab(Dictionary<string, string> o)
         {
             var map = One(o);
@@ -249,5 +355,6 @@ namespace MapGenQA
                 map.Tiles.Select(t => (new Guid(t.Guid).ToByteArray(), t.X, t.Y, t.Z, t.Rot)).ToList()));
             return 0;
         }
+
     }
 }

@@ -21,8 +21,12 @@ namespace MapGenQA
             new DuplicateTile(),
             new StackedWalls(),
             new IllegalSubTileOffset(),
+            new NegativePosition(),
             new IllegalRotation(),
             new EncoderRoundTrip(),
+            new TileSizeIsUnit(),
+            new WallRowOverlap(),
+            new FloorCoverage(),
             new RoomOverlap(),
             new RoomConnectivity(),
             new CorridorSpansElevations(),
@@ -32,6 +36,13 @@ namespace MapGenQA
             new UpperRoomSupported(),
             new MissingCorner(),
             new EnclosureLeak(),
+            new FloorWallOverlap(),
+            new StoreyAlignment(),
+            new StairRiseContinuous(),
+            new StairReachesLanding(),
+            new StairWellOpen(),
+            new StairTreadSupported(),
+            new WallSeatedOnEdge(),
         };
 
         internal static bool IsWallish(Placement p) =>
@@ -43,6 +54,77 @@ namespace MapGenQA
                 .Where(r => Math.Abs(r.OriginY - y) < 0.001f)
                 .SelectMany(GeneratedMap.Footprint)
                 .ToHashSet();
+
+        internal static string ThemeOf(GeneratedMap map, RoomSpec r) =>
+            string.IsNullOrEmpty(r.Theme) ? (map.Spec.Theme ?? TileCatalog.DefaultTheme) : r.Theme;
+
+        internal static (int dx, int dz) Step(string dir)
+        {
+            switch (dir?.ToLowerInvariant())
+            {
+                case "north": return (0, -1);
+                case "south": return (0, 1);
+                case "east":  return (1, 0);
+                default:      return (-1, 0);
+            }
+        }
+
+        /// One staircase, resolved from the spec back onto the tiles that were actually placed.
+        internal class StairRun
+        {
+            public VerticalConnection Conn;
+            public RoomSpec Lower, Upper;
+            public string LowerTheme, UpperTheme;
+            public List<(int x, int z)> Cells = new();   // climb order
+            public List<Placement> Treads = new();       // one per cell, same order
+        }
+
+        /// Walks each VerticalConnection's run outward from its origin for as long as stair tiles
+        /// are found, so every checker below sees the same run the builder emitted rather than one
+        /// recomputed from the same formula it is meant to be testing.
+        internal static List<StairRun> StairRuns(GeneratedMap map)
+        {
+            var byId = (map.Spec.Rooms ?? new List<RoomSpec>()).ToDictionary(r => r.Id);
+            var treadAt = map.Tiles.Where(t => t.RoleKnown && t.Role == TileRole.Stairs)
+                                   .GroupBy(t => t.Cell)
+                                   .ToDictionary(g => g.Key, g => g.OrderBy(t => t.Y).First());
+
+            var runs = new List<StairRun>();
+            foreach (var v in map.Spec.VerticalConnections ?? new List<VerticalConnection>())
+            {
+                if (!byId.TryGetValue(v.LowerRoomId ?? "", out var lower)) continue;
+                if (!byId.TryGetValue(v.UpperRoomId ?? "", out var upper)) continue;
+
+                var run = new StairRun
+                {
+                    Conn = v, Lower = lower, Upper = upper,
+                    LowerTheme = ThemeOf(map, lower), UpperTheme = ThemeOf(map, upper),
+                };
+
+                var (dx, dz) = Step(v.ClimbDirection);
+                var cell = (v.StairOriginX, v.StairOriginZ);
+                while (treadAt.TryGetValue(cell, out var t) && run.Cells.Count < 64)
+                {
+                    run.Cells.Add(cell);
+                    run.Treads.Add(t);
+                    cell = (cell.Item1 + dx, cell.Item2 + dz);
+                }
+                runs.Add(run);
+            }
+            return runs;
+        }
+
+        /// Cells a stair comes up through, keyed by the elevation of the storey it breaks through.
+        internal static HashSet<(int, int, int)> StairWells(GeneratedMap map)
+        {
+            var wells = new HashSet<(int, int, int)>();
+            foreach (var run in StairRuns(map))
+            {
+                int y100 = (int)Math.Round(run.Upper.OriginY * 100);
+                foreach (var c in run.Cells) wells.Add((c.x, c.z, y100));
+            }
+            return wells;
+        }
     }
 
     // ── Integrity ────────────────────────────────────────────────────────────
@@ -83,11 +165,14 @@ namespace MapGenQA
         public string Name => "IllegalSubTileOffset";
         public string Describes => "sub-tile offsets that are not exactly 0 or 0.5";
 
+        // X and Z only. Y is an elevation, not a quadrant: it is whatever the tiles below add up
+        // to, and a tileset with a 2.2-tall wall legitimately puts its second row at 2.2.
+        // WallRowOverlap covers the vertical axis.
         public IEnumerable<string> Check(GeneratedMap map)
         {
             foreach (var t in map.Tiles)
             {
-                if (!IsHalfStep(t.X) || !IsHalfStep(t.Z) || !IsHalfStep(t.Y))
+                if (!IsHalfStep(t.X) || !IsHalfStep(t.Z))
                     yield return $"offset {t}";
             }
         }
@@ -96,6 +181,23 @@ namespace MapGenQA
         {
             float f = Math.Abs(v - (float)Math.Floor(v));
             return f < 0.001f || Math.Abs(f - 0.5f) < 0.001f;
+        }
+    }
+
+    public class NegativePosition : IValidator
+    {
+        public string Name => "NegativePosition";
+        public string Describes => "a tile at a negative coordinate, which the slab format cannot hold";
+
+        // Slab positions are packed into unsigned 18-bit fields, so a negative coordinate does not
+        // fail loudly — it wraps, and TaleSpire then rejects the whole slab silently. A map that is
+        // otherwise perfect simply refuses to paste, and no other check here can see it: the tiles
+        // themselves are all well formed.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            foreach (var t in map.Tiles)
+                if (t.X < 0 || t.Y < 0 || t.Z < 0)
+                    yield return $"negative position {t}";
         }
     }
 
@@ -154,6 +256,90 @@ namespace MapGenQA
         private static (string, int, int, int, int) Norm((string guid, float x, float y, float z, int rot) p) =>
             (p.guid.ToLowerInvariant(), (int)Math.Round(p.x * 100), (int)Math.Round(p.y * 100),
              (int)Math.Round(p.z * 100), p.rot);
+    }
+
+    // ── Tile fitness ─────────────────────────────────────────────────────────
+
+    public class TileSizeIsUnit : IValidator
+    {
+        public string Name => "TileSizeIsUnit";
+        public string Describes => "a tile larger than 1x1 placed on the 1x1 grid";
+
+        // The generator reserves exactly one cell per tile. A 2x1 tile placed on adjacent cells
+        // interpenetrates its neighbour, and no other validator sees it — the positions are
+        // distinct, so DuplicateTile and StackedWalls both pass.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            foreach (var t in map.Tiles)
+                if (t.RoleKnown && t.Size != "1x1")
+                    yield return $"{t.Role} tile is {t.Size} at ({t.X},{t.Y},{t.Z})";
+        }
+    }
+
+    public class WallRowOverlap : IValidator
+    {
+        public string Name => "WallRowOverlap";
+        public string Describes => "stacked wall rows that sink into the row below";
+
+        // Rows are pitched by the profile's wallHeight but filled with a tile of its own height,
+        // and the two need not agree. Where the tile is taller than the pitch, every row above
+        // the first is buried in the one below it.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            foreach (var col in map.Tiles.Where(Validators.IsWallish)
+                                         .Where(t => t.Role != TileRole.InnerCorner && t.Height > 0)
+                                         .GroupBy(t => t.Cell))
+            {
+                var stack = col.OrderBy(t => t.Y).ToList();
+                for (int i = 1; i < stack.Count; i++)
+                {
+                    float top = stack[i - 1].Y + stack[i - 1].Height;
+                    if (stack[i].Y < top - 0.001f)
+                    {
+                        yield return $"at ({col.Key.Item1},{col.Key.Item2}): {stack[i].Role} at " +
+                                     $"y={stack[i].Y} overlaps the tile below, which tops out at {top}";
+                        break;   // one report per column
+                    }
+                }
+            }
+        }
+    }
+
+    public class FloorCoverage : IValidator
+    {
+        public string Name => "FloorCoverage";
+        public string Describes => "a room interior cell without exactly one floor tile";
+
+        // Exactly one, in both directions. None leaves the room standing on open board; two
+        // stacks coplanar surfaces that z-fight in game. Only interiors are checked — on the
+        // wall ring the surface may legitimately come from a floor-carrying wall instead, and
+        // whether it does is the very thing the profile flag is asserting.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            // A stair breaking through this floor is meant to leave a hole. StairWellOpen owns
+            // the question of whether the hole is in the right place.
+            var wells = Validators.StairWells(map);
+
+            foreach (var room in map.Spec.Rooms ?? new List<RoomSpec>())
+            {
+                int y100 = (int)Math.Round(room.OriginY * 100);
+
+                var counts = new Dictionary<(int, int), int>();
+                foreach (var t in map.At(room.OriginY).Where(t => t.RoleKnown && t.Role == TileRole.Floor))
+                    counts[t.Cell] = counts.TryGetValue(t.Cell, out int c) ? c + 1 : 1;
+
+                foreach (var cell in GeneratedMap.Interior(room))
+                {
+                    if (wells.Contains((cell.x, cell.z, y100))) continue;
+                    int n = counts.TryGetValue(cell, out int c) ? c : 0;
+                    if (n != 1)
+                    {
+                        yield return $"room {room.Id} has {n} floor tiles at ({cell.x},{cell.z}) y={room.OriginY}";
+                        break;   // one report per room
+                    }
+                }
+            }
+        }
     }
 
     // ── Layout quality ───────────────────────────────────────────────────────
@@ -293,49 +479,29 @@ namespace MapGenQA
     public class StairFootprintInsideRoom : IValidator
     {
         public string Name => "StairFootprintInsideRoom";
-        public string Describes => "a stair run leaving the room it starts in";
+        public string Describes => "a stair run leaving the rooms it joins";
 
+        // Checked against both ends. The run stands on the lower room's floor, so leaving that
+        // room puts treads in open board; it surfaces through the upper room's floor, so leaving
+        // *that* room means the hole it needs is somewhere the upper storey never laid floor.
         public IEnumerable<string> Check(GeneratedMap map)
         {
-            var byId = (map.Spec.Rooms ?? new List<RoomSpec>()).ToDictionary(r => r.Id);
-            var stairCells = map.Tiles.Where(t => t.RoleKnown && t.Role == TileRole.Stairs)
-                                      .Select(t => t.Cell).ToHashSet();
-
-            foreach (var v in map.Spec.VerticalConnections ?? new List<VerticalConnection>())
+            foreach (var run in Validators.StairRuns(map))
             {
-                if (!byId.TryGetValue(v.LowerRoomId ?? "", out var lower)) continue;
-                var interior = GeneratedMap.Interior(lower).ToHashSet();
-                if (!interior.Contains((v.StairOriginX, v.StairOriginZ)))
-                {
-                    yield return $"{v.LowerRoomId}->{v.UpperRoomId} stair origin ({v.StairOriginX},{v.StairOriginZ}) is outside the room interior";
-                    continue;
-                }
+                if (run.Cells.Count == 0) continue;
 
-                // A fitting origin says nothing about the run: a stair tall enough to reach the
-                // upper storey can climb straight out through the far wall.
-                var (dx, dz) = Step(v.ClimbDirection);
-                var cell = (v.StairOriginX, v.StairOriginZ);
-                while (stairCells.Contains(cell))
+                foreach (var (room, which) in new[] { (run.Lower, "lower"), (run.Upper, "upper") })
                 {
-                    if (!interior.Contains(cell))
+                    var interior = GeneratedMap.Interior(room).ToHashSet();
+                    foreach (var c in run.Cells)
                     {
-                        yield return $"{v.LowerRoomId}->{v.UpperRoomId} stair run climbing {v.ClimbDirection} " +
-                                     $"leaves the room at ({cell.Item1},{cell.Item2})";
+                        if (interior.Contains(c)) continue;
+                        yield return $"{run.Conn.LowerRoomId}->{run.Conn.UpperRoomId} climbing " +
+                                     $"{run.Conn.ClimbDirection} leaves the {which} room {room.Id} " +
+                                     $"at ({c.x},{c.z})";
                         break;
                     }
-                    cell = (cell.Item1 + dx, cell.Item2 + dz);
                 }
-            }
-        }
-
-        private static (int, int) Step(string dir)
-        {
-            switch (dir?.ToLowerInvariant())
-            {
-                case "north": return (0, -1);
-                case "south": return (0, 1);
-                case "east":  return (1, 0);
-                default:      return (-1, 0);
             }
         }
     }
@@ -502,6 +668,238 @@ namespace MapGenQA
                 case Validators.RotEast:  yield return (0, -1); yield return (1, 0);  break;
                 case Validators.RotSouth: yield return (0, 1);  yield return (1, 0);  break;
                 case Validators.RotWest:  yield return (0, 1);  yield return (-1, 0); break;
+            }
+        }
+    }
+
+    public class FloorWallOverlap : IValidator
+    {
+        public string Name => "FloorWallOverlap";
+        public string Describes => "a wall whose bottom is buried in the floor tile under it";
+
+        // WallRowOverlap only ever compared wallish tiles to each other, so a wall emitted at the
+        // same elevation as the floor beneath it went unseen for the life of the project: on every
+        // tileset whose wall does not carry its own floor, the ring stood half a unit below the
+        // surface you walk on. Compared per cell rather than per room so shell and corridor walls
+        // are covered by the same rule.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            foreach (var col in map.Tiles.Where(t => t.RoleKnown).GroupBy(t => t.Cell))
+            {
+                var floors = col.Where(t => t.Role == TileRole.Floor && t.Height > 0).ToList();
+                if (floors.Count == 0) continue;
+
+                foreach (var w in col.Where(t => t.Role == TileRole.Wall || t.Role == TileRole.Corner))
+                foreach (var f in floors)
+                {
+                    if (w.Y < f.Y - 0.001f || w.Y > f.Y + f.Height - 0.001f) continue;
+                    yield return $"at ({col.Key.Item1},{col.Key.Item2}): {w.Role} at y={w.Y} sits " +
+                                 $"inside the floor tile spanning {f.Y}..{f.Y + f.Height}";
+                    goto next;   // one report per cell
+                }
+                next: ;
+            }
+        }
+    }
+
+    public class StoreyAlignment : IValidator
+    {
+        public string Name => "StoreyAlignment";
+        public string Describes => "an upper storey that does not rest on the one below it";
+
+        // The gap the in-game test showed between a Dungeon Cellar basement and the keep above it:
+        // upperY was computed as wallRows*wallHeight + floorHeight, which counts the floor twice on
+        // a tileset whose wall already carries one.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            foreach (var run in Validators.StairRuns(map))
+            {
+                int   rows     = run.Lower.WallRows > 0 ? run.Lower.WallRows : 1;
+                float expected = run.Lower.OriginY + TileCatalog.StoreyHeight(run.LowerTheme, rows);
+                if (Math.Abs(run.Upper.OriginY - expected) < 0.001f) continue;
+
+                yield return $"{run.Upper.Id} at y={run.Upper.OriginY} should sit at {expected} — " +
+                             $"{rows} row(s) of '{run.LowerTheme}' above {run.Lower.Id} (y={run.Lower.OriginY})";
+            }
+        }
+    }
+
+    public class StairRiseContinuous : IValidator
+    {
+        public string Name => "StairRiseContinuous";
+        public string Describes => "stair treads that do not form one continuous flight";
+
+        // The builder stepped by a fixed 0.5 against 1.0-tall treads and started the first one at
+        // the room's origin rather than on the floor's surface, so a flight read as a row of
+        // separate half-height staircases standing side by side, the lowest sunk into the ground.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            foreach (var run in Validators.StairRuns(map))
+            {
+                if (run.Treads.Count == 0)
+                {
+                    yield return $"{run.Conn.LowerRoomId}->{run.Conn.UpperRoomId} has no stair tile at its origin " +
+                                 $"({run.Conn.StairOriginX},{run.Conn.StairOriginZ})";
+                    continue;
+                }
+
+                float rise    = TileCatalog.StairRise(run.LowerTheme);
+                float surface = run.Lower.OriginY + TileCatalog.FloorThickness(run.LowerTheme);
+
+                if (Math.Abs(run.Treads[0].Y - surface) > 0.001f)
+                {
+                    yield return $"{run.Conn.LowerRoomId}->{run.Conn.UpperRoomId} bottom tread at y={run.Treads[0].Y} " +
+                                 $"does not rest on the floor surface ({surface})";
+                    continue;
+                }
+
+                for (int i = 1; i < run.Treads.Count; i++)
+                {
+                    float step = run.Treads[i].Y - run.Treads[i - 1].Y;
+                    if (Math.Abs(step - rise) < 0.001f) continue;
+                    yield return $"{run.Conn.LowerRoomId}->{run.Conn.UpperRoomId} tread {i} rises {step} " +
+                                 $"above the one below it, not {rise}";
+                    break;
+                }
+            }
+        }
+    }
+
+    public class StairReachesLanding : IValidator
+    {
+        public string Name => "StairReachesLanding";
+        public string Describes => "a stair that overshoots or falls well short of the storey it feeds";
+
+        // Ties the tread count to the storey height: the two are computed by separate formulas and
+        // a flight that stops a whole tread below its landing, or pokes above it, is the "staircase
+        // ends in mid-air" symptom. A storey height that is not a whole number of treads (Dungeon
+        // Cellar climbs 2.5 on 1.0 treads) leaves a sub-tread lip, which is tolerated.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            foreach (var run in Validators.StairRuns(map))
+            {
+                if (run.Treads.Count == 0) continue;
+
+                var   top     = run.Treads[^1];
+                float arrival = top.Y + (top.Height > 0 ? top.Height : TileCatalog.StairRise(run.LowerTheme));
+                float landing = run.Upper.OriginY + TileCatalog.FloorThickness(run.UpperTheme);
+                float rise    = TileCatalog.StairRise(run.LowerTheme);
+
+                if (arrival > landing + 0.001f)
+                    yield return $"{run.Conn.LowerRoomId}->{run.Conn.UpperRoomId} top tread tops out at " +
+                                 $"{arrival}, above the landing at {landing}";
+                else if (landing - arrival >= rise - 0.001f)
+                    yield return $"{run.Conn.LowerRoomId}->{run.Conn.UpperRoomId} top tread tops out at " +
+                                 $"{arrival}, a full tread or more below the landing at {landing}";
+            }
+        }
+    }
+
+    public class StairWellOpen : IValidator
+    {
+        public string Name => "StairWellOpen";
+        public string Describes => "a stair with no hole in the floor it climbs through, or a hole left unwalled";
+
+        // The run surfaces inside the upper room, so that room's floor has to be cut away over it —
+        // without the hole the flight tops out against the underside of the storey above. The cell
+        // one beyond the top tread is the landing and must still be floored, or the hole is a pit.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            foreach (var run in Validators.StairRuns(map))
+            {
+                if (run.Cells.Count == 0) continue;
+
+                var floors = map.At(run.Upper.OriginY)
+                                .Where(t => t.RoleKnown && t.Role == TileRole.Floor)
+                                .Select(t => t.Cell).ToHashSet();
+
+                foreach (var c in run.Cells)
+                    if (floors.Contains(c))
+                    {
+                        yield return $"{run.Conn.LowerRoomId}->{run.Conn.UpperRoomId} climbs into floor at " +
+                                     $"({c.x},{c.z}) y={run.Upper.OriginY}";
+                        break;
+                    }
+
+                var (dx, dz) = Validators.Step(run.Conn.ClimbDirection);
+                var head = (run.Cells[^1].x + dx, run.Cells[^1].z + dz);
+                if (!floors.Contains(head))
+                    yield return $"{run.Conn.LowerRoomId}->{run.Conn.UpperRoomId} arrives at ({head.Item1},{head.Item2}) " +
+                                 $"y={run.Upper.OriginY}, where there is no floor to step onto";
+            }
+        }
+    }
+
+    public class StairTreadSupported : IValidator
+    {
+        public string Name => "StairTreadSupported";
+        public string Describes => "a raised stair tread with nothing underneath it";
+
+        // A tread carries only its own step, so every one above the first hangs a full rise over
+        // open air and the flight reads as separate steps floating in a line rather than as a
+        // staircase. The column under each tread has to be filled solid down to the floor surface,
+        // by the set's stair block where it has one and its floor tile where it does not — so this
+        // checks coverage of the gap rather than the presence of any particular tile.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            foreach (var run in Validators.StairRuns(map))
+            {
+                float surface = run.Lower.OriginY + TileCatalog.FloorThickness(run.LowerTheme);
+
+                for (int i = 0; i < run.Treads.Count; i++)
+                {
+                    var tread = run.Treads[i];
+                    if (tread.Y <= surface + 0.01f) continue;
+
+                    float filled = surface;
+                    var column = map.Tiles
+                        .Where(t => t.Cell == run.Cells[i] && t.Height > 0
+                                 && t.Y >= surface - 0.01f && t.Y < tread.Y - 0.01f)
+                        .OrderBy(t => t.Y);
+
+                    foreach (var t in column)
+                    {
+                        if (t.Y > filled + 0.01f) break;      // gap below this tile
+                        filled = Math.Max(filled, t.Y + t.Height);
+                    }
+
+                    if (filled < tread.Y - 0.01f)
+                        yield return $"{run.Conn.LowerRoomId}->{run.Conn.UpperRoomId} tread {i} at " +
+                                     $"({run.Cells[i].x},{run.Cells[i].z}) y={tread.Y} is unsupported from " +
+                                     $"y={filled} — {tread.Y - filled:0.##} of open air beneath it";
+                }
+            }
+        }
+    }
+
+    public class WallSeatedOnEdge : IValidator
+    {
+        public string Name => "WallSeatedOnEdge";
+        public string Describes => "a wall parked half a cell in from the edge it is supposed to line";
+
+        // A slab position is the minimum corner of the tile's world bounding box, so a wall whose
+        // footprint is shallower than its cell hugs the low-x/low-z side whichever way it faces.
+        // Facing north or west that is the outer edge and looks right; facing south or east it is
+        // the inner one, and the floor tile it stands on juts out past it into open air. Only the
+        // tilesets whose wall carries no floor of its own are shallow enough to show it, which is
+        // why this went unseen until Castle Fortified was built in game.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            foreach (var t in map.Tiles)
+            {
+                if (!t.RoleKnown || (t.Role != TileRole.Wall && t.Role != TileRole.Corner)) continue;
+                if (t.Rot % 6 != 0) continue;
+                if (!TileIndex.TryGet(t.Guid, out var entry)) continue;
+
+                var foot = entry.RotatedFootprint(t.Rot);
+                float far = t.Rot == Validators.RotEast ? t.X + foot.X
+                          : t.Rot == Validators.RotSouth ? t.Z + foot.Z
+                          : float.NaN;
+                if (float.IsNaN(far)) continue;
+
+                float cell = t.Rot == Validators.RotEast ? (float)Math.Floor(t.X) : (float)Math.Floor(t.Z);
+                if (Math.Abs(far - (cell + 1f)) > 0.01f)
+                    yield return $"{entry.Name} {t} stops at {far:0.##}, {cell + 1f - far:0.##} short of the cell edge";
             }
         }
     }

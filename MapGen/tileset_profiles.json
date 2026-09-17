@@ -31,39 +31,114 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "d52ff29e-6e7b-4a83-94f7-7b2739473bb6"
+              "id": "d52ff29e-6e7b-4a83-94f7-7b2739473bb6",
+              "name": "abandoned_village_wall_1x1_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "8944b901-5c4f-4503-bd7c-21f79dbd4095"
+              "id": "8944b901-5c4f-4503-bd7c-21f79dbd4095",
+              "name": "wall_1x1_breach_01_left",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "9c31287e-c3ac-42d8-a658-b2bdc2676dd6"
+              "id": "9c31287e-c3ac-42d8-a658-b2bdc2676dd6",
+              "name": "wall_1x1_breach_01_right",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "3b6623fd-5ae1-41c3-b811-a07da563fbe7"
+              "id": "3b6623fd-5ae1-41c3-b811-a07da563fbe7",
+              "name": "abandoned_village_wall_1x1_corner_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "bb59c0a2-1703-4800-b968-2f678369a07e"
+              "id": "bb59c0a2-1703-4800-b968-2f678369a07e",
+              "name": "abandoned_village_corner_filler_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "fe090444-6b65-4aa6-a579-f2a3f1df25f8"
+              "id": "fe090444-6b65-4aa6-a579-f2a3f1df25f8",
+              "name": "haunted wall filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "65a07fe1-84b4-4d78-bb24-b49ad0cb6966"
+              "id": "65a07fe1-84b4-4d78-bb24-b49ad0cb6966",
+              "name": "abandoned_village_floor_1x1_01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "34e259a2-2c20-44c1-a2ff-45b8f1a82e2e"
+              "id": "34e259a2-2c20-44c1-a2ff-45b8f1a82e2e",
+              "name": "abandoned_village_stairs_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "9684fd47-24c1-41cc-9af3-430455c1ad6f"
+              "id": "9684fd47-24c1-41cc-9af3-430455c1ad6f",
+              "name": "abandoned_village_stairs_broken_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "0569aaca-0f0a-4386-a469-e5c9925e262f",
+              "name": "Door_town_v2",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
@@ -73,7 +148,9 @@
         ],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Aberration": {
         "folder": "Aberration",
@@ -104,51 +181,154 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "1080de7d-4b36-4a2b-8625-3385a23ddf2c"
+              "id": "1080de7d-4b36-4a2b-8625-3385a23ddf2c",
+              "name": "Aberration Wall 1x1",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "00c1e32d-a59c-4d9b-844a-3abc45140ae7"
+              "id": "00c1e32d-a59c-4d9b-844a-3abc45140ae7",
+              "name": "Aberration Wall 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "53dec21d-de57-4cc5-b12d-65801f006074"
+              "id": "53dec21d-de57-4cc5-b12d-65801f006074",
+              "name": "Aberration Corner 1x1",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "a09a33b5-dc56-4465-9b2b-644359e5f561"
+              "id": "a09a33b5-dc56-4465-9b2b-644359e5f561",
+              "name": "Aberration Corner 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "efb2b3c7-6430-4db9-95e2-431b2e53fde4"
+              "id": "efb2b3c7-6430-4db9-95e2-431b2e53fde4",
+              "name": "Aberration InnerCorner",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "3fff3902-881b-4a9b-b6b3-1f9fc04681b9"
+              "id": "3fff3902-881b-4a9b-b6b3-1f9fc04681b9",
+              "name": "Aberration InnerCorner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "719acad2-f42c-4b15-a62a-fe5b3b161905"
+              "id": "719acad2-f42c-4b15-a62a-fe5b3b161905",
+              "name": "Aberration Floor 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "d77b4c57-7995-44b0-a6d2-8292a2506da3"
+              "id": "d77b4c57-7995-44b0-a6d2-8292a2506da3",
+              "name": "Aberration Floor 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "cd878f27-9f99-4c1b-9130-87803f8f76f8"
+              "id": "cd878f27-9f99-4c1b-9130-87803f8f76f8",
+              "name": "Aberration Floor 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "1cce597c-bb20-43e3-bc4e-a22e2812f27c"
+              "id": "1cce597c-bb20-43e3-bc4e-a22e2812f27c",
+              "name": "Aberration Stairs 1x1",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "189020d0-02a6-431d-86b0-7f86bf2ce378"
+              "id": "189020d0-02a6-431d-86b0-7f86bf2ce378",
+              "name": "Aberration Stairs 1x1",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "2d216fe1-833c-4bd5-818a-ec7c5321b2a7"
+              "id": "2d216fe1-833c-4bd5-818a-ec7c5321b2a7",
+              "name": "Aberration Stairs 1x1",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "2eb87655-81eb-4a4b-a43f-704d0ae8e2ce"
+              "id": "2eb87655-81eb-4a4b-a43f-704d0ae8e2ce",
+              "name": "Aberration Stairs 1x1",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "68812ded-47c5-4c8d-a2a6-224b74cfa6e7",
+              "name": "Aberration Door Small",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
@@ -158,7 +338,9 @@
         ],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "BellowGloom": {
         "folder": "BellowGloom",
@@ -186,49 +368,145 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "3c34f2f9-ba5e-4d75-95b5-17e6b7bc4ee2"
+              "id": "3c34f2f9-ba5e-4d75-95b5-17e6b7bc4ee2",
+              "name": "bg_combo_1x1_01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "100bd8e6-33ad-4897-a208-2136f8cc2bef"
+              "id": "100bd8e6-33ad-4897-a208-2136f8cc2bef",
+              "name": "bg_combo_1x1_02",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "00cdf63c-ab62-4643-9dcb-0dacf713ba3e"
+              "id": "00cdf63c-ab62-4643-9dcb-0dacf713ba3e",
+              "name": "bg_wall_1x1_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "7d2ca0e6-8baf-4982-9e51-9252de4e6d40"
+              "id": "7d2ca0e6-8baf-4982-9e51-9252de4e6d40",
+              "name": "bg_wall_1x1_02",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "27bf03a4-a0e0-4dbe-b955-ce5460c614b4"
+              "id": "27bf03a4-a0e0-4dbe-b955-ce5460c614b4",
+              "name": "bg_combo_1x1_corner_01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "40044a99-2743-4498-baf7-59a9f290319a"
+              "id": "40044a99-2743-4498-baf7-59a9f290319a",
+              "name": "bg_wall_1x1_corner_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "02e0bfd1-af67-4de9-a2e7-9af942852615"
+              "id": "02e0bfd1-af67-4de9-a2e7-9af942852615",
+              "name": "bg_filler_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "83b31a56-ea61-4246-82b0-07692527ac76"
+              "id": "83b31a56-ea61-4246-82b0-07692527ac76",
+              "name": "bg_floor_1x1_01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "239dad98-4a2e-4460-9c01-401a58431f14"
+              "id": "239dad98-4a2e-4460-9c01-401a58431f14",
+              "name": "bg_stairblock_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "b7bfe16c-8731-424b-a880-5c0e09280bf8"
+              "id": "b7bfe16c-8731-424b-a880-5c0e09280bf8",
+              "name": "bg_stairs_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "239dad98-4a2e-4460-9c01-401a58431f14",
+              "name": "bg_stairblock_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "3151e230-bac7-401e-8fa8-b993bbee17ea",
+              "name": "Door - Dungeon",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
         "doorCompatibilityNames": [],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Burrow": {
         "folder": "Burrow",
@@ -251,37 +529,86 @@
         "innerCornerStyle": "separate_tile",
         "doorCompatibility": [],
         "structuralCompatibility": [],
-        "notes": "Corner tile is 2\u00d72; only one corner tile exists. Inner corner is a full 1\u00d71 tile, not a quadrant filler.",
+        "notes": "Corner tile is 2×2; only one corner tile exists. Inner corner is a full 1×1 tile, not a quadrant filler.",
         "tilesByRole": {
           "wall": [
             {
-              "id": "879c9823-984d-4fd3-95b1-e40dfe93d029"
+              "id": "879c9823-984d-4fd3-95b1-e40dfe93d029",
+              "name": "burrow_wall_1x1_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "f77d3801-d205-44e2-b009-58816345df99"
+              "id": "f77d3801-d205-44e2-b009-58816345df99",
+              "name": "burrow_wall_2x1_01",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "94a60b0f-d9e0-4352-915d-e17ddf8558e1"
+              "id": "94a60b0f-d9e0-4352-915d-e17ddf8558e1",
+              "name": "burrow_corner_2x2_rounded_01",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "17eeac43-1b4e-4bec-b5b7-c3ae6afce0c1"
+              "id": "17eeac43-1b4e-4bec-b5b7-c3ae6afce0c1",
+              "name": "burrow_corner_filler_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "floor": [
             {
-              "id": "5bb2e524-64fd-46ce-9b2d-76babfcf7c79"
+              "id": "5bb2e524-64fd-46ce-9b2d-76babfcf7c79",
+              "name": "burrow_floor_1x1_01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "352b22d5-2c1a-443c-847a-fd80fc18b269"
+              "id": "352b22d5-2c1a-443c-847a-fd80fc18b269",
+              "name": "burrow_stairblock_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "5d21ca8f-9a94-47eb-9b33-c56dc10a640e"
+              "id": "5d21ca8f-9a94-47eb-9b33-c56dc10a640e",
+              "name": "burrow_stairs_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ]
         },
@@ -321,42 +648,124 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "d3f7dbbf-6f78-4c5b-93e3-a6c1d00cbefd"
+              "id": "e3ea2de4-47c7-4964-baa6-6bf09d014fc8",
+              "name": "castle wall 1x1 base",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "e3ea2de4-47c7-4964-baa6-6bf09d014fc8"
+              "id": "d3f7dbbf-6f78-4c5b-93e3-a6c1d00cbefd",
+              "name": "castle wall 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "64b2846b-2f02-4595-9f17-013ad7ca612e"
+              "id": "64b2846b-2f02-4595-9f17-013ad7ca612e",
+              "name": "castle wall 2x2",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "2a0bbf1c-2725-49d6-891a-12eaa4fd4d9a"
+              "id": "2a0bbf1c-2725-49d6-891a-12eaa4fd4d9a",
+              "name": "castle wall corner 1x1 base",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "24316483-aed0-4a3d-8402-8c99a2965b3f"
+              "id": "24316483-aed0-4a3d-8402-8c99a2965b3f",
+              "name": "castle wall filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "a2eaf2e2-01d8-4548-a517-50df8551057a"
+              "id": "a2eaf2e2-01d8-4548-a517-50df8551057a",
+              "name": "castle floor 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "97331fa7-5483-468a-a37a-725f1403b202"
+              "id": "97331fa7-5483-468a-a37a-725f1403b202",
+              "name": "castle merlon 1x1 stair L",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "34c5b9a4-1f0f-42c4-9639-ee4af9cb9aed"
+              "id": "34c5b9a4-1f0f-42c4-9639-ee4af9cb9aed",
+              "name": "castle merlon 1x1 stair R",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "88da5941-b328-481c-b396-b71d2c88d2bb"
+              "id": "88da5941-b328-481c-b396-b71d2c88d2bb",
+              "name": "castle wall corner 2x2 curved w step",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "9ddee77d-c4ba-4f31-8a74-a9c0ba80f212"
+              "id": "9ddee77d-c4ba-4f31-8a74-a9c0ba80f212",
+              "name": "castle wall corner 2x2 base curved w step",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "3dfb51cc-836a-41fb-a1d0-dbbb3aea78e2",
+              "name": "castle door 2x2 single",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
@@ -367,7 +776,9 @@
         ],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "CastleRuins": {
         "folder": "CastleRuins",
@@ -406,52 +817,167 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "a30334dd-40ab-4bb7-8030-43fa3b5b33cf"
+              "id": "b303b449-3d35-4b4c-8739-44f9a1e7d110",
+              "name": "Castle Ruins Wallbase 02",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.001,
+                1.001
+              ]
             },
             {
-              "id": "b0a5ef8b-a9e6-48fa-8f56-f43d1cff2442"
+              "id": "a30334dd-40ab-4bb7-8030-43fa3b5b33cf",
+              "name": "Castle Ruins Wall 01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "b303b449-3d35-4b4c-8739-44f9a1e7d110"
+              "id": "b0a5ef8b-a9e6-48fa-8f56-f43d1cff2442",
+              "name": "Castle Ruins Wall 02",
+              "size": "1x2",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                2.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "3fb39e0a-bb63-41e7-ab1e-7be7a06b5d8c"
+              "id": "3fb39e0a-bb63-41e7-ab1e-7be7a06b5d8c",
+              "name": "Castle Ruins Wall/Floor Corner - Small",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "6f03159b-1c19-4aa1-8762-67418dc0f4b0"
+              "id": "6f03159b-1c19-4aa1-8762-67418dc0f4b0",
+              "name": "Castle Ruins Wall Corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [],
           "floor": [
             {
-              "id": "8c1eaebe-c5a5-44d6-86bd-154ce9dd811d"
+              "id": "ecbac309-1ed3-4aa9-884d-cebb1ec19030",
+              "name": "Castle Ruins Floor - Small",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "ecbac309-1ed3-4aa9-884d-cebb1ec19030"
+              "id": "5e38122e-f09c-47aa-8cb0-d9e122a894e9",
+              "name": "Castle Ruins floor stone 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "5e38122e-f09c-47aa-8cb0-d9e122a894e9"
+              "id": "8c1eaebe-c5a5-44d6-86bd-154ce9dd811d",
+              "name": "Castle Ruins Floor 01",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "ed33edd1-f8b9-44b0-9d0c-bb1f601cbac4"
+              "id": "ed33edd1-f8b9-44b0-9d0c-bb1f601cbac4",
+              "name": "Castle Ruins Stair",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "eb32a5e7-d3ed-414b-91a4-1095edac7a20"
+              "id": "eb32a5e7-d3ed-414b-91a4-1095edac7a20",
+              "name": "Castle Ruins Stairbox",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "pillar": [
             {
-              "id": "c538277b-6116-4ff8-a493-2525d80055bb"
+              "id": "c538277b-6116-4ff8-a493-2525d80055bb",
+              "name": "Castle Ruins Pillar - Base",
+              "size": "1x1",
+              "height": 1.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "40a7e9b8-d7f2-4e2b-92af-b0fff3021368"
+              "id": "40a7e9b8-d7f2-4e2b-92af-b0fff3021368",
+              "name": "Castle Ruins Pillar - Mid",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "ed127e54-5d15-409f-b2d6-96e3d8dd67fc"
+              "id": "ed127e54-5d15-409f-b2d6-96e3d8dd67fc",
+              "name": "Castle Ruins Pillar - Top",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "eb32a5e7-d3ed-414b-91a4-1095edac7a20",
+              "name": "Castle Ruins Stairbox",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "3dfb51cc-836a-41fb-a1d0-dbbb3aea78e2",
+              "name": "castle door 2x2 single",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
@@ -462,7 +988,9 @@
         ],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Cavern": {
         "folder": "Cavern",
@@ -490,45 +1018,129 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "e972de17-0cfc-4b42-8906-879193ea96e9"
+              "id": "c06fdfb8-bf24-4234-99c7-3a72a5aacb02",
+              "name": "Cave Wall 01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "c06fdfb8-bf24-4234-99c7-3a72a5aacb02"
+              "id": "8405574e-c75b-4146-b08d-ff9007ac95ac",
+              "name": "Cave Wall 02",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8405574e-c75b-4146-b08d-ff9007ac95ac"
+              "id": "e972de17-0cfc-4b42-8906-879193ea96e9",
+              "name": "Cave Wall/Floor 01",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "39f5b1a9-6316-4d13-90d6-12a0bac9c38e"
+              "id": "39f5b1a9-6316-4d13-90d6-12a0bac9c38e",
+              "name": "Cave Wall 03",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "f16eaf8d-7e01-486b-be6d-1fa261569cd4"
+              "id": "f16eaf8d-7e01-486b-be6d-1fa261569cd4",
+              "name": "Cave Corner 01",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "6707437b-a990-4216-a017-197744cf750c"
+              "id": "6707437b-a990-4216-a017-197744cf750c",
+              "name": "Cave Corner 02",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "283fe136-1ac3-4025-b9bf-90612c464c52"
+              "id": "283fe136-1ac3-4025-b9bf-90612c464c52",
+              "name": "Cave Wall Corner 01",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "620e2184-6489-4411-86b9-223ac358c64b"
+              "id": "620e2184-6489-4411-86b9-223ac358c64b",
+              "name": "Cave Wall Corner 02",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [],
           "floor": [
             {
-              "id": "b83392b1-8833-43c9-a97f-2ac3df659e66"
+              "id": "ce6a2235-664f-43e8-a744-d5743623701d",
+              "name": "Cave Floor - Rock 2",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "ce6a2235-664f-43e8-a744-d5743623701d"
+              "id": "ea5589dc-507a-4e0d-bf48-b097c8318a38",
+              "name": "Cave Floor - Rock 03",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "ea5589dc-507a-4e0d-bf48-b097c8318a38"
+              "id": "b83392b1-8833-43c9-a97f-2ac3df659e66",
+              "name": "Cave Floor - Rock 01",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "0207e67f-6bba-4eb3-a343-54bf2d4d35d3"
+              "id": "0207e67f-6bba-4eb3-a343-54bf2d4d35d3",
+              "name": "Cave Floor - Rock 04",
+              "size": "1x2",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                2.0
+              ]
             }
           ]
         },
@@ -558,85 +1170,246 @@
         "innerCornerStyle": "filler",
         "doorCompatibility": [],
         "structuralCompatibility": [],
-        "notes": "Corner tile is 2\u00d72.",
+        "notes": "Corner tile is 2×2.",
         "tilesByRole": {
           "wall": [
             {
-              "id": "6a2785d2-7ed2-4411-ba47-66de5a42715e"
+              "id": "b331abbf-7eff-4cfa-944c-f377ef6cdd3e",
+              "name": "Lava wall combo v5",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "b331abbf-7eff-4cfa-944c-f377ef6cdd3e"
+              "id": "18b64779-39b9-4905-b88e-6a63d3af0854",
+              "name": "Lava wall combo v8",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "c205aeec-9f95-47d9-8e29-65e35d682c0b"
+              "id": "f9751248-343d-4e4a-8d2a-f46421579a21",
+              "name": "Lava wall 1x1 cold v1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "110b03e4-d36b-42c0-ab12-ac34f5a9d445"
+              "id": "06b1dd45-b628-4dc3-bfd1-3e86d51fb4de",
+              "name": "Lava wall 1x1 hot v1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "18b64779-39b9-4905-b88e-6a63d3af0854"
+              "id": "8de6620c-d4a6-451c-bd61-59948ae02f96",
+              "name": "Lava wall 1x1 hot v2",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "f9751248-343d-4e4a-8d2a-f46421579a21"
+              "id": "0f6212ea-5e47-4adc-9f1e-960733d593aa",
+              "name": "Lava wall 1x1 hot v3",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "06b1dd45-b628-4dc3-bfd1-3e86d51fb4de"
+              "id": "6a2785d2-7ed2-4411-ba47-66de5a42715e",
+              "name": "Lava wall combo v7",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "8de6620c-d4a6-451c-bd61-59948ae02f96"
+              "id": "c205aeec-9f95-47d9-8e29-65e35d682c0b",
+              "name": "Lava wall combo v6",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "0f6212ea-5e47-4adc-9f1e-960733d593aa"
+              "id": "110b03e4-d36b-42c0-ab12-ac34f5a9d445",
+              "name": "lava wall combo v2",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "006ed915-eb46-4d9f-80c0-204cf2263974"
+              "id": "006ed915-eb46-4d9f-80c0-204cf2263974",
+              "name": "Lava wall cold corner",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "17c8b681-1e18-4407-8a5b-2ee1f3d5d432"
+              "id": "17c8b681-1e18-4407-8a5b-2ee1f3d5d432",
+              "name": "Lava wall corner hot",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "48619487-fb34-4ef0-80e2-befe4cc12719"
+              "id": "48619487-fb34-4ef0-80e2-befe4cc12719",
+              "name": "Lava wall corner hot",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "d9a8e241-9d4c-4c9e-90a3-177c73d480b6"
+              "id": "d9a8e241-9d4c-4c9e-90a3-177c73d480b6",
+              "name": "Lava wall filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "098a1955-4fcb-49b5-b117-1c88c2b3f535"
+              "id": "098a1955-4fcb-49b5-b117-1c88c2b3f535",
+              "name": "Lava wall filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "1cf3a724-a8d5-4581-98b2-ec590cf72f39"
+              "id": "1cf3a724-a8d5-4581-98b2-ec590cf72f39",
+              "name": "Lava floor 1x1 ashes",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "030145b1-a5c3-45a5-b658-cd627bd43d5c"
+              "id": "030145b1-a5c3-45a5-b658-cd627bd43d5c",
+              "name": "Lava floor 1x1 hot",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "ab4a7dbb-f597-456e-9381-4d84f4c29e6d"
+              "id": "ab4a7dbb-f597-456e-9381-4d84f4c29e6d",
+              "name": "Lava stair",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "3fa410f6-e949-4fda-a3e8-db9f3d266ea8"
+              "id": "3fa410f6-e949-4fda-a3e8-db9f3d266ea8",
+              "name": "Lava stair corner",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "da91b462-0219-49ba-8e00-232ac481b94d"
+              "id": "da91b462-0219-49ba-8e00-232ac481b94d",
+              "name": "Lava stair top",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "30ce49c1-d3c4-4a83-84d8-6a1764030baa"
+              "id": "30ce49c1-d3c4-4a83-84d8-6a1764030baa",
+              "name": "Lava stair corner",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "cc3a3b6b-f537-4482-b2f4-a82a8e682d7a"
+              "id": "cc3a3b6b-f537-4482-b2f4-a82a8e682d7a",
+              "name": "Lava stair floor",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "0e15769e-9370-4752-a505-913b023e6bca"
+              "id": "0e15769e-9370-4752-a505-913b023e6bca",
+              "name": "Lava stair top",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "2e1f5de4-ce36-47a1-8cef-ce2f2ba3d320"
+              "id": "2e1f5de4-ce36-47a1-8cef-ce2f2ba3d320",
+              "name": "Lava stair",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ]
         },
@@ -669,15 +1442,36 @@
         "tilesByRole": {
           "corner": [
             {
-              "id": "24d7027c-dfef-4b55-833f-2fca795396ae"
+              "id": "24d7027c-dfef-4b55-833f-2fca795396ae",
+              "name": "CobbleStone Corner 01",
+              "size": "2x2",
+              "height": 0.2,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "floor": [
             {
-              "id": "6d146ada-02d4-4fab-ad2a-4fbe1a672328"
+              "id": "3bc61730-aa14-4df3-b5a9-8f8e99efab86",
+              "name": "CobbleStone Floor Small",
+              "size": "1x1",
+              "height": 0.2,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "3bc61730-aa14-4df3-b5a9-8f8e99efab86"
+              "id": "6d146ada-02d4-4fab-ad2a-4fbe1a672328",
+              "name": "CobbleStone Floor 01",
+              "size": "2x2",
+              "height": 0.2,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ]
         },
@@ -704,7 +1498,7 @@
         "hasDoor": false,
         "variantStrategy": "rich",
         "tileCount": 55,
-        "hasIntegratedFloorWall": true,
+        "hasIntegratedFloorWall": false,
         "stairType": "stackable",
         "minCeilingHeight": 2.5,
         "rotationQuirks": null,
@@ -715,82 +1509,255 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "f1df0fec-badf-432b-8cf8-154f938aa755"
+              "id": "d3313868-0459-4e00-be2d-7ed99fbe7f72",
+              "name": "Desert wall 02",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "2c70d1ce-d76e-44cf-980d-d69dd521204b"
+              "id": "2c70d1ce-d76e-44cf-980d-d69dd521204b",
+              "name": "Desert wall floor 02",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "d9f2f65f-ab6e-4c02-b4c0-6793fd2ba49c"
+              "id": "f486efae-dee0-4526-a231-6a3f477cdbd5",
+              "name": "Desert wall 03",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "d3313868-0459-4e00-be2d-7ed99fbe7f72"
+              "id": "f1df0fec-badf-432b-8cf8-154f938aa755",
+              "name": "Desert wall floor 01",
+              "size": "1x2",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                2.0
+              ]
             },
             {
-              "id": "f486efae-dee0-4526-a231-6a3f477cdbd5"
+              "id": "d9f2f65f-ab6e-4c02-b4c0-6793fd2ba49c",
+              "name": "Desert wall 01",
+              "size": "1x2",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                2.0
+              ]
             },
             {
-              "id": "595c8d05-49ec-4bbc-a0b6-85ea613095e5"
+              "id": "595c8d05-49ec-4bbc-a0b6-85ea613095e5",
+              "name": "Desert wall 04",
+              "size": "1x2",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                2.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "af2a956b-85f1-48a3-b077-777373fedc85"
+              "id": "05e77997-3382-48e2-b09f-114b40894e19",
+              "name": "Desert wall corner 01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "4dc088c2-98e0-42b7-967e-bb910766ee18"
+              "id": "af2a956b-85f1-48a3-b077-777373fedc85",
+              "name": "Desert wall floor corner 01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "05e77997-3382-48e2-b09f-114b40894e19"
+              "id": "4dc088c2-98e0-42b7-967e-bb910766ee18",
+              "name": "Desert wall floor corner 03",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "350b7829-ec03-418c-a067-686f2bb1bd65"
+              "id": "350b7829-ec03-418c-a067-686f2bb1bd65",
+              "name": "Desert wall  corner 03",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "aaae0ac1-946d-43f0-970f-daaabb0a51b0"
+              "id": "aaae0ac1-946d-43f0-970f-daaabb0a51b0",
+              "name": "Desert wall corner 05",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "2f5ff29c-f73b-4cf7-ac28-8031fd28aa5c"
+              "id": "b89a6234-5f9a-4351-8bee-a9e2d611e28e",
+              "name": "Desert wall inner corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "b89a6234-5f9a-4351-8bee-a9e2d611e28e"
+              "id": "2f5ff29c-f73b-4cf7-ac28-8031fd28aa5c",
+              "name": "Desert wall floor inner corner",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "floor": [
             {
-              "id": "35a4af95-4afc-45a8-a657-a5601f4ad879"
+              "id": "35a4af95-4afc-45a8-a657-a5601f4ad879",
+              "name": "Desert floor 01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "9536a8fb-ab44-4b73-a430-6d17fd6316d4"
+              "id": "4245fbdd-8c05-4f1f-bc3a-ed60dedbddaf",
+              "name": "Desert floor 03",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "4245fbdd-8c05-4f1f-bc3a-ed60dedbddaf"
+              "id": "ce330020-b299-4512-8957-3c74e5e6ef90",
+              "name": "Desert stone floor 01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "6d57a25c-fd2f-40a4-b868-597762041843"
+              "id": "9536a8fb-ab44-4b73-a430-6d17fd6316d4",
+              "name": "Desert floor 02",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "ce330020-b299-4512-8957-3c74e5e6ef90"
+              "id": "6d57a25c-fd2f-40a4-b868-597762041843",
+              "name": "Desert floor 04",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "ed6a96ab-857f-4ea2-ae2c-490f0da92533"
+              "id": "ed6a96ab-857f-4ea2-ae2c-490f0da92533",
+              "name": "Desert stone floor 02",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "d4317fa6-cdfb-4533-8f7e-bed1c8839585"
+              "id": "d4317fa6-cdfb-4533-8f7e-bed1c8839585",
+              "name": "Desert stair block",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "f76d22ad-70af-4c37-b222-0d8944b59733"
+              "id": "f76d22ad-70af-4c37-b222-0d8944b59733",
+              "name": "Desert Stair",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "d4317fa6-cdfb-4533-8f7e-bed1c8839585",
+              "name": "Desert stair block",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "0569aaca-0f0a-4386-a469-e5c9925e262f",
+              "name": "Door_town_v2",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
         "doorCompatibilityNames": [],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Doors": {
         "folder": "Doors",
@@ -817,79 +1784,254 @@
         "tilesByRole": {
           "door": [
             {
-              "id": "3151e230-bac7-401e-8fa8-b993bbee17ea"
+              "id": "3151e230-bac7-401e-8fa8-b993bbee17ea",
+              "name": "Door - Dungeon",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "fa777637-f260-4d29-8448-979e8a8bb29e"
+              "id": "fa777637-f260-4d29-8448-979e8a8bb29e",
+              "name": "door_dungeon_002",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "bafb5e74-2014-4062-91b5-75d5b0a3e4b9"
+              "id": "63c8488e-e0b6-4d75-9f0c-97163f77edbc",
+              "name": "Door - Prison",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "e963aa2f-ec17-4841-9887-721c9d37161d"
+              "id": "3e568b0f-49ff-4dc3-910e-ebf98d643110",
+              "name": "Prison Cage Door",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "63c8488e-e0b6-4d75-9f0c-97163f77edbc"
+              "id": "a6ebe880-6994-4dd7-8f4e-83ba4d57ce61",
+              "name": "Door -Peasant",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "4711521a-5996-4c0c-aaaa-2a4a20c5731e"
+              "id": "78c166cc-8b34-4940-ae95-120f6a7d1942",
+              "name": "Door - Fancy",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "c5900fdb-899b-4668-b076-865752c30848"
+              "id": "bc856f88-bb15-4e2f-9133-6b975dca9e6c",
+              "name": "Door - Metal Gate",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "3e568b0f-49ff-4dc3-910e-ebf98d643110"
+              "id": "3dfb51cc-836a-41fb-a1d0-dbbb3aea78e2",
+              "name": "castle door 2x2 single",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "a6ebe880-6994-4dd7-8f4e-83ba4d57ce61"
+              "id": "e46444d0-1620-4c60-87a8-104244f7e572",
+              "name": "Door Stone",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "52be0662-f2b7-4baa-8c95-ff0158378cf3"
+              "id": "6432f1d9-9677-4db8-8a97-171b142ad556",
+              "name": "shugun_smallDoor",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "78c166cc-8b34-4940-ae95-120f6a7d1942"
+              "id": "615ed958-cf0c-403b-ba03-9a3367b2c55d",
+              "name": "ship door",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "cc50cdb7-950c-4c24-897e-f31972861f72"
+              "id": "bafb5e74-2014-4062-91b5-75d5b0a3e4b9",
+              "name": "door_dungeon_lg_01_frame",
+              "size": "2x1",
+              "height": 4.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "bc856f88-bb15-4e2f-9133-6b975dca9e6c"
+              "id": "e963aa2f-ec17-4841-9887-721c9d37161d",
+              "name": "Doors - Dungeon Double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "78f0aa91-b6c9-4ab1-b1cf-20e294aab384"
+              "id": "4711521a-5996-4c0c-aaaa-2a4a20c5731e",
+              "name": "Door - Prison double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "a5335452-5bdd-421f-a508-aab398804689"
+              "id": "c5900fdb-899b-4668-b076-865752c30848",
+              "name": "Prison Cage Door double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "3dfb51cc-836a-41fb-a1d0-dbbb3aea78e2"
+              "id": "52be0662-f2b7-4baa-8c95-ff0158378cf3",
+              "name": "Door -Peasant double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "fcb7a2fe-4b79-4d0a-b1fd-31e4b17ffaf5"
+              "id": "cc50cdb7-950c-4c24-897e-f31972861f72",
+              "name": "Door - Fancy double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "11ee1f53-bb09-4015-9758-46a22ad5993a"
+              "id": "78f0aa91-b6c9-4ab1-b1cf-20e294aab384",
+              "name": "Door - Metal Gate double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "e46444d0-1620-4c60-87a8-104244f7e572"
+              "id": "a5335452-5bdd-421f-a508-aab398804689",
+              "name": "castle door 2x2 double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "9acc3a3d-48e3-47c6-b382-1a92310c80f8"
+              "id": "fcb7a2fe-4b79-4d0a-b1fd-31e4b17ffaf5",
+              "name": "Door - Portcullis",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "cab9a3e6-10b0-477e-a9fc-7e7261c3d69f"
+              "id": "11ee1f53-bb09-4015-9758-46a22ad5993a",
+              "name": "Door - Portcullis double",
+              "size": "4x1",
+              "height": 3.8,
+              "footprint": [
+                4.0,
+                0.5
+              ]
             },
             {
-              "id": "ca61fda8-9f39-4a8b-95b4-a1ae953e334a"
+              "id": "9acc3a3d-48e3-47c6-b382-1a92310c80f8",
+              "name": "Door - Stone Double",
+              "size": "1x2",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                2.0
+              ]
             },
             {
-              "id": "6432f1d9-9677-4db8-8a97-171b142ad556"
+              "id": "cab9a3e6-10b0-477e-a9fc-7e7261c3d69f",
+              "name": "Doors - Palace Marble Gold",
+              "size": "2x1",
+              "height": 4.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "deab3691-dba5-4a3a-8d8c-bab80740fafb"
+              "id": "ca61fda8-9f39-4a8b-95b4-a1ae953e334a",
+              "name": "shogunWoodenDoor",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "615ed958-cf0c-403b-ba03-9a3367b2c55d"
+              "id": "deab3691-dba5-4a3a-8d8c-bab80740fafb",
+              "name": "ship door double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             }
           ]
         },
@@ -940,61 +2082,171 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "ed0ad169-3248-411a-9eb0-4aada656fb61"
+              "id": "ed0ad169-3248-411a-9eb0-4aada656fb61",
+              "name": "Dungeon Wall/Floor 01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "05569c54-72de-4798-8db4-c6ac8d2837ed"
+              "id": "05569c54-72de-4798-8db4-c6ac8d2837ed",
+              "name": "Dungeon Wall/Floor With Roots 01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                0.996
+              ]
             },
             {
-              "id": "8f0026ca-a0c6-487d-a6c9-ea19bd57d070"
+              "id": "8f0026ca-a0c6-487d-a6c9-ea19bd57d070",
+              "name": "Dungeon Wall/Floor With Chains",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
               "id": "7e51a34b-b25f-485c-b1c0-a937a936e4c2",
               "tags": [
                 "light_source"
+              ],
+              "name": "Dungeon Wall/Floor With Torch 01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
               ]
             }
           ],
           "corner": [
             {
-              "id": "fdd3c8dc-9c94-4a63-a7d9-10ae36d07fe7"
+              "id": "fdd3c8dc-9c94-4a63-a7d9-10ae36d07fe7",
+              "name": "Dungeon Wall/Floor Corner - Small",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "cec14f2e-faf2-4a9a-bd96-909c16b92197"
+              "id": "cec14f2e-faf2-4a9a-bd96-909c16b92197",
+              "name": "Dungeon Wall Corner Filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "d5900784-9510-4cf7-b017-f369448d0d52"
+              "id": "d5900784-9510-4cf7-b017-f369448d0d52",
+              "name": "Dungeon Floor - Small",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "door": [
             {
-              "id": "bafb5e74-2014-4062-91b5-75d5b0a3e4b9"
+              "id": "3151e230-bac7-401e-8fa8-b993bbee17ea",
+              "name": "Door - Dungeon",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "3151e230-bac7-401e-8fa8-b993bbee17ea"
+              "id": "fa777637-f260-4d29-8448-979e8a8bb29e",
+              "name": "door_dungeon_002",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "fa777637-f260-4d29-8448-979e8a8bb29e"
+              "id": "bafb5e74-2014-4062-91b5-75d5b0a3e4b9",
+              "name": "door_dungeon_lg_01_frame",
+              "size": "2x1",
+              "height": 4.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "ed072f00-f245-44e7-9d25-6a1cb498cbaa"
+              "id": "ed072f00-f245-44e7-9d25-6a1cb498cbaa",
+              "name": "Dungeon Stairs",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "10809742-70c4-45a9-9350-2ae81505da07"
+              "id": "10809742-70c4-45a9-9350-2ae81505da07",
+              "name": "Dungeon Stair Block",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "pillar": [
             {
-              "id": "ade24972-5bf6-4dc4-be27-48026fbfa097"
+              "id": "ade24972-5bf6-4dc4-be27-48026fbfa097",
+              "name": "Dungeon Pillar",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "be6cf2a8-92f1-4128-8a05-e1d0437f51a3"
+              "id": "be6cf2a8-92f1-4128-8a05-e1d0437f51a3",
+              "name": "Dungeon Pillar - Ruined",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "10809742-70c4-45a9-9350-2ae81505da07",
+              "name": "Dungeon Stair Block",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ]
         },
@@ -1012,7 +2264,9 @@
         ],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Harbor": {
         "folder": "Harbor",
@@ -1042,61 +2296,161 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "1ecccb9c-5e72-4a18-a28d-ab08f1bf9e29"
+              "id": "1ecccb9c-5e72-4a18-a28d-ab08f1bf9e29",
+              "name": "Harbor Edge 01",
+              "size": "1x1",
+              "height": 1.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "16dbd3a3-4a12-45ac-b3b7-f00c4431ab15"
+              "id": "16dbd3a3-4a12-45ac-b3b7-f00c4431ab15",
+              "name": "Harbor Edge 02",
+              "size": "1x2",
+              "height": 1.5,
+              "footprint": [
+                1.0,
+                2.0
+              ]
             },
             {
-              "id": "8c4d50f7-b42f-4fde-93ae-6f2fef327f2f"
+              "id": "8c4d50f7-b42f-4fde-93ae-6f2fef327f2f",
+              "name": "Harbor Edge 03",
+              "size": "1x3",
+              "height": 1.5,
+              "footprint": [
+                1.0,
+                3.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "1561c476-9098-47ff-905d-19d388a10502"
+              "id": "1561c476-9098-47ff-905d-19d388a10502",
+              "name": "Harbor Corner 01",
+              "size": "1x1",
+              "height": 1.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "floor": [
             {
-              "id": "c12805c3-3c3d-4ec9-abee-24dda27c1e52"
+              "id": "c12805c3-3c3d-4ec9-abee-24dda27c1e52",
+              "name": "Harbor Float 01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "174bce0d-f1e0-4ae6-a2db-e2ced233bc4f"
+              "id": "174bce0d-f1e0-4ae6-a2db-e2ced233bc4f",
+              "name": "Harbor Float_02",
+              "size": "2x1",
+              "height": 1.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             },
             {
-              "id": "4ae96c86-9644-4c43-ab30-fd3488cb22be"
+              "id": "4ae96c86-9644-4c43-ab30-fd3488cb22be",
+              "name": "Harbor Middle 01",
+              "size": "2x2",
+              "height": 1.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "4b5d29e0-9d55-4229-9cc7-a9d754a20272"
+              "id": "4b5d29e0-9d55-4229-9cc7-a9d754a20272",
+              "name": "Harbor Middle 02",
+              "size": "2x1",
+              "height": 1.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             }
           ],
           "pillar": [
             {
-              "id": "2a52687e-6a6b-4330-a96d-6db8a5be540b"
+              "id": "2a52687e-6a6b-4330-a96d-6db8a5be540b",
+              "name": "Harbor Beam 01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "6782900b-e3e7-49b1-b247-dd97f40279e5"
+              "id": "6782900b-e3e7-49b1-b247-dd97f40279e5",
+              "name": "Harbor Beam 02",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "8183441b-9a39-4755-9d30-3716d5972bc2"
+              "id": "8183441b-9a39-4755-9d30-3716d5972bc2",
+              "name": "Harbor Leg 01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "48200ee4-89bf-4e12-9328-f2bc8770d728"
+              "id": "48200ee4-89bf-4e12-9328-f2bc8770d728",
+              "name": "Harbor Leg 02",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "2d83b34d-e374-48bc-ac61-a321b32f3bbc"
+              "id": "2d83b34d-e374-48bc-ac61-a321b32f3bbc",
+              "name": "Harbor Ramp 01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "d205da32-2d99-45b9-ac5e-f17fc439d987"
+              "id": "d205da32-2d99-45b9-ac5e-f17fc439d987",
+              "name": "Harbor Ramp 02",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ]
         },
         "doorCompatibilityNames": [],
         "standalone": null,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": false,
+        "excluded": true
       },
       "Library Set": {
         "folder": "Library Set",
@@ -1153,72 +2507,224 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "8ef24afd-4b9b-46c2-a338-1bbceab0be4a"
+              "id": "20911967-c5df-450e-b9f6-388d70983553",
+              "name": "Palace Marble wall base 03",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "5873783e-a16c-4eef-bde4-1aa4d399d9e8"
+              "id": "8ef24afd-4b9b-46c2-a338-1bbceab0be4a",
+              "name": "Palace Marble wall base 01",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "20911967-c5df-450e-b9f6-388d70983553"
+              "id": "5873783e-a16c-4eef-bde4-1aa4d399d9e8",
+              "name": "Palace Marble wall base 02",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "9cd938b9-97b3-4174-ad72-1eab87dc4d9e"
+              "id": "9cd938b9-97b3-4174-ad72-1eab87dc4d9e",
+              "name": "Palace Marble wall full",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "25824b02-54b1-4612-a125-7b4932e7a837"
+              "id": "f96be2eb-2443-4686-97b6-08490ef14e43",
+              "name": "Palace Marble wall corner base 02",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "f96be2eb-2443-4686-97b6-08490ef14e43"
+              "id": "9e4f25c4-d85d-45ed-8bc1-e7b4eb261c7b",
+              "name": "Palace Marble wall corner base",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "9e4f25c4-d85d-45ed-8bc1-e7b4eb261c7b"
+              "id": "25824b02-54b1-4612-a125-7b4932e7a837",
+              "name": "Palace Marble wall corner base 02",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "580a66e2-617a-4191-a770-b6e31eb3210b"
+              "id": "580a66e2-617a-4191-a770-b6e31eb3210b",
+              "name": "Palace Marble wall corner base 02",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "ec854329-507b-4923-a6c9-14cb8864e369"
+              "id": "ec854329-507b-4923-a6c9-14cb8864e369",
+              "name": "Palace Marble wall filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "80dc3f68-a26d-43a8-b66f-bebf3114b773"
+              "id": "80dc3f68-a26d-43a8-b66f-bebf3114b773",
+              "name": "Palace Marble wall filler mid",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "2cfe78b2-e95e-4739-b050-ab22ef2c31af"
+              "id": "2cfe78b2-e95e-4739-b050-ab22ef2c31af",
+              "name": "Palace Marble floor 01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8ab38aa7-7be0-4dde-a45b-8df9acd9ca20"
+              "id": "8ab38aa7-7be0-4dde-a45b-8df9acd9ca20",
+              "name": "Palace Marble floor 02",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "b83c901e-5d5e-4eec-ac01-a541ca6bfb3f"
+              "id": "b83c901e-5d5e-4eec-ac01-a541ca6bfb3f",
+              "name": "Palace Marble floor 03",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "7211dbfb-6fb7-42b6-8e6e-0a5534d3ff05"
+              "id": "7211dbfb-6fb7-42b6-8e6e-0a5534d3ff05",
+              "name": "Palace Marble floor 04",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "0005d272-8296-4549-acf9-b6f4b13b4a81"
+              "id": "0005d272-8296-4549-acf9-b6f4b13b4a81",
+              "name": "Palace Marble floor 05",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "c8c4350f-67c2-405e-934a-a8feba442e0f"
+              "id": "c8c4350f-67c2-405e-934a-a8feba442e0f",
+              "name": "Palace Marble stair single",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "1b3bd4e9-252f-4ba4-a508-01ef4ddd5168"
+              "id": "1b3bd4e9-252f-4ba4-a508-01ef4ddd5168",
+              "name": "Palace Marble stair mid",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "7355a534-f102-4eed-98c8-94059c959951"
+              "id": "7355a534-f102-4eed-98c8-94059c959951",
+              "name": "Palace Marble stair corner in",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "bacef097-d1a6-4a61-80e8-fe0329148724"
+              "id": "bacef097-d1a6-4a61-80e8-fe0329148724",
+              "name": "Palace Marble stair corner out",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "237b1119-0d26-4b63-b63e-260da0755ecc"
+              "id": "237b1119-0d26-4b63-b63e-260da0755ecc",
+              "name": "Palace Marble stair top",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "78c166cc-8b34-4940-ae95-120f6a7d1942",
+              "name": "Door - Fancy",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
@@ -1227,7 +2733,9 @@
         ],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "MegaDungeon": {
         "folder": "MegaDungeon",
@@ -1273,62 +2781,218 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "56e2633d-bbce-4eea-bde7-cb7c34b636f1"
+              "id": "c8312af8-8bfb-41e1-bb6e-30280686b168",
+              "name": "md_pref_wall_1x1_01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "0a8b2d73-1769-4c97-8f59-eef2b99c10e7"
+              "id": "56e2633d-bbce-4eea-bde7-cb7c34b636f1",
+              "name": "md_wall_1x1_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "eea7b9e2-b30c-43f3-95fb-0db4a6720d45"
+              "id": "0a8b2d73-1769-4c97-8f59-eef2b99c10e7",
+              "name": "md_wall_1x1_02",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
+            },
+            {
+              "id": "eea7b9e2-b30c-43f3-95fb-0db4a6720d45",
+              "name": "md_wall_2x1_01",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "c531d6fa-e26e-4300-975d-ac25218c8f4c"
+              "id": "0820791e-c1a8-4a1e-b690-f34b0cb276ba",
+              "name": "md_wall_corner_1x1_01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "0dfcb0de-e13b-4f17-881f-6228a9922a70"
+              "id": "c531d6fa-e26e-4300-975d-ac25218c8f4c",
+              "name": "md_wall_corner_1x1_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "446a743d-9fdf-45f6-af21-3731e1427752"
+              "id": "0dfcb0de-e13b-4f17-881f-6228a9922a70",
+              "name": "md_wall_corner_1x1_02",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "id": "446a743d-9fdf-45f6-af21-3731e1427752",
+              "name": "md_wall_corner_2x2_01",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "bb8e7378-44da-4556-bac5-92420f766815"
+              "id": "bb8e7378-44da-4556-bac5-92420f766815",
+              "name": "md_corner_filler_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "90165669-6508-4a4a-a02e-7063e41e19fa"
+              "id": "90165669-6508-4a4a-a02e-7063e41e19fa",
+              "name": "md_corner_filler_02",
+              "size": "1x1",
+              "height": 1.8,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "940d013f-c982-43e7-922a-0317cc1c74db"
+              "id": "940d013f-c982-43e7-922a-0317cc1c74db",
+              "name": "md_floor_1x1_01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "0252d209-c23c-4f72-aa8b-51ed0dc09f3a"
+              "id": "0252d209-c23c-4f72-aa8b-51ed0dc09f3a",
+              "name": "md_stairblock_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "76c70419-899f-4c6b-944b-8c208713a985"
+              "id": "76c70419-899f-4c6b-944b-8c208713a985",
+              "name": "md_stairblock_02",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "f4a32f18-e4ce-4dd3-baec-cdd3da36c28e"
+              "id": "f4a32f18-e4ce-4dd3-baec-cdd3da36c28e",
+              "name": "md_stairs_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "5229563c-1971-4d8c-9679-9acad99d2c93"
+              "id": "5229563c-1971-4d8c-9679-9acad99d2c93",
+              "name": "md_stairs_02",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "pillar": [
             {
-              "id": "74501cb0-9d80-41dd-bda2-e3be8c7eb579"
+              "id": "74501cb0-9d80-41dd-bda2-e3be8c7eb579",
+              "name": "md_wall_archpillar_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "7ca3d088-11e9-41fd-b78f-68b4ca6e2fcd"
+              "id": "7ca3d088-11e9-41fd-b78f-68b4ca6e2fcd",
+              "name": "md_wall_diag_fill_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "7cd2158c-7b22-4ba9-afbd-5bff7e854060"
+              "id": "7cd2158c-7b22-4ba9-afbd-5bff7e854060",
+              "name": "md_wall_diag_fill_02",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "0252d209-c23c-4f72-aa8b-51ed0dc09f3a",
+              "name": "md_stairblock_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "3151e230-bac7-401e-8fa8-b993bbee17ea",
+              "name": "Door - Dungeon",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
@@ -1346,7 +3010,9 @@
         ],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Merchant": {
         "folder": "Merchant",
@@ -1374,23 +3040,58 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "87e50eb9-0482-4ab3-b7ab-b0f5d5477b9f"
+              "id": "87e50eb9-0482-4ab3-b7ab-b0f5d5477b9f",
+              "name": "Tent Wall 01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8e2ddd46-9c4f-4fbc-b837-a5934bc2e866"
+              "id": "8e2ddd46-9c4f-4fbc-b837-a5934bc2e866",
+              "name": "Tent Wall 02",
+              "size": "1x2",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                2.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "e686b828-cae8-4992-b674-961a38761061"
+              "id": "e686b828-cae8-4992-b674-961a38761061",
+              "name": "Tent Wall Corner 01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "f8254299-b4ab-4405-a21d-4540ca990c85"
+              "id": "f8254299-b4ab-4405-a21d-4540ca990c85",
+              "name": "Tent Wall Corner 02",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "0b61f4c9-021d-46d4-8d5a-86dd3545e69d"
+              "id": "0b61f4c9-021d-46d4-8d5a-86dd3545e69d",
+              "name": "Tent Wall Inner Corner 01",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ]
         },
@@ -1433,77 +3134,234 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "873fbae5-541d-4fc4-9a12-c2daef592537"
+              "id": "873fbae5-541d-4fc4-9a12-c2daef592537",
+              "name": "Moorgoth Wall/Floor 01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "86478f35-3d28-4beb-b3c9-317035abfb25"
+              "id": "e6a198db-7e49-4f2d-9d09-09cd47a1f126",
+              "name": "Wall (Plain, Small)",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "a80593af-271b-4e53-a205-2fa6720b6124"
+              "id": "86478f35-3d28-4beb-b3c9-317035abfb25",
+              "name": "Moorgoth Wall/Floor 02",
+              "size": "2x1",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                1.0
+              ]
+            },
+            {
+              "id": "a80593af-271b-4e53-a205-2fa6720b6124",
+              "name": "Moorgoth Wall/Floor 03",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
               "id": "7a1f2946-c235-46db-a5c4-a978693ca6b6",
               "tags": [
                 "light_source"
+              ],
+              "name": "Moorgoth Wall/Floor With Candleabra 02",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
               ]
             },
             {
               "id": "39e6bb97-a758-4d0c-8651-f9bb5128c9ab",
               "tags": [
                 "light_source"
+              ],
+              "name": "Moorgoth Wall/Floor With Candleabra 01",
+              "size": "2x1",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                1.0
               ]
             },
             {
-              "id": "7ea17361-afff-4e37-8304-678b6ed3d0c3"
-            },
-            {
-              "id": "e6a198db-7e49-4f2d-9d09-09cd47a1f126"
+              "id": "7ea17361-afff-4e37-8304-678b6ed3d0c3",
+              "name": "Moorgoth Wall 01",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "94faab59-900c-4199-8adf-c9d88fe1263c"
+              "id": "94faab59-900c-4199-8adf-c9d88fe1263c",
+              "name": "Moorgoth Wall/Floor Corner - Small",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "2b8ad89e-1a27-4152-ba52-69b174d87711"
+              "id": "bfdd28f9-9be1-4a7b-9ba3-08141f210724",
+              "name": "Moorgoth Wall Corner - Small",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "bfdd28f9-9be1-4a7b-9ba3-08141f210724"
+              "id": "2b8ad89e-1a27-4152-ba52-69b174d87711",
+              "name": "Moorgoth Wall/Floor Corner",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "c41d1a34-14b8-4244-8a0c-4b2a59c8c90b"
+              "id": "c41d1a34-14b8-4244-8a0c-4b2a59c8c90b",
+              "name": "Moorgoth Wall Corner",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "d33edea4-2555-4731-84d5-b79e5c9e7a64"
+              "id": "d33edea4-2555-4731-84d5-b79e5c9e7a64",
+              "name": "Moorgoth Corner Filler ",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "ee0d3511-24a3-4f6b-995d-3e54de38de3b"
+              "id": "ee0d3511-24a3-4f6b-995d-3e54de38de3b",
+              "name": "Moorgoth Floor 01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "dadda343-2dcd-4a2e-883d-b28144976907"
+              "id": "dadda343-2dcd-4a2e-883d-b28144976907",
+              "name": "Moorgoth Floor 02",
+              "size": "1x2",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                2.0
+              ]
             },
             {
-              "id": "d02e420c-ef0b-44e4-9e1b-4e2af1c28eef"
+              "id": "d02e420c-ef0b-44e4-9e1b-4e2af1c28eef",
+              "name": "Moorgoth Floor 03",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "20638fe0-295a-408e-974e-b84969093731"
+              "id": "20638fe0-295a-408e-974e-b84969093731",
+              "name": "Moorgoth Stairs",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "990b5ddd-2733-40d5-af3e-6145666f140e"
+              "id": "990b5ddd-2733-40d5-af3e-6145666f140e",
+              "name": "Moorgoth Stair Block",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "208e4f40-7d2e-4e12-a752-08353c378d40"
+              "id": "208e4f40-7d2e-4e12-a752-08353c378d40",
+              "name": "Moorgoth Floor Stairwell",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "pillar": [
             {
-              "id": "8cf9a5bc-d5a5-42ee-9f55-fe288936c510"
+              "id": "8cf9a5bc-d5a5-42ee-9f55-fe288936c510",
+              "name": "Moorgoth Fancy Pillar ",
+              "size": "1x1",
+              "height": 2.2,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "990b5ddd-2733-40d5-af3e-6145666f140e",
+              "name": "Moorgoth Stair Block",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "e46444d0-1620-4c60-87a8-104244f7e572",
+              "name": "Door Stone",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             }
           ]
         },
@@ -1515,7 +3373,9 @@
         "standalone": true,
         "advanced": false,
         "minTileDimension": 1,
-        "tallWallIntegratedFloor": false
+        "tallWallIntegratedFloor": false,
+        "verified": true,
+        "excluded": false
       },
       "Nature": {
         "folder": "Nature",
@@ -1542,13 +3402,34 @@
         "tilesByRole": {
           "floor": [
             {
-              "id": "ad6c985c-8d8b-44f2-abd5-edc9de568d30"
+              "id": "ad6c985c-8d8b-44f2-abd5-edc9de568d30",
+              "name": "Grass 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "01c3a210-94fb-449f-8c47-993eda3e7126"
+              "id": "01c3a210-94fb-449f-8c47-993eda3e7126",
+              "name": "Grass - Lush",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "d52cfe32-67b6-4717-a2cf-e59a44822f17"
+              "id": "d52cfe32-67b6-4717-a2cf-e59a44822f17",
+              "name": "Tilled Earth",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ]
         },
@@ -1581,13 +3462,34 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "10336934-fb7d-4af4-8869-ec5135897415"
+              "id": "10336934-fb7d-4af4-8869-ec5135897415",
+              "name": "Palisade wall short 1x1",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "122b1c4d-ae71-49d2-8c06-7f7dd23fbc13"
+              "id": "122b1c4d-ae71-49d2-8c06-7f7dd23fbc13",
+              "name": "Palisade wall tall 1x2",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "2916f2a6-5ddb-46a5-bdce-f029ee09c7ef"
+              "id": "2916f2a6-5ddb-46a5-bdce-f029ee09c7ef",
+              "name": "Palisade wall tall corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ]
         },
@@ -1620,16 +3522,44 @@
         "tilesByRole": {
           "floor": [
             {
-              "id": "04630d55-54c9-48ec-8a80-81ea2c857ebe"
+              "id": "04630d55-54c9-48ec-8a80-81ea2c857ebe",
+              "name": "Jungle floor 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "e9760d38-36a5-4e19-9e3f-37429578f479"
+              "id": "e9760d38-36a5-4e19-9e3f-37429578f479",
+              "name": "Jungle floor 1x1 02",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "49c46105-0786-4142-92b1-b67ec0178f2c"
+              "id": "49c46105-0786-4142-92b1-b67ec0178f2c",
+              "name": "Jungle floor 2x1 02",
+              "size": "2x1",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             },
             {
-              "id": "8b637951-85df-40f4-aebc-626714f9bb3a"
+              "id": "8b637951-85df-40f4-aebc-626714f9bb3a",
+              "name": "Jungle floor 2x1",
+              "size": "2x1",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             }
           ]
         },
@@ -1669,54 +3599,152 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "ecc47cd7-0da1-429a-8a5a-3668f8f3b3cd"
+              "id": "ecc47cd7-0da1-429a-8a5a-3668f8f3b3cd",
+              "name": "Rural Wall Floor 01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "94aee0af-4148-4afa-99e6-8ea47258cf46"
+              "id": "0c3b3167-f45b-4751-b410-f45aea257adb",
+              "name": "Rural Wall 01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "0c3b3167-f45b-4751-b410-f45aea257adb"
+              "id": "94aee0af-4148-4afa-99e6-8ea47258cf46",
+              "name": "Rural Wall Floor 02",
+              "size": "1x2",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                2.0
+              ]
             },
             {
-              "id": "231ed553-f9f7-45a8-9415-3ef5859371eb"
+              "id": "231ed553-f9f7-45a8-9415-3ef5859371eb",
+              "name": "Rural Wall 02",
+              "size": "1x2",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                2.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "632ac7be-4a35-4249-a561-53b250d91293"
+              "id": "632ac7be-4a35-4249-a561-53b250d91293",
+              "name": "Rural Corner Floor 01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "6a1a6139-3449-4e4a-81e2-eb6d120257e3"
+              "id": "489c204c-1369-4267-a468-6077b2e8dd8c",
+              "name": "Rural Corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "489c204c-1369-4267-a468-6077b2e8dd8c"
+              "id": "6a1a6139-3449-4e4a-81e2-eb6d120257e3",
+              "name": "Rural Corner Floor 02",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "9b3123d5-90f9-412c-802a-72edf5177dcb"
+              "id": "9b3123d5-90f9-412c-802a-72edf5177dcb",
+              "name": "Rural Inner Corner Floor",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "6db20a42-b868-43af-93eb-290a880a1afa"
+              "id": "6db20a42-b868-43af-93eb-290a880a1afa",
+              "name": "Rural Inner Corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "db9902bc-cc36-4172-ae60-df9d5eaee4e7"
+              "id": "db9902bc-cc36-4172-ae60-df9d5eaee4e7",
+              "name": "Rural Floor 01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "654a2e59-a5cf-439c-a897-59578264f3e8"
+              "id": "654a2e59-a5cf-439c-a897-59578264f3e8",
+              "name": "Rural Floor 02",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "a4522b17-969b-4f19-8b58-ae5c22d10bff"
+              "id": "a4522b17-969b-4f19-8b58-ae5c22d10bff",
+              "name": "Rural Floor 03",
+              "size": "1x2",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                2.0
+              ]
             },
             {
-              "id": "6e8cee0f-afe4-4538-b0df-b339ab42bebb"
+              "id": "6e8cee0f-afe4-4538-b0df-b339ab42bebb",
+              "name": "Rural Floor 04",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "fd31ea7e-0b05-4caa-a3df-439c2e3b6a31"
+              "id": "fd31ea7e-0b05-4caa-a3df-439c2e3b6a31",
+              "name": "Rural Stairs",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ]
         },
@@ -1726,7 +3754,9 @@
         ],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": false,
+        "excluded": true
       },
       "Sewers": {
         "folder": "Sewers",
@@ -1746,7 +3776,7 @@
         "hasIntegratedFloorWall": true,
         "stairType": "none",
         "minCeilingHeight": 2.5,
-        "rotationQuirks": "All tiles must be rotated 45\u00b0 clockwise to align with other tilesets.",
+        "rotationQuirks": "All tiles must be rotated 45° clockwise to align with other tilesets.",
         "innerCornerStyle": "separate_tile",
         "doorCompatibility": [
           "fcb7a2fe-4b79-4d0a-b1fd-31e4b17ffaf5"
@@ -1756,60 +3786,206 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "887d5410-4c59-40a3-b338-8d8c2efaafd3"
+              "id": "887d5410-4c59-40a3-b338-8d8c2efaafd3",
+              "name": "Sewer Wall/Floor 01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "5cf67f4c-2ace-4845-94cf-e7ce53dbd50e"
+              "id": "5cf67f4c-2ace-4845-94cf-e7ce53dbd50e",
+              "name": "Sewer Wall/Floor 02",
+              "size": "2x1",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             },
             {
-              "id": "145e42e4-7668-4526-a93e-58b429bbe590"
+              "id": "145e42e4-7668-4526-a93e-58b429bbe590",
+              "name": "Sewer Wall/Floor 03",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "de0e954c-cf6b-49cf-b75c-dec87c5f9145"
+              "id": "de0e954c-cf6b-49cf-b75c-dec87c5f9145",
+              "name": "Sewer Wall  01",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             },
             {
-              "id": "3d63fd95-d8b1-452a-ac7a-4ee4e6fe1670"
+              "id": "3d63fd95-d8b1-452a-ac7a-4ee4e6fe1670",
+              "name": "Sewer Wall 02",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "240523d7-5154-4bb6-8a05-85f20a19eb44"
+              "id": "180105d6-8c75-4da0-85ae-251aa3145e98",
+              "name": "Sewer Wall/Floor Corner - Small",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "180105d6-8c75-4da0-85ae-251aa3145e98"
+              "id": "ff2d6f8f-03f6-4fd6-a1f6-c4093e7b4a1b",
+              "name": "Sewer Wall Corner - Small",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "e916ebce-f240-4f4a-b039-99f3647d9987"
+              "id": "240523d7-5154-4bb6-8a05-85f20a19eb44",
+              "name": "Sewer Wall/Floor Corner",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "ff2d6f8f-03f6-4fd6-a1f6-c4093e7b4a1b"
+              "id": "e916ebce-f240-4f4a-b039-99f3647d9987",
+              "name": "Sewer Wall Corner",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "d172bb08-175b-495a-bd50-22f4135d5209"
+              "id": "d172bb08-175b-495a-bd50-22f4135d5209",
+              "name": "Sewer Corner Filler - Small",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "floor": [
             {
-              "id": "81a8acd3-0685-44ce-b185-cb70c58ae68f"
+              "id": "81a8acd3-0685-44ce-b185-cb70c58ae68f",
+              "name": "Sewer Floor 01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "90c20786-15b5-4198-ab79-0f965a4d2f76"
+              "id": "90c20786-15b5-4198-ab79-0f965a4d2f76",
+              "name": "Sewer Floor 02",
+              "size": "1x2",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                2.0
+              ]
             },
             {
-              "id": "ae36eac0-dfb2-4d98-9236-03c5c1db4a07"
+              "id": "ae36eac0-dfb2-4d98-9236-03c5c1db4a07",
+              "name": "Sewer Floor 03",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "door": [
             {
-              "id": "9c703622-dc6c-49d2-8f4f-c95498f66612"
+              "id": "bc856f88-bb15-4e2f-9133-6b975dca9e6c",
+              "name": "Door - Metal Gate",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "b51a404c-54c7-4f93-be46-a236e06fa353"
+              "id": "9c703622-dc6c-49d2-8f4f-c95498f66612",
+              "name": "Sewer Wall/Floor With Door 01",
+              "size": "2x1",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             },
             {
-              "id": "c902ef04-d6a4-4b83-9328-5d274fbec3c0"
+              "id": "b51a404c-54c7-4f93-be46-a236e06fa353",
+              "name": "Sewer Wall/Floor With Door 02",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
+            },
+            {
+              "id": "c902ef04-d6a4-4b83-9328-5d274fbec3c0",
+              "name": "Sewer Wall With Door",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
+            }
+          ],
+          "stairs": [
+            {
+              "id": "ed072f00-f245-44e7-9d25-6a1cb498cbaa",
+              "name": "Dungeon Stairs",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "10809742-70c4-45a9-9350-2ae81505da07",
+              "name": "Dungeon Stair Block",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ]
         },
@@ -1818,7 +3994,9 @@
         ],
         "standalone": null,
         "advanced": true,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Ship": {
         "folder": "Ship",
@@ -1850,48 +4028,156 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "33827cdb-2128-4bb0-976f-50a36720cde9"
+              "id": "33827cdb-2128-4bb0-976f-50a36720cde9",
+              "name": "Ship wall basic 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "e8a97bb5-78d6-4b7e-8e8b-44bb48b8fd00"
+              "id": "e8a97bb5-78d6-4b7e-8e8b-44bb48b8fd00",
+              "name": "Ship wall supported 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "3be3545b-b154-46d8-b4aa-558daad15b27"
+              "id": "3be3545b-b154-46d8-b4aa-558daad15b27",
+              "name": "Ship wall 1x1 decor v1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "9af910d7-3267-4a09-b374-eeacf0c6f715"
+              "id": "9af910d7-3267-4a09-b374-eeacf0c6f715",
+              "name": "Ship wall 1x1 decor v2",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "c6190eb1-8027-4ac5-9038-ba0ce1f753c4"
+              "id": "c6190eb1-8027-4ac5-9038-ba0ce1f753c4",
+              "name": "Ship wall basic corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "2e9b2aae-94b7-40a6-bdc2-d116a6e0d392"
+              "id": "2e9b2aae-94b7-40a6-bdc2-d116a6e0d392",
+              "name": "Ship wall basic filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "374d957e-801e-4e1b-a659-24d9103f8e0f"
+              "id": "374d957e-801e-4e1b-a659-24d9103f8e0f",
+              "name": "Ship wall decor filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "d5f3bacb-01f2-4c22-9b7f-5f2627c747b3"
+              "id": "d5f3bacb-01f2-4c22-9b7f-5f2627c747b3",
+              "name": "Ship floor 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "7e2b468d-2f8a-406c-be07-fc3a4df890a1"
+              "id": "7e2b468d-2f8a-406c-be07-fc3a4df890a1",
+              "name": "Ship floor 2x1",
+              "size": "1x2",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                2.0
+              ]
             },
             {
-              "id": "e8ca21a0-5efb-47a1-a28c-37d609db25ba"
+              "id": "e8ca21a0-5efb-47a1-a28c-37d609db25ba",
+              "name": "Ship floor 2x2",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "4d1b4a50-11c2-409c-aa3c-42d5798fe8fc"
+              "id": "4d1b4a50-11c2-409c-aa3c-42d5798fe8fc",
+              "name": "Ship stairs v1",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "4d7ca0d0-54a6-4970-8b3a-35913e531a94"
+              "id": "4d7ca0d0-54a6-4970-8b3a-35913e531a94",
+              "name": "Ship stairs v2",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "95d7e8ce-a2dc-46e4-9e0b-4a7b07c53094",
+              "name": "Ship base floor 1x1",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "615ed958-cf0c-403b-ba03-9a3367b2c55d",
+              "name": "ship door",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
@@ -1901,7 +4187,9 @@
         ],
         "standalone": null,
         "advanced": true,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Shogun Palace": {
         "folder": "Shogun Palace",
@@ -1933,49 +4221,176 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "6746008a-54bc-4e30-8f29-27bb788fd994"
+              "id": "6746008a-54bc-4e30-8f29-27bb788fd994",
+              "name": "shogunPlainWall_1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "1cdfd70e-32ee-432f-b106-4af918b0d5fd"
+              "id": "1cdfd70e-32ee-432f-b106-4af918b0d5fd",
+              "name": "shogunWall1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "952e74f1-e653-4527-89d0-37df8f38fc65"
+              "id": "952e74f1-e653-4527-89d0-37df8f38fc65",
+              "name": "shogunPaperWall",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "5ff522cd-73df-482a-99d8-cd488fd723ae"
+              "id": "5ff522cd-73df-482a-99d8-cd488fd723ae",
+              "name": "shugunRockWall_1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "6a7f5070-8743-484d-af1a-5dfe3c926eb4"
+              "id": "6a7f5070-8743-484d-af1a-5dfe3c926eb4",
+              "name": "digWall_1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "58a1f709-bf6c-4230-81c9-d31c3deec2cf"
+              "id": "b5df84da-f1bb-4203-8576-c7851b766e06",
+              "name": "digWallCorner_1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "b5df84da-f1bb-4203-8576-c7851b766e06"
+              "id": "58a1f709-bf6c-4230-81c9-d31c3deec2cf",
+              "name": "shogunWallCorner1x1",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                1.5,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "1ec10fce-7266-4568-81bd-87ca50df03e3"
+              "id": "1ec10fce-7266-4568-81bd-87ca50df03e3",
+              "name": "shugunWallInnerCorner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "99cee227-f32a-4a8b-a02d-d7789dcfea90"
+              "id": "99cee227-f32a-4a8b-a02d-d7789dcfea90",
+              "name": "shugunRockWallInnerCorner_1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "cdf7070a-d452-4dff-ac83-9f91b9042c06"
+              "id": "cdf7070a-d452-4dff-ac83-9f91b9042c06",
+              "name": "shogun_digWallInnerCorner_1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "dac67579-1e7d-4454-ad08-d3aeef466a80"
+              "id": "8ddbaf79-b471-40a9-bd38-54a25b00d772",
+              "name": "shogunFloorMatt_1x1",
+              "size": "1x1",
+              "height": 0.2,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8f726e87-5bde-4e99-b997-a1651485ec92"
+              "id": "dac67579-1e7d-4454-ad08-d3aeef466a80",
+              "name": "shogunFloor_1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8ddbaf79-b471-40a9-bd38-54a25b00d772"
+              "id": "8f726e87-5bde-4e99-b997-a1651485ec92",
+              "name": "shogun_stoneFloor2x2",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
+            }
+          ],
+          "stairs": [
+            {
+              "id": "4d1b4a50-11c2-409c-aa3c-42d5798fe8fc",
+              "name": "Ship stairs v1",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "95d7e8ce-a2dc-46e4-9e0b-4a7b07c53094",
+              "name": "Ship base floor 1x1",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "6432f1d9-9677-4db8-8a97-171b142ad556",
+              "name": "shugun_smallDoor",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             }
           ]
         },
@@ -1985,7 +4400,9 @@
         ],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Tavern": {
         "folder": "Tavern",
@@ -2019,63 +4436,175 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "05b8b832-e457-4ea7-88d5-25fa44037f39"
+              "id": "05b8b832-e457-4ea7-88d5-25fa44037f39",
+              "name": "Tavern Wall/Floor 01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "2fc1f203-3702-4126-8777-5f94067a0c9d"
+              "id": "82b03fd9-1afb-463f-a3f8-2f30204d6561",
+              "name": "Tavern Wall - Small 01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "910bdbf7-1cdf-4601-929a-9c89c5eaa8be"
+              "id": "2fc1f203-3702-4126-8777-5f94067a0c9d",
+              "name": "Wall 00",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
+            },
+            {
+              "id": "910bdbf7-1cdf-4601-929a-9c89c5eaa8be",
+              "name": "Wall 02",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
               "id": "d3ec0216-95e4-44cc-b076-74f39504166e",
               "tags": [
                 "light_source"
+              ],
+              "name": "Taven Fireplace Wall/Floor",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
               ]
             },
             {
-              "id": "55421077-5672-492d-9609-89befbf9eb9d"
-            },
-            {
-              "id": "82b03fd9-1afb-463f-a3f8-2f30204d6561"
+              "id": "55421077-5672-492d-9609-89befbf9eb9d",
+              "name": "Tavern Wall 01",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "ff6b5a27-a041-4ba1-ad33-01d82c77bb34"
+              "id": "ff6b5a27-a041-4ba1-ad33-01d82c77bb34",
+              "name": "Tavern Wall/Floor Corner 01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "db822c28-e616-42b8-99c1-e848906fbc9c"
+              "id": "db822c28-e616-42b8-99c1-e848906fbc9c",
+              "name": "Tavern Wall/Floor Corner",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "8240e82c-c665-4f5d-a391-c3f0d6176fe8"
+              "id": "8240e82c-c665-4f5d-a391-c3f0d6176fe8",
+              "name": "Tavern Wall/Floor Corner With Decor",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "ce1e617e-f031-4011-b64e-ba262082b20f"
+              "id": "ce1e617e-f031-4011-b64e-ba262082b20f",
+              "name": "Tavern Wall Corner",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "ea0c2824-9848-49a7-924e-9f21fd302367"
+              "id": "ea0c2824-9848-49a7-924e-9f21fd302367",
+              "name": "Tavern Inner Corner",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "floor": [
             {
-              "id": "cf6063bb-5c6e-4107-b3e9-9c0c5ac75768"
+              "id": "cf6063bb-5c6e-4107-b3e9-9c0c5ac75768",
+              "name": "Tavern Floor 01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "680a8f4e-6a4b-4194-beda-416be3c4ac47"
+              "id": "680a8f4e-6a4b-4194-beda-416be3c4ac47",
+              "name": "Tavern Floor 02",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "e62c6746-cecf-46bf-8b20-f81738f1d220"
+              "id": "e62c6746-cecf-46bf-8b20-f81738f1d220",
+              "name": "Tavern Floor 03",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "fd2a3ed0-531f-4341-9931-6bb991f42f2b"
+              "id": "fd2a3ed0-531f-4341-9931-6bb991f42f2b",
+              "name": "Tavern Stairs Block",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8a77baef-61e9-4a59-9591-70d5b0c6f1d6"
+              "id": "8a77baef-61e9-4a59-9591-70d5b0c6f1d6",
+              "name": "Tavern Stair",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ]
         },
@@ -2085,7 +4614,9 @@
         ],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": false,
+        "excluded": true
       },
       "TempWater": {
         "folder": "TempWater",
@@ -2142,46 +4673,123 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "1072c6a5-c5b0-4dab-bab8-b0ba63474b4b"
+              "id": "1072c6a5-c5b0-4dab-bab8-b0ba63474b4b",
+              "name": "Brick wall 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "59d5b512-9cda-4df1-8637-224f53f97eba"
+              "id": "59d5b512-9cda-4df1-8637-224f53f97eba",
+              "name": "brick floor 1x1 corner",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "7179962d-5293-4b4f-b514-cac447d938b0"
+              "id": "7179962d-5293-4b4f-b514-cac447d938b0",
+              "name": "Brick wall corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "c6668e15-eee8-496f-a451-9b672b3a415b"
+              "id": "c6668e15-eee8-496f-a451-9b672b3a415b",
+              "name": "Brick wall corner unique",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "0ef7acd8-d14d-41be-b8eb-1b9fb04bacf8"
+              "id": "0ef7acd8-d14d-41be-b8eb-1b9fb04bacf8",
+              "name": "Brick wall filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "82cab5e2-c96f-4163-b584-a0c1f6dd0e87"
+              "id": "82cab5e2-c96f-4163-b584-a0c1f6dd0e87",
+              "name": "brick floor 1x1 v1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "d840b008-d94f-4cb8-b0ad-63c59a26568b"
+              "id": "d840b008-d94f-4cb8-b0ad-63c59a26568b",
+              "name": "brick floor 1x1 v2",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "9bad054e-b720-4ff1-980d-ec386ec3df98"
+              "id": "9bad054e-b720-4ff1-980d-ec386ec3df98",
+              "name": "fire escape stair stub",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "59ade835-439c-48a4-bd53-1dbfaf73ea13"
+              "id": "59ade835-439c-48a4-bd53-1dbfaf73ea13",
+              "name": "fire escape bulk",
+              "size": "3x2",
+              "height": 2.5,
+              "footprint": [
+                3.0,
+                2.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "42a2e597-f916-4805-bf2f-e811863b182c",
+              "name": "door with peep hole",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
         "doorCompatibilityNames": [],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Chamber": {
         "folder": "Chamber",
@@ -2210,53 +4818,163 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "ebda0dae-cf9a-4f4e-a224-bea82aacffe6"
+              "id": "dddcc2ac-4eb3-4058-9065-ae5fcbb6de7f",
+              "name": "caged tunnel lower deck wall 01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "dddcc2ac-4eb3-4058-9065-ae5fcbb6de7f"
+              "id": "ebda0dae-cf9a-4f4e-a224-bea82aacffe6",
+              "name": "Chamber hold 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
             },
             {
-              "id": "fa37a21d-4fff-4575-8709-e9f39856cf81"
+              "id": "00ee5cc5-e27b-4d60-8048-99c1b1c4ef8b",
+              "name": "caged tunnel upper wall 01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "00ee5cc5-e27b-4d60-8048-99c1b1c4ef8b"
+              "id": "fa37a21d-4fff-4575-8709-e9f39856cf81",
+              "name": "caged tunnel lower deck wall 02",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             },
             {
-              "id": "46db49be-599b-4a96-abf3-4398ca1feb82"
+              "id": "46db49be-599b-4a96-abf3-4398ca1feb82",
+              "name": "caged tunnel upper wall 02",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "087c3327-1e40-4444-9014-85a4adfe66ff"
+              "id": "087c3327-1e40-4444-9014-85a4adfe66ff",
+              "name": "caged tunnel lower deck corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "0b186879-cae8-4b64-8c42-ad5f29a5a986"
+              "id": "0b186879-cae8-4b64-8c42-ad5f29a5a986",
+              "name": "caged tunnel wall upper corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "b5b46d2b-9bd1-42a8-a6cd-37f440c394a0"
+              "id": "b5b46d2b-9bd1-42a8-a6cd-37f440c394a0",
+              "name": "scifi Caged tunnel lower deck corner mid",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.998
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "3e317e75-888f-4426-86fe-80a753d117b7"
+              "id": "3e317e75-888f-4426-86fe-80a753d117b7",
+              "name": "scifi wall tunnel filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "89ed469d-56c0-47c5-b100-ef184993c550"
+              "id": "89ed469d-56c0-47c5-b100-ef184993c550",
+              "name": "durable floor 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "194c4e29-2332-475c-84c9-03774865ebae"
+              "id": "194c4e29-2332-475c-84c9-03774865ebae",
+              "name": "landing guide floor 1x1 on",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "6dfb35e0-ff97-4f45-8355-9ee6abb14f8b"
+              "id": "6dfb35e0-ff97-4f45-8355-9ee6abb14f8b",
+              "name": "landing guide floor 1x1 off",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairs": [
+            {
+              "id": "59a3c366-257f-42dc-a945-c2e89b9af884",
+              "name": "stripped floor stair",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "f56d891a-ed49-4e6e-910e-81827e8eac37",
+              "name": "space ship door 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
         "doorCompatibilityNames": [],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Concrete Building": {
         "folder": "Concrete Building",
@@ -2284,58 +5002,163 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "7371a3cc-0716-4a03-b39e-68852d08a43e"
+              "id": "7371a3cc-0716-4a03-b39e-68852d08a43e",
+              "name": "concrete wall 1x1 full",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "2c675ab5-9a46-444a-bf20-78fb9d6fee74"
+              "id": "2c675ab5-9a46-444a-bf20-78fb9d6fee74",
+              "name": "concrete wall 1x1 plane",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "068a5157-098c-45f9-8791-ba09656b3606"
+              "id": "068a5157-098c-45f9-8791-ba09656b3606",
+              "name": "concrete wall 2x2 set 01",
+              "size": "2x1",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             },
             {
-              "id": "d61a5333-f271-4ec0-9497-b3671e311d3e"
+              "id": "d61a5333-f271-4ec0-9497-b3671e311d3e",
+              "name": "concrete wall 2x2 set 02",
+              "size": "2x1",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "ace4d698-3ddd-42dc-919e-04ef36268817"
+              "id": "ace4d698-3ddd-42dc-919e-04ef36268817",
+              "name": "concrete corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "a76680c2-e0b6-4599-b29f-67946c047670"
+              "id": "a76680c2-e0b6-4599-b29f-67946c047670",
+              "name": "concrete wall filler v2",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             },
             {
-              "id": "d1b8f550-1fb5-49a4-a0be-76348adce158"
+              "id": "d1b8f550-1fb5-49a4-a0be-76348adce158",
+              "name": "concrete wall filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "ce61ee2e-4133-4dc9-91ad-42ad771e1900"
+              "id": "ce61ee2e-4133-4dc9-91ad-42ad771e1900",
+              "name": "concrete floor 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "e23df2d1-fd48-4060-96fb-09859b7e4fc5"
+              "id": "e23df2d1-fd48-4060-96fb-09859b7e4fc5",
+              "name": "concrete floor 1x1 strip",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "0fef3beb-8242-4ad0-818a-b15ada2e9df0"
+              "id": "0fef3beb-8242-4ad0-818a-b15ada2e9df0",
+              "name": "concrete floor 1x1 cracked v1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8be0d9f8-11bd-491a-9f43-56b6b82132d6"
+              "id": "8be0d9f8-11bd-491a-9f43-56b6b82132d6",
+              "name": "concrete floor 1x1 cracked v2",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "d73acf50-b2c4-4e8b-9b41-7f096bbdd9ad"
+              "id": "d73acf50-b2c4-4e8b-9b41-7f096bbdd9ad",
+              "name": "concrete floor stair top",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "d36187ec-a778-41fb-96fb-a2902252592c"
+              "id": "d36187ec-a778-41fb-96fb-a2902252592c",
+              "name": "concrete floor stair",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "ee954d42-7b4e-47c6-86d8-f0a1652cbf81",
+              "name": "door with louver lite",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
         "doorCompatibilityNames": [],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Construction": {
         "folder": "Construction",
@@ -2385,64 +5208,204 @@
         "tilesByRole": {
           "door": [
             {
-              "id": "807cb643-f889-437b-9b93-08ffaa84faa6"
+              "id": "807cb643-f889-437b-9b93-08ffaa84faa6",
+              "name": "door with full lite",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "ee954d42-7b4e-47c6-86d8-f0a1652cbf81"
+              "id": "ee954d42-7b4e-47c6-86d8-f0a1652cbf81",
+              "name": "door with louver lite",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "94d41683-fdb4-466f-862b-fb91d3f5125f"
+              "id": "94d41683-fdb4-466f-862b-fb91d3f5125f",
+              "name": "door with narrow lite",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "42a2e597-f916-4805-bf2f-e811863b182c"
+              "id": "42a2e597-f916-4805-bf2f-e811863b182c",
+              "name": "door with peep hole",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "e5b992ca-f6c7-4909-9835-9e2188b85621"
+              "id": "e5b992ca-f6c7-4909-9835-9e2188b85621",
+              "name": "door with security",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "8dbe288b-d3c5-4556-9eea-c3193d083161"
+              "id": "b619afa5-139c-42b4-9e95-070f8d67db41",
+              "name": "Door lab single",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "b619afa5-139c-42b4-9e95-070f8d67db41"
+              "id": "f56d891a-ed49-4e6e-910e-81827e8eac37",
+              "name": "space ship door 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "893d8571-0b40-4de5-9ec1-60e3b8a251c3"
+              "id": "8dbe288b-d3c5-4556-9eea-c3193d083161",
+              "name": "Door lab double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "87f82c79-dd4a-4304-b410-6c5b6aabc919"
+              "id": "893d8571-0b40-4de5-9ec1-60e3b8a251c3",
+              "name": "station door slide",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "f56d891a-ed49-4e6e-910e-81827e8eac37"
+              "id": "87f82c79-dd4a-4304-b410-6c5b6aabc919",
+              "name": "station door slide double",
+              "size": "4x1",
+              "height": 2.0,
+              "footprint": [
+                4.0,
+                0.5
+              ]
             },
             {
-              "id": "ae40e42f-2a00-4b99-97e1-c3d41baadc27"
+              "id": "ae40e42f-2a00-4b99-97e1-c3d41baadc27",
+              "name": "space ship door double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "cac3888c-f04b-4da9-b0b3-db6e2d4b7b75"
+              "id": "cac3888c-f04b-4da9-b0b3-db6e2d4b7b75",
+              "name": "space ship hatch Vertical 01",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             },
             {
-              "id": "d58e27d0-3a41-4cb7-b6c8-c389ca16360b"
+              "id": "d58e27d0-3a41-4cb7-b6c8-c389ca16360b",
+              "name": "space ship hatch horizontal 01",
+              "size": "2x2",
+              "height": 1.2,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "9ebaa47b-1733-4ca4-a249-31bda0c0c390"
+              "id": "9ebaa47b-1733-4ca4-a249-31bda0c0c390",
+              "name": "tech unique Door double",
+              "size": "4x1",
+              "height": 2.5,
+              "footprint": [
+                4.0,
+                1.0
+              ]
             },
             {
-              "id": "100fe2c7-ad44-4718-a325-b8509dd2de99"
+              "id": "100fe2c7-ad44-4718-a325-b8509dd2de99",
+              "name": "tech unique Door single",
+              "size": "2x1",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             },
             {
-              "id": "5c442181-6c29-4568-a6d0-6a152419941a"
+              "id": "5c442181-6c29-4568-a6d0-6a152419941a",
+              "name": "door with full lite double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "95a9e1bb-edec-41ab-b597-ee2bdad3e86c"
+              "id": "95a9e1bb-edec-41ab-b597-ee2bdad3e86c",
+              "name": "door with louver lite double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "f07c2436-adc0-4197-b9da-eda239fe7390"
+              "id": "f07c2436-adc0-4197-b9da-eda239fe7390",
+              "name": "door with narrow lite double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "fe86ff70-6a20-43a3-8ff9-9b0d77daebcb"
+              "id": "fe86ff70-6a20-43a3-8ff9-9b0d77daebcb",
+              "name": "door with peep hole double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "54a1af64-e24c-4661-8a42-fb0330b8040f"
+              "id": "54a1af64-e24c-4661-8a42-fb0330b8040f",
+              "name": "door with security double",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             }
           ]
         },
@@ -2478,94 +5441,283 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "09f8bec6-263d-4e96-bef5-eba63f27a114"
+              "id": "09f8bec6-263d-4e96-bef5-eba63f27a114",
+              "name": "space ship wall 1x1 basic",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "3d415700-51fd-443b-bc45-d0189e66f3c0"
+              "id": "8f7db753-52e8-4c21-a0ec-66573b032f5a",
+              "name": "space ship wall 1x1 soft top",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "1ae589b7-1cfb-4b63-80df-08319cdb246b"
+              "id": "a79ae732-c9f9-4049-b570-8fa76e606df9",
+              "name": "space ship wall 1x1 soft bottom",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8f7db753-52e8-4c21-a0ec-66573b032f5a"
+              "id": "3d415700-51fd-443b-bc45-d0189e66f3c0",
+              "name": "space ship wall 2x2 ribbed",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             },
             {
-              "id": "a79ae732-c9f9-4049-b570-8fa76e606df9"
+              "id": "1ae589b7-1cfb-4b63-80df-08319cdb246b",
+              "name": "space ship wall 2x2 compact",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "26f266c3-4b74-4ccd-8564-661a75e5c85a"
+              "id": "26f266c3-4b74-4ccd-8564-661a75e5c85a",
+              "name": "Facility Combo Corner 1x1",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8f28af4d-a0b3-4355-8b63-743d9a2c38bd"
+              "id": "8f28af4d-a0b3-4355-8b63-743d9a2c38bd",
+              "name": "Facility Combo Corner 1x1",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "398e3dc1-9a98-481d-b7eb-a5157cf61490"
+              "id": "33b7dac3-42b8-4fdd-b8c8-d56d7cd1c866",
+              "name": "space ship wall 1x1 basic corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.999
+              ]
             },
             {
-              "id": "11eb247a-edbd-4397-8959-2b5f1f101c11"
+              "id": "398e3dc1-9a98-481d-b7eb-a5157cf61490",
+              "name": "Facility Combo Corner 2x2",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "33b7dac3-42b8-4fdd-b8c8-d56d7cd1c866"
+              "id": "11eb247a-edbd-4397-8959-2b5f1f101c11",
+              "name": "Facility Combo Corner 2x2",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "594a5799-cbff-4708-b192-be0b7a34ce2f"
+              "id": "594a5799-cbff-4708-b192-be0b7a34ce2f",
+              "name": "space ship wall basic filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.501,
+                0.5
+              ]
             },
             {
-              "id": "e73996bf-0378-4ebf-9c8d-9cb6f3eeb33e"
+              "id": "e73996bf-0378-4ebf-9c8d-9cb6f3eeb33e",
+              "name": "Lab wall filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "88696045-fa1f-416f-b94c-143f7f9ad229"
+              "id": "88696045-fa1f-416f-b94c-143f7f9ad229",
+              "name": "scifi floor 1x1 panel hard",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "a9226e2f-40e5-4a87-92d8-820169c63f74"
+              "id": "a9226e2f-40e5-4a87-92d8-820169c63f74",
+              "name": "scifi floor 1x1 metal plane",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "36147fe1-3850-4662-a95e-1a56be8a14b4"
+              "id": "36147fe1-3850-4662-a95e-1a56be8a14b4",
+              "name": "space ship floor 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "26555daf-8c4b-463b-b236-65b6d5912aa6"
+              "id": "26555daf-8c4b-463b-b236-65b6d5912aa6",
+              "name": "scifi floor 1x1 panel soft",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "4a407436-9e02-4e7a-9291-efd58c673b82"
+              "id": "4a407436-9e02-4e7a-9291-efd58c673b82",
+              "name": "space ship stair mid",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "dac29d1a-8ce0-4571-8a5d-af07a143a537"
+              "id": "dac29d1a-8ce0-4571-8a5d-af07a143a537",
+              "name": "space ship stair narrow",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "16147394-ad39-456d-9b48-7086e4dec272"
+              "id": "16147394-ad39-456d-9b48-7086e4dec272",
+              "name": "space ship stair end R",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "e72efb67-1342-40bb-83bc-7a05a951603a"
+              "id": "e72efb67-1342-40bb-83bc-7a05a951603a",
+              "name": "space ship stair end L",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "f4ebb003-e281-469b-843e-567b72d429a0"
+              "id": "f4ebb003-e281-469b-843e-567b72d429a0",
+              "name": "space ship stair corner inner",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "eeeb737f-e4de-4457-b9f0-1e6b0bb78510"
+              "id": "eeeb737f-e4de-4457-b9f0-1e6b0bb78510",
+              "name": "space ship stair corner out",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8f69000c-65cb-49a3-813a-b91911b3ea43"
+              "id": "8f69000c-65cb-49a3-813a-b91911b3ea43",
+              "name": "space ship stair top",
+              "size": "1x1",
+              "height": 0.2,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "5a0f44b7-734e-4d17-99f2-da808c141ce4"
+              "id": "5a0f44b7-734e-4d17-99f2-da808c141ce4",
+              "name": "space ship stair top edge v1",
+              "size": "1x1",
+              "height": 0.2,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "af42d195-ed10-44e2-b43a-557d7eff9790"
+              "id": "af42d195-ed10-44e2-b43a-557d7eff9790",
+              "name": "space ship stair top edge v2",
+              "size": "1x1",
+              "height": 0.2,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "b619afa5-139c-42b4-9e95-070f8d67db41",
+              "name": "Door lab single",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
         "doorCompatibilityNames": [],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Hull": {
         "folder": "Hull",
@@ -2597,37 +5749,100 @@
               "tags": [
                 "half_height",
                 "wall_panel"
+              ],
+              "name": "Hull_Sidewall_center_1x1",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                0.5,
+                1.0
               ]
             }
           ],
           "corner": [
             {
-              "id": "77017a39-cf6a-488d-a409-cc17880b8ada"
+              "id": "77017a39-cf6a-488d-a409-cc17880b8ada",
+              "name": "HullSideWall",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "b719e1a8-832c-4abc-98ca-dce54c3640cb"
+              "id": "b719e1a8-832c-4abc-98ca-dce54c3640cb",
+              "name": "HullSideWall",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "21f9ff1a-43f4-4d9c-b456-1741f6a9ab5b"
+              "id": "21f9ff1a-43f4-4d9c-b456-1741f6a9ab5b",
+              "name": "HullSideWall",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "5dc4e1b7-63ad-4563-a9ff-e660c990a355"
+              "id": "5dc4e1b7-63ad-4563-a9ff-e660c990a355",
+              "name": "HullSideWall",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "6d7137d3-b93d-4796-aeb8-fbb69ae0bbd5"
+              "id": "6d7137d3-b93d-4796-aeb8-fbb69ae0bbd5",
+              "name": "HullSideWall",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "bbe57d2c-7dc2-4d67-b286-0d35f4f754eb"
+              "id": "bbe57d2c-7dc2-4d67-b286-0d35f4f754eb",
+              "name": "HullSideWall",
+              "size": "2x2",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "floor": [
             {
-              "id": "0f1c53e1-ca89-4776-bdb7-b4acd726fbbf"
+              "id": "0f1c53e1-ca89-4776-bdb7-b4acd726fbbf",
+              "name": "Hull01_floor1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
               "id": "de41722d-9e09-439b-b0d1-9c9daf87ef5b",
               "tags": [
                 "wall_base_ledge"
+              ],
+              "name": "Hull01_floor1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
               ]
             }
           ]
@@ -2666,52 +5881,155 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "2c59d205-6f56-4b2e-b3c5-df12e33601f2"
+              "id": "2c59d205-6f56-4b2e-b3c5-df12e33601f2",
+              "name": "industrial_wall_1x1_02",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "0dcdfd2b-b26d-4b9f-8ca5-1077e9dac528"
+              "id": "0dcdfd2b-b26d-4b9f-8ca5-1077e9dac528",
+              "name": "industrial_wall_1x1_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "eec09e64-5764-4cfb-95dd-017f89c0a1fe"
+              "id": "eec09e64-5764-4cfb-95dd-017f89c0a1fe",
+              "name": "industrial_wall_1x1_02",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "4fb293e1-f49d-4689-a7c9-c1c5cb2ca9e7"
+              "id": "4fb293e1-f49d-4689-a7c9-c1c5cb2ca9e7",
+              "name": "industrial_wall_1x1_03",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "0a561ea9-133d-4e1e-91e7-158439e653bd"
+              "id": "0a561ea9-133d-4e1e-91e7-158439e653bd",
+              "name": "industrial_wall_corner_1x1_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "68c61c65-0168-4d85-98bc-c6b168004b4f"
+              "id": "68c61c65-0168-4d85-98bc-c6b168004b4f",
+              "name": "industrial_wall_corner_1x1_02",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "52f98016-e075-4737-9b0d-d2496a61fa62"
+              "id": "52f98016-e075-4737-9b0d-d2496a61fa62",
+              "name": "industrial_corner_filler_01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "e019571d-518d-4237-9e06-a7619b6e5ed8"
+              "id": "e019571d-518d-4237-9e06-a7619b6e5ed8",
+              "name": "industrial_corner_filler_01",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "8146433f-6b5f-44f2-bc49-35cd0cd47c36"
+              "id": "8146433f-6b5f-44f2-bc49-35cd0cd47c36",
+              "name": "industrial_floor_1x1_01",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "2a3dd6a5-774c-4633-ad8a-7f0553c5cda2"
+              "id": "2a3dd6a5-774c-4633-ad8a-7f0553c5cda2",
+              "name": "industrial_stairblock_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "462ca61d-f36d-4405-9a98-f2e4c5adff18"
+              "id": "462ca61d-f36d-4405-9a98-f2e4c5adff18",
+              "name": "industrial_stairs_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "2a3dd6a5-774c-4633-ad8a-7f0553c5cda2",
+              "name": "industrial_stairblock_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "e5b992ca-f6c7-4909-9835-9e2188b85621",
+              "name": "door with security",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
         "doorCompatibilityNames": [],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Interstellar": {
         "folder": "Interstellar",
@@ -2741,64 +6059,195 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "f5e138a4-dab6-4dbd-8684-8403fb0c5bfb"
+              "id": "f5e138a4-dab6-4dbd-8684-8403fb0c5bfb",
+              "name": "tech wall 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "af3ee188-659b-461e-8525-11f03654a86f"
+              "id": "af3ee188-659b-461e-8525-11f03654a86f",
+              "name": "wall 1x1 plane",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "b056f270-f907-41b5-9044-ada24ce804a0"
+              "id": "b056f270-f907-41b5-9044-ada24ce804a0",
+              "name": "tech wall 2x2",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                1.0
+              ]
             }
           ],
           "corner": [
             {
-              "id": "1920a81a-2129-4967-92aa-1e3869e9dd86"
+              "id": "1920a81a-2129-4967-92aa-1e3869e9dd86",
+              "name": "tech wall corner full",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "54c616bc-f652-402f-ac21-ef3c2728f325"
+              "id": "54c616bc-f652-402f-ac21-ef3c2728f325",
+              "name": "wall corner bulk",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "bd39033b-d3f2-4c50-8ca2-18630d63ff8b"
+              "id": "bd39033b-d3f2-4c50-8ca2-18630d63ff8b",
+              "name": "tech wall filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "eddb24f3-13fc-42cb-bc3e-3583001692f3"
+              "id": "eddb24f3-13fc-42cb-bc3e-3583001692f3",
+              "name": "main 1x1 floor",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "80220e8c-374c-49d6-b621-2be5a9b3d189"
+              "id": "80220e8c-374c-49d6-b621-2be5a9b3d189",
+              "name": "floor 1x1 tech A ",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "0af476f9-a6d2-4d03-8511-5276d58d9d8d"
+              "id": "0af476f9-a6d2-4d03-8511-5276d58d9d8d",
+              "name": "main 2x2 floor",
+              "size": "2x2",
+              "height": 0.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "59a3c366-257f-42dc-a945-c2e89b9af884"
+              "id": "59a3c366-257f-42dc-a945-c2e89b9af884",
+              "name": "stripped floor stair",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "99bcf1bb-978f-470f-9d13-b24447a8b52c"
+              "id": "99bcf1bb-978f-470f-9d13-b24447a8b52c",
+              "name": "stripped floor box",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "5ea4bd5a-8b0b-484b-b5a4-0bca761ae0fd"
+              "id": "5ea4bd5a-8b0b-484b-b5a4-0bca761ae0fd",
+              "name": "stripped floor 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "741cfffb-b583-477d-a592-be068c57fa70"
+              "id": "741cfffb-b583-477d-a592-be068c57fa70",
+              "name": "stripped floor edge",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "6ac80ca2-f58d-4c60-9212-3b3fd225f5e8"
+              "id": "6ac80ca2-f58d-4c60-9212-3b3fd225f5e8",
+              "name": "stripped floor corner inner",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "6643c958-d665-49f6-a524-132876160314"
+              "id": "6643c958-d665-49f6-a524-132876160314",
+              "name": "stripped floor corner outer",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "stairBlock": [
+            {
+              "id": "99bcf1bb-978f-470f-9d13-b24447a8b52c",
+              "name": "stripped floor box",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "f56d891a-ed49-4e6e-910e-81827e8eac37",
+              "name": "space ship door 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
         "doorCompatibilityNames": [],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Outpost": {
         "folder": "Outpost",
@@ -2826,76 +6275,223 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "700a65a8-22d7-4ae8-907c-3a98a1567fa1"
+              "id": "700a65a8-22d7-4ae8-907c-3a98a1567fa1",
+              "name": "station wall 1x1 combo",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8a271cf7-18c6-4dbf-8f8f-2dab6278e86f"
+              "id": "8a271cf7-18c6-4dbf-8f8f-2dab6278e86f",
+              "name": "station wall 1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             },
             {
-              "id": "acbbf9ab-d867-40fa-af4c-7272ce4ee279"
+              "id": "acbbf9ab-d867-40fa-af4c-7272ce4ee279",
+              "name": "station wall 2x2 combo",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             },
             {
-              "id": "e3750f74-2b5a-4fd7-a103-329b4fad17ec"
+              "id": "e3750f74-2b5a-4fd7-a103-329b4fad17ec",
+              "name": "station wall 2x2",
+              "size": "2x1",
+              "height": 2.0,
+              "footprint": [
+                2.0,
+                0.5
+              ]
             }
           ],
           "corner": [
             {
-              "id": "9e61acf2-0353-4103-9032-e3ea6432f174"
+              "id": "49f56065-3601-492b-9360-2df35de0d159",
+              "name": "station wall 01 corner combo",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "49f56065-3601-492b-9360-2df35de0d159"
+              "id": "a6e21aae-ab51-4f00-93fd-0ca3da8382b0",
+              "name": "station wall 01 corner",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "a6e21aae-ab51-4f00-93fd-0ca3da8382b0"
+              "id": "9e61acf2-0353-4103-9032-e3ea6432f174",
+              "name": "station wall 01 corner combo",
+              "size": "2x2",
+              "height": 2.5,
+              "footprint": [
+                2.0,
+                2.0
+              ]
             }
           ],
           "cornerFiller": [
             {
-              "id": "05349e58-2537-43d9-9177-08d1c0220eb1"
+              "id": "05349e58-2537-43d9-9177-08d1c0220eb1",
+              "name": "station wall filler combo",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "785c8510-a7aa-40c4-92d7-fd718db1248d"
+              "id": "785c8510-a7aa-40c4-92d7-fd718db1248d",
+              "name": "station wall filler",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.501,
+                0.5
+              ]
             }
           ],
           "floor": [
             {
-              "id": "a486f597-e170-480f-9caa-5fb972bed9db"
+              "id": "a486f597-e170-480f-9caa-5fb972bed9db",
+              "name": "SciFi floor rubber 1x1 plain",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "acfe07e1-d352-4b77-b9f8-4632adf84c78"
+              "id": "acfe07e1-d352-4b77-b9f8-4632adf84c78",
+              "name": "SciFi floor rubber 1x1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "477551f9-0ffe-4e9f-abe5-311093418b3e"
+              "id": "477551f9-0ffe-4e9f-abe5-311093418b3e",
+              "name": "scifi clamped floor v1",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "a604573d-ee04-4238-a5cb-7f6f484da6d8"
+              "id": "a604573d-ee04-4238-a5cb-7f6f484da6d8",
+              "name": "scifi clamped floor v2",
+              "size": "1x1",
+              "height": 0.5,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             }
           ],
           "stairs": [
             {
-              "id": "db97d5cf-9790-46c2-b752-2fd8aa03d0f8"
+              "id": "db97d5cf-9790-46c2-b752-2fd8aa03d0f8",
+              "name": "light stair L",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "aaa3cb06-aa83-4ba3-941e-02d8b06579aa"
+              "id": "aaa3cb06-aa83-4ba3-941e-02d8b06579aa",
+              "name": "light stair mid",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "ad55a4e6-f57a-4232-a8a4-1654c8ec07d4"
+              "id": "ad55a4e6-f57a-4232-a8a4-1654c8ec07d4",
+              "name": "light stair R",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "ee3617bb-4118-4348-bbe1-78eb3133635c"
+              "id": "ee3617bb-4118-4348-bbe1-78eb3133635c",
+              "name": "light stair set",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "bef77625-f3fb-4ea6-9e41-4cec79a50356"
+              "id": "bef77625-f3fb-4ea6-9e41-4cec79a50356",
+              "name": "light stair top",
+              "size": "1x1",
+              "height": 0.2,
+              "footprint": [
+                1.0,
+                1.0
+              ]
             },
             {
-              "id": "8b06a2eb-c691-4162-9baf-3545859adbb2"
+              "id": "8b06a2eb-c691-4162-9baf-3545859adbb2",
+              "name": "lgiht stair top corner",
+              "size": "1x1",
+              "height": 0.2,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            }
+          ],
+          "door": [
+            {
+              "id": "807cb643-f889-437b-9b93-08ffaa84faa6",
+              "name": "door with full lite",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                1.0,
+                0.5
+              ]
             }
           ]
         },
         "doorCompatibilityNames": [],
         "standalone": true,
         "advanced": false,
-        "minTileDimension": 1
+        "minTileDimension": 1,
+        "verified": true,
+        "excluded": false
       },
       "Street": {
         "folder": "Street",

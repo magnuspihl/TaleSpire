@@ -222,11 +222,50 @@ def bend2_exact():
     return p
 
 
+def wall_rot_probe():
+    """
+    Where inside its cell does a wall tile's plate sit, per rotation? Answer: against
+    the low-x/low-z side every time, because a stored position is the minimum corner of
+    the tile's world bounding box. So a 1 x 0.5 wall lines the cell edge facing north or
+    west and sits half a cell in facing south or east — see bug 25 in MapGen/CLAUDE.md.
+
+    Positions here are raw, with none of SlabBuilder's edge correction, so the probe
+    shows that rule directly. Each rotation gets one isolated floor tile with one wall
+    on it and empty board all round, so the floor square reads as a ruler and the wall
+    as a bar along one of its edges. Dungeon Cellar (combo, fills its cell) is the
+    control row against Castle Fortified (separate wall, 1 x 0.5).
+
+    An L of bare floor tiles at the origin fixes which way +X and +Z point on screen,
+    because the board camera faces west and the compass cannot be assumed.
+    """
+    CF_WALL  = "d3f7dbbf-6f78-4c5b-93e3-a6c1d00cbefd"
+    CF_FLOOR = "a2eaf2e2-01d8-4548-a517-50df8551057a"
+
+    p = []
+
+    # Compass L: 4 tiles running +X, 2 running +Z, sharing the corner at (10,10).
+    for x in range(10, 14): p.append((FLOOR_GUID, float(x), 0.0, 10.0, ROT_NORTH))
+    for z in range(11, 13): p.append((FLOOR_GUID, 10.0, 0.0, float(z), ROT_NORTH))
+
+    rots = [("N", ROT_NORTH), ("W", ROT_WEST), ("S", ROT_SOUTH), ("E", ROT_EAST)]
+
+    # Control row (combo tileset) at z=16; test row (separate floor+wall) at z=22.
+    for zrow, floor, wall, wy in [(16, FLOOR_GUID, WALL_GUID,  0.0),
+                                  (22, CF_FLOOR,   CF_WALL,    0.5)]:
+        for i, (_, rot) in enumerate(rots):
+            x = 10.0 + i * 4
+            p.append((floor, x, 0.0, float(zrow), ROT_NORTH))
+            p.append((wall,  x, wy,  float(zrow), rot))
+
+    return p
+
+
 SCRIPTS = {
-    "lbend_oc":      lbend_oc,
-    "single_corner": single_corner,
-    "bend1_exact":   bend1_exact,
-    "bend2_exact":   bend2_exact,
+    "lbend_oc":       lbend_oc,
+    "single_corner":  single_corner,
+    "bend1_exact":    bend1_exact,
+    "bend2_exact":    bend2_exact,
+    "wall_rot_probe": wall_rot_probe,
 }
 
 if __name__ == "__main__":

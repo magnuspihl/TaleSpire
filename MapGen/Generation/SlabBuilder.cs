@@ -23,6 +23,7 @@ namespace TaleSpireMapGen.Generation
         private struct Tile
         {
             public byte[] Guid;
+            public TileRole Role;
             public float X, Y, Z;
             public int RotStep;
         }
@@ -36,6 +37,11 @@ namespace TaleSpireMapGen.Generation
             public string    IcStyle;
             public int       WallRows;
             public float     WallHeight;
+            public bool      WallCombo;
+            public float     FloorThick;
+
+            /// <summary>Base of the bottom wall row — on top of the floor unless the wall carries one.</summary>
+            public float WallBase => Cy + (WallCombo ? 0f : FloorThick);
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -56,8 +62,14 @@ namespace TaleSpireMapGen.Generation
                 doorGaps.Add((conn.FromRoomId, conn.WallSide.ToLowerInvariant(), conn.Offset));
 
             string layoutTheme = spec.Theme ?? "Dungeon Cellar";
+
+            // Where a stair breaks through the floor above it. Worked out before anything is
+            // placed because the hole belongs to the upper room while the run that needs it is
+            // defined by the lower one, and three separate stages lay floor at that elevation.
+            var stairWells = StairWellCells(spec, roomById, layoutTheme);
+
             foreach (var room in spec.Rooms ?? Enumerable.Empty<RoomSpec>())
-                BuildRoom(room, layoutTheme, doorGaps, tiles);
+                BuildRoom(room, layoutTheme, doorGaps, stairWells, tiles);
 
             if (spec.Connections != null)
                 BuildCorridors(spec.Connections, roomById, layoutTheme, tiles);
@@ -66,7 +78,7 @@ namespace TaleSpireMapGen.Generation
                 foreach (var vc in spec.VerticalConnections)
                     BuildStaircase(vc, roomById, layoutTheme, tiles);
 
-            BuildBalconies(spec, roomById, layoutTheme, tiles);
+            BuildBalconies(spec, roomById, layoutTheme, stairWells, tiles);
             BuildExteriorShell(spec, layoutTheme, tiles);
 
             // TODO: BuildRoofs(spec, roomById, layoutTheme, tiles)
@@ -88,7 +100,21 @@ namespace TaleSpireMapGen.Generation
                 if (seen.Add(key)) unique.Add(t);
             }
 
-            return unique.Select(t => (t.Guid, t.X, t.Y, t.Z, t.RotStep)).ToList();
+            // A wall sharing its elevation with a floor can only be a wall that carries its own
+            // floor, and the loose one under it is then both redundant and buries the wall's
+            // bottom. Stages cannot see this for themselves: it happens where one corridor's
+            // walkway is another's wall cell, so neither knows the other laid anything there.
+            // Matched per cell rather than per exact position, because a wall shallower than its
+            // cell is pushed off the cell origin to reach the edge it lines (see Mk/EdgeHug) while
+            // the floor under it still sits at the origin.
+            var carried = new HashSet<(int, int, int)>();
+            foreach (var t in unique)
+                if (t.Role == TileRole.Wall || t.Role == TileRole.Corner)
+                    carried.Add(Cell(t));
+
+            return unique
+                .Where(t => t.Role != TileRole.Floor || !carried.Contains(Cell(t)))
+                .Select(t => (t.Guid, t.X, t.Y, t.Z, t.RotStep)).ToList();
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -99,12 +125,15 @@ namespace TaleSpireMapGen.Generation
             RoomSpec room,
             string layoutTheme,
             HashSet<(string, string, int)> doorGaps,
+            HashSet<(int, int, int)> stairWells,
             List<Tile> out_)
         {
             string theme = !string.IsNullOrEmpty(room.Theme) ? room.Theme : layoutTheme;
 
-            var (wallHeight, _, wallCombo, _, _, _) = ProfileCatalog.GetData(theme);
-            int wallRows = room.WallRows > 0 ? room.WallRows : 1;
+            var (_, _, wallCombo, _, _, _) = ProfileCatalog.GetData(theme);
+            float wallHeight = TileCatalog.WallPitch(theme);
+            float floorThick = TileCatalog.FloorThickness(theme);
+            int   wallRows   = room.WallRows > 0 ? room.WallRows : 1;
 
             var floorTile  = TileCatalog.Get(theme, TileRole.Floor);
             var wallTile   = TileCatalog.Get(theme, TileRole.Wall);
@@ -116,19 +145,24 @@ namespace TaleSpireMapGen.Generation
             int   w  = Math.Max(room.Width, 3);
             int   d  = Math.Max(room.Depth, 3);
 
+            // A wall that carries no floor of its own stands *on* the floor tile, not in it.
+            // Sharing one Y with the floor buried the bottom of every Castle Fortified wall and
+            // left the whole ring half a unit below the surface you walk on.
+            float wallBase = fy + (wallCombo ? 0f : floorThick);
+
             // Place wall/corner ring for each vertical row.
             for (int row = 0; row < wallRows; row++)
             {
-                float wy     = fy + row * wallHeight;
+                float wy     = wallBase + row * wallHeight;
                 bool  isBase = row == 0;
                 // Suppress the under-wall floor tile on upper rows, and for combo themes always.
                 bool  noFloor = !isBase || wallCombo;
 
                 // Corners — NW(0) NE(18) SE(12) SW(6)
-                PlaceWall(out_, cornerTile, floorTile, noFloor, ox,       wy, oz,       ROT_NORTH);
-                PlaceWall(out_, cornerTile, floorTile, noFloor, ox + w-1, wy, oz,       ROT_EAST);
-                PlaceWall(out_, cornerTile, floorTile, noFloor, ox + w-1, wy, oz + d-1, ROT_SOUTH);
-                PlaceWall(out_, cornerTile, floorTile, noFloor, ox,       wy, oz + d-1, ROT_WEST);
+                PlaceWall(out_, cornerTile, floorTile, noFloor, ox,       fy, wy, oz,       ROT_NORTH);
+                PlaceWall(out_, cornerTile, floorTile, noFloor, ox + w-1, fy, wy, oz,       ROT_EAST);
+                PlaceWall(out_, cornerTile, floorTile, noFloor, ox + w-1, fy, wy, oz + d-1, ROT_SOUTH);
+                PlaceWall(out_, cornerTile, floorTile, noFloor, ox,       fy, wy, oz + d-1, ROT_WEST);
 
                 // North wall (z = oz)
                 for (int x = ox + 1; x <= ox + w - 2; x++)
@@ -136,9 +170,9 @@ namespace TaleSpireMapGen.Generation
                     if (isBase)
                     {
                         bool door = doorGaps.Contains((room.Id, "north", x - (ox + 1)));
-                        PlaceDoorOrWall(out_, door, doorTile, wallTile, floorTile, wallCombo, x, wy, oz, ROT_NORTH);
+                        PlaceDoorOrWall(out_, door, doorTile, wallTile, floorTile, wallCombo, floorThick, x, fy, wy, oz, ROT_NORTH);
                     }
-                    else PlaceWall(out_, wallTile, floorTile, true, x, wy, oz, ROT_NORTH);
+                    else PlaceWall(out_, wallTile, floorTile, true, x, fy, wy, oz, ROT_NORTH);
                 }
 
                 // South wall (z = oz + d - 1)
@@ -147,9 +181,9 @@ namespace TaleSpireMapGen.Generation
                     if (isBase)
                     {
                         bool door = doorGaps.Contains((room.Id, "south", x - (ox + 1)));
-                        PlaceDoorOrWall(out_, door, doorTile, wallTile, floorTile, wallCombo, x, wy, oz + d - 1, ROT_SOUTH);
+                        PlaceDoorOrWall(out_, door, doorTile, wallTile, floorTile, wallCombo, floorThick, x, fy, wy, oz + d - 1, ROT_SOUTH);
                     }
-                    else PlaceWall(out_, wallTile, floorTile, true, x, wy, oz + d - 1, ROT_SOUTH);
+                    else PlaceWall(out_, wallTile, floorTile, true, x, fy, wy, oz + d - 1, ROT_SOUTH);
                 }
 
                 // West wall (x = ox)
@@ -158,9 +192,9 @@ namespace TaleSpireMapGen.Generation
                     if (isBase)
                     {
                         bool door = doorGaps.Contains((room.Id, "west", z - (oz + 1)));
-                        PlaceDoorOrWall(out_, door, doorTile, wallTile, floorTile, wallCombo, ox, wy, z, ROT_WEST);
+                        PlaceDoorOrWall(out_, door, doorTile, wallTile, floorTile, wallCombo, floorThick, ox, fy, wy, z, ROT_WEST);
                     }
-                    else PlaceWall(out_, wallTile, floorTile, true, ox, wy, z, ROT_WEST);
+                    else PlaceWall(out_, wallTile, floorTile, true, ox, fy, wy, z, ROT_WEST);
                 }
 
                 // East wall (x = ox + w - 1)
@@ -169,16 +203,20 @@ namespace TaleSpireMapGen.Generation
                     if (isBase)
                     {
                         bool door = doorGaps.Contains((room.Id, "east", z - (oz + 1)));
-                        PlaceDoorOrWall(out_, door, doorTile, wallTile, floorTile, wallCombo, ox + w - 1, wy, z, ROT_EAST);
+                        PlaceDoorOrWall(out_, door, doorTile, wallTile, floorTile, wallCombo, floorThick, ox + w - 1, fy, wy, z, ROT_EAST);
                     }
-                    else PlaceWall(out_, wallTile, floorTile, true, ox + w - 1, wy, z, ROT_EAST);
+                    else PlaceWall(out_, wallTile, floorTile, true, ox + w - 1, fy, wy, z, ROT_EAST);
                 }
             }
 
-            // Interior floor — placed once at the base elevation.
+            // Interior floor — placed once at the base elevation, minus any cell a stair comes up
+            // through. Without the hole the run from the storey below tops out against the
+            // underside of this floor.
+            int fy100 = (int)Math.Round(fy * 100);
             for (int x = ox + 1; x <= ox + w - 2; x++)
                 for (int z = oz + 1; z <= oz + d - 2; z++)
-                    out_.Add(Mk(floorTile, x, fy, z, 0));
+                    if (!stairWells.Contains((x, z, fy100)))
+                        out_.Add(Mk(floorTile, x, fy, z, 0));
 
             // Internal ceiling: when wallRows > 1, floor tiles cap the top of the wall stack.
             // This forms the visible ceiling below and the walkable surface for any room above.
@@ -186,28 +224,32 @@ namespace TaleSpireMapGen.Generation
             // roof tiles (TileRole.Roof) would replace or supplement these — see BuildRoofs TODO in Build().
             if (wallRows > 1)
             {
-                float ceilingY = fy + wallRows * wallHeight;
+                float ceilingY   = fy + TileCatalog.StoreyHeight(theme, wallRows);
+                int   ceiling100 = (int)Math.Round(ceilingY * 100);
                 for (int x = ox; x < ox + w; x++)
                     for (int z = oz; z < oz + d; z++)
-                        out_.Add(Mk(floorTile, x, ceilingY, z, 0));
+                        if (!stairWells.Contains((x, z, ceiling100)))
+                            out_.Add(Mk(floorTile, x, ceilingY, z, 0));
             }
         }
 
-        // Place a wall or corner tile; for non-combo themes add a floor tile underneath.
+        // Place a wall or corner tile, and unless suppressed the floor tile it stands on. The two
+        // take separate elevations on purpose: the floor sits at the storey's base and the wall on
+        // top of it.
         private static void PlaceWall(
-            List<Tile> out_, TileEntry tile, TileEntry floor, bool wallCombo,
-            int x, float y, int z, int rot)
+            List<Tile> out_, TileEntry tile, TileEntry floor, bool noFloor,
+            int x, float floorY, float wallY, int z, int rot)
         {
-            if (!wallCombo) out_.Add(Mk(floor, x, y, z, 0));
-            out_.Add(Mk(tile, x, y, z, rot));
+            if (!noFloor) out_.Add(Mk(floor, x, floorY, z, 0));
+            out_.Add(Mk(tile, x, wallY, z, rot));
         }
 
         // At door openings always place a floor tile under the door (door tiles have no floor baked in).
         // For non-combo themes, also add floor under wall tiles.
         private static void PlaceDoorOrWall(
             List<Tile> out_, bool isDoor,
-            TileEntry door, TileEntry wall, TileEntry floor, bool wallCombo,
-            int x, float y, int z, int rot)
+            TileEntry door, TileEntry wall, TileEntry floor, bool wallCombo, float floorThick,
+            int x, float floorY, float wallY, int z, int rot)
         {
             if (isDoor)
             {
@@ -215,13 +257,13 @@ namespace TaleSpireMapGen.Generation
                 // TaleSpire snap grid: 0 = NW half, +0.5 = SE half within the tile cell.
                 float odx = (rot == ROT_EAST) ? 0.5f : 0f;
                 float odz = (rot == ROT_SOUTH) ? 0.5f : 0f;
-                out_.Add(Mk(floor, x,       y,        z,       0));
-                out_.Add(Mk(door,  x + odx, y + 0.5f, z + odz, (rot + 12) % 24));
+                out_.Add(Mk(floor, x,       floorY,              z,       0));
+                out_.Add(Mk(door,  x + odx, floorY + floorThick, z + odz, (rot + 12) % 24));
             }
             else
             {
-                if (!wallCombo) out_.Add(Mk(floor, x, y, z, 0));
-                out_.Add(Mk(wall, x, y, z, rot));
+                if (!wallCombo) out_.Add(Mk(floor, x, floorY, z, 0));
+                out_.Add(Mk(wall, x, wallY, z, rot));
             }
         }
 
@@ -253,31 +295,88 @@ namespace TaleSpireMapGen.Generation
                 return;
             }
 
-            List<TileProfileEntry> stairList = null;
-            if (profile.TilesByRole == null || !profile.TilesByRole.TryGetValue("stairs", out stairList) || stairList.Count == 0)
+            // Via the catalog rather than the profile directly, so the 1x1 filter applies. Several
+            // tilesets list only oversized stairs, which would be placed one cell apart and
+            // interpenetrate.
+            if (!TileCatalog.HasTile(theme, TileRole.Stairs))
             {
-                DebugLog?.Invoke($"[Staircase] No stair tiles for '{theme}', skipping");
+                DebugLog?.Invoke($"[Staircase] No 1x1 stair tile for '{theme}', skipping");
                 return;
             }
 
-            int   wallRows    = lowerRoom.WallRows > 0 ? lowerRoom.WallRows : 1;
-            float totalHeight = wallRows * profile.WallHeight;
-            int   steps       = profile.WallHeight > 0 ? (int)Math.Round(totalHeight / 0.5f) : 0;
+            roomById.TryGetValue(vc.UpperRoomId ?? "", out var upperRoom);
+            string upperTheme = !string.IsNullOrEmpty(upperRoom?.Theme) ? upperRoom.Theme : layoutTheme;
+
+            int wallRows = lowerRoom.WallRows > 0 ? lowerRoom.WallRows : 1;
+            int steps    = TileCatalog.StairStepCount(theme, wallRows, upperTheme);
             if (steps == 0) { DebugLog?.Invoke("[Staircase] Zero steps, skipping"); return; }
 
-            var stairEntry = new TileEntry(stairList[0].Id, "Stairs", TileRole.Stairs, "1x1");
-            int rot = DirToRot(vc.ClimbDirection);
+            var   stairEntry = TileCatalog.Get(theme, TileRole.Stairs);
+            float rise       = TileCatalog.StairRise(theme);
+            // The bottom tread rests on the floor's surface. Starting it at the room's origin
+            // sank the whole flight half a tread into the ground.
+            float baseY = lowerRoom.OriginY + TileCatalog.FloorThickness(theme);
+
+            // Three quarter turns off the wall-facing convention DirToRot encodes. Both in-game
+            // looks went into this number: bare DirToRot had the flight climbing west with every
+            // tread facing north, and +6 fixed that quarter turn but left the treads pointing back
+            // down the flight. The remaining half turn is the difference between a tread facing
+            // the way you climb and one facing where you came from.
+            int rot = (DirToRot(vc.ClimbDirection) + 18) % 24;
             (int dx, int dz) = DirToStep(vc.ClimbDirection);
+
+            // Every tread above the first hangs a whole rise above the one behind it, so a bare
+            // flight reads as separate steps floating in a line rather than as a staircase. Seven
+            // tilesets ship an explicit block for this (Dungeon Cellar's is "Dungeon Stair Block");
+            // the rest fill the column with their own floor tile, which is solid, always present,
+            // and matches the material. Falling back through TileCatalog.Get would instead borrow
+            // the *dungeon's* block, which is the wrong stone under a marble staircase.
+            var  block  = TileCatalog.Get(theme,
+                TileCatalog.HasTile(theme, TileRole.StairBlock) ? TileRole.StairBlock : TileRole.Floor);
+            bool fillable = block.Height > 0.01f;
 
             for (int i = 0; i < steps; i++)
             {
                 float sx = vc.StairOriginX + dx * i;
-                float sy = lowerRoom.OriginY + i * 0.5f;
+                float sy = baseY + i * rise;
                 float sz = vc.StairOriginZ + dz * i;
                 out_.Add(Mk(stairEntry, sx, sy, sz, rot));
+
+                if (!fillable) continue;
+                for (float by = baseY; by < sy - 0.01f; by += block.Height)
+                    out_.Add(Mk(block, sx, by, sz, rot));
             }
 
-            DebugLog?.Invoke($"[Staircase] {vc.LowerRoomId}→{vc.UpperRoomId} theme='{theme}' steps={steps} dir={vc.ClimbDirection}");
+            DebugLog?.Invoke($"[Staircase] {vc.LowerRoomId}→{vc.UpperRoomId} theme='{theme}' steps={steps} rise={rise} dir={vc.ClimbDirection}");
+        }
+
+        // Cells where a stair run has to come up through the storey above it, keyed by that
+        // storey's elevation (x, z, y*100). The run sits inside the upper room's interior, so the
+        // hole is a stairwell in its floor and no wall has to be breached to reach it.
+        private static HashSet<(int, int, int)> StairWellCells(
+            LayoutSpec spec,
+            Dictionary<string, RoomSpec> roomById,
+            string layoutTheme)
+        {
+            var cells = new HashSet<(int, int, int)>();
+
+            foreach (var vc in spec.VerticalConnections ?? Enumerable.Empty<VerticalConnection>())
+            {
+                if (!roomById.TryGetValue(vc.LowerRoomId ?? "", out var lower)) continue;
+                if (!roomById.TryGetValue(vc.UpperRoomId ?? "", out var upper)) continue;
+
+                string theme      = !string.IsNullOrEmpty(lower.Theme) ? lower.Theme : layoutTheme;
+                string upperTheme = !string.IsNullOrEmpty(upper.Theme) ? upper.Theme : layoutTheme;
+                int    steps = TileCatalog.StairStepCount(
+                    theme, lower.WallRows > 0 ? lower.WallRows : 1, upperTheme);
+                int    y100  = (int)Math.Round(upper.OriginY * 100);
+                (int dx, int dz) = DirToStep(vc.ClimbDirection);
+
+                for (int i = 0; i < steps; i++)
+                    cells.Add((vc.StairOriginX + dx * i, vc.StairOriginZ + dz * i, y100));
+            }
+
+            return cells;
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -299,6 +398,7 @@ namespace TaleSpireMapGen.Generation
             LayoutSpec spec,
             Dictionary<string, RoomSpec> roomById,
             string layoutTheme,
+            HashSet<(int, int, int)> stairWells,
             List<Tile> out_)
         {
             if (spec.VerticalConnections == null) return;
@@ -323,6 +423,7 @@ namespace TaleSpireMapGen.Generation
                 string theme     = !string.IsNullOrEmpty(lower.Theme) ? lower.Theme : layoutTheme;
                 var    floorTile = TileCatalog.Get(theme, TileRole.Floor);
                 float  balconyY  = upper.OriginY;   // same level as the hub room's floor
+                int    balcony100 = (int)Math.Round(balconyY * 100);
 
                 int oxL = lower.OriginX, ozL = lower.OriginZ;
                 int wL  = Math.Max(lower.Width,  3);
@@ -342,6 +443,7 @@ namespace TaleSpireMapGen.Generation
                         bool inHub = x >= oxU && x <= oxU + wU - 1
                                   && z >= ozU && z <= ozU + dU - 1;
                         if (inHub) continue;
+                        if (stairWells.Contains((x, z, balcony100))) continue;
 
                         out_.Add(Mk(floorTile, x, balconyY, z, 0));
                     }
@@ -377,10 +479,14 @@ namespace TaleSpireMapGen.Generation
                 float y      = kvp.Key;
                 var   yRooms = kvp.Value;
 
-                // Use the tallest room's theme/height for this level's shell.
-                int    wallRows   = 1;
-                float  wallHeight = 1f;
-                string theme      = layoutTheme;
+                // Tallest room at this elevation decides the ring's height, and the ring takes that
+                // room's theme. Seeding wallRows at 0 rather than 1 matters: every room carries at
+                // least one row, so the first one always wins and the theme always comes from a room
+                // *on this storey*. Seeded at 1 the loop never fired for a storey of single-row
+                // rooms, and the ring silently fell back to the layout theme — invisible while every
+                // room shared one theme, but a dungeon wall around a castle keep once they differ.
+                int    wallRows = 0;
+                string theme    = layoutTheme;
                 foreach (var room in yRooms)
                 {
                     int wr = room.WallRows > 0 ? room.WallRows : 1;
@@ -390,17 +496,19 @@ namespace TaleSpireMapGen.Generation
                         theme    = !string.IsNullOrEmpty(room.Theme) ? room.Theme : layoutTheme;
                     }
                 }
-                var pd         = ProfileCatalog.GetData(theme);
-                wallHeight     = pd.wallHeight;
+                float wallHeight = TileCatalog.WallPitch(theme);
+                float floorThick = TileCatalog.FloorThickness(theme);
+                bool  wallCombo  = TileCatalog.WallIncludesFloor(theme);
                 var wallTile   = TileCatalog.Get(theme, TileRole.Wall);
                 var cornerTile = TileCatalog.Get(theme, TileRole.Corner);
+                var floorTile  = TileCatalog.Get(theme, TileRole.Floor);
 
                 // One ring per *cluster* of nearby rooms, not one per elevation. A storey whose
                 // rooms are spread out — typically an upper floor, where rooms sit above whichever
                 // lower rooms were chosen to carry them — would otherwise get a single enormous
                 // wall around mostly bare board. A dense storey still clusters into one group, so
                 // ground floors are unaffected.
-                float bandTop = y + wallRows * wallHeight;
+                float bandTop = y + TileCatalog.StoreyHeight(theme, wallRows);
 
                 foreach (var cluster in ClusterRooms(yRooms, spec))
                 {
@@ -433,34 +541,39 @@ namespace TaleSpireMapGen.Generation
                         if (t.Y >= y - 0.01f && t.Y < bandTop - 0.01f)
                             blocked.Add(((int)Math.Floor(t.X), (int)Math.Floor(t.Z)));
 
-                    void Ring(TileEntry tile, int x, float wy, int z, int rot)
+                    // A shell wall stands on the same footing as a room wall: on top of a floor tile
+                    // when the theme's wall does not carry one, so the ring's base lines up with the
+                    // storey's walkable surface instead of sinking into it.
+                    float ringBase = wallCombo ? 0f : floorThick;
+
+                    void Ring(TileEntry tile, int x, int row, int z, int rot)
                     {
-                        if (!blocked.Contains((x, z))) out_.Add(Mk(tile, x, wy, z, rot));
+                        if (blocked.Contains((x, z))) return;
+                        if (row == 0 && !wallCombo) out_.Add(Mk(floorTile, x, y, z, 0));
+                        out_.Add(Mk(tile, x, y + ringBase + row * wallHeight, z, rot));
                     }
 
                     for (int row = 0; row < wallRows; row++)
                     {
-                        float wy = y + row * wallHeight;
-
                         // North edge (z = sz0) — NW corner, north walls, NE corner.
-                        Ring(cornerTile, sx0, wy, sz0, ROT_NORTH);
+                        Ring(cornerTile, sx0, row, sz0, ROT_NORTH);
                         for (int x = sx0 + 1; x < sx1; x++)
-                            Ring(wallTile, x, wy, sz0, ROT_NORTH);
-                        Ring(cornerTile, sx1, wy, sz0, ROT_EAST);
+                            Ring(wallTile, x, row, sz0, ROT_NORTH);
+                        Ring(cornerTile, sx1, row, sz0, ROT_EAST);
 
                         // South edge (z = sz1) — SW corner, south walls, SE corner.
-                        Ring(cornerTile, sx0, wy, sz1, ROT_WEST);
+                        Ring(cornerTile, sx0, row, sz1, ROT_WEST);
                         for (int x = sx0 + 1; x < sx1; x++)
-                            Ring(wallTile, x, wy, sz1, ROT_SOUTH);
-                        Ring(cornerTile, sx1, wy, sz1, ROT_SOUTH);
+                            Ring(wallTile, x, row, sz1, ROT_SOUTH);
+                        Ring(cornerTile, sx1, row, sz1, ROT_SOUTH);
 
                         // West edge (x = sx0) — between the two corners.
                         for (int z = sz0 + 1; z < sz1; z++)
-                            Ring(wallTile, sx0, wy, z, ROT_WEST);
+                            Ring(wallTile, sx0, row, z, ROT_WEST);
 
                         // East edge (x = sx1) — between the two corners.
                         for (int z = sz0 + 1; z < sz1; z++)
-                            Ring(wallTile, sx1, wy, z, ROT_EAST);
+                            Ring(wallTile, sx1, row, z, ROT_EAST);
                     }
                 }
             }
@@ -526,6 +639,11 @@ namespace TaleSpireMapGen.Generation
             public string InnerCornerStyle;
             public int   WallRows;   // = max(fromRoom.WallRows, toRoom.WallRows), min 1
             public float WallHeight; // from profile
+            public bool  WallCombo;
+            public float FloorThick;
+
+            /// <summary>Base of the bottom wall row — on top of the floor unless the wall carries one.</summary>
+            public float WallBase => Cy + (WallCombo ? 0f : FloorThick);
         }
 
         /// The pipeline's shared state — room cells, global floors, wall notes — is keyed on (x,z)
@@ -650,7 +768,9 @@ namespace TaleSpireMapGen.Generation
                     Inner      = TileCatalog.Get(theme, TileRole.InnerCorner),
                     InnerCornerStyle = pd.icStyle,
                     WallRows   = corridorWR,
-                    WallHeight = pd.wallHeight,
+                    WallHeight = TileCatalog.WallPitch(theme),
+                    WallCombo  = TileCatalog.WallIncludesFloor(theme),
+                    FloorThick = TileCatalog.FloorThickness(theme),
                 });
             }
 
@@ -680,6 +800,7 @@ namespace TaleSpireMapGen.Generation
                             Cy = c.Cy, Floor = c.Floor, Wall = c.Wall, Inner = c.Inner,
                             Corner = c.Corner, IcStyle = c.InnerCornerStyle,
                             WallRows = c.WallRows, WallHeight = c.WallHeight,
+                            WallCombo = c.WallCombo, FloorThick = c.FloorThick,
                         };
                     }
                     else if (c.WallRows > wallInfo[key].WallRows)
@@ -688,6 +809,8 @@ namespace TaleSpireMapGen.Generation
                         var wi = wallInfo[key];
                         wi.WallRows   = c.WallRows;
                         wi.WallHeight = c.WallHeight;
+                        wi.WallCombo  = c.WallCombo;
+                        wi.FloorThick = c.FloorThick;
                         wallInfo[key] = wi;
                     }
                     if (!lst.Contains(rot)) lst.Add(rot);
@@ -770,6 +893,7 @@ namespace TaleSpireMapGen.Generation
                         Cy = c.Cy, Floor = c.Floor, Wall = c.Wall, Inner = c.Inner,
                         Corner = c.Corner, IcStyle = c.InnerCornerStyle,
                         WallRows = c.WallRows, WallHeight = c.WallHeight,
+                        WallCombo = c.WallCombo, FloorThick = c.FloorThick,
                     };
                     DebugLog?.Invoke($"[Phase2.6] sealed ({nx},{nz}) rot={rot} beside ic ({icx},{icz})");
                 }
@@ -809,8 +933,9 @@ namespace TaleSpireMapGen.Generation
 
                             int rot = CornerRotFromFacings(new List<int> { sideRot, endRot });
                             // Stack corner tiles to match corridor height.
+                            if (!c.WallCombo) out_.Add(Mk(c.Floor, cx, c.Cy, cz, 0));
                             for (int row = 0; row < c.WallRows; row++)
-                                out_.Add(Mk(c.Corner, cx, c.Cy + row * c.WallHeight, cz, rot));
+                                out_.Add(Mk(c.Corner, cx, c.WallBase + row * c.WallHeight, cz, rot));
 
                             DebugLog?.Invoke($"[Phase2.7] floor=({fx},{fz}) corner=({cx},{cz}) rot={rot} rows={c.WallRows}");
                         }
@@ -832,9 +957,11 @@ namespace TaleSpireMapGen.Generation
 
                 if (rots.Count == 1)
                 {
-                    // Straight wall — stack once per row.
+                    // Straight wall — stack once per row, standing on a floor tile of its own
+                    // unless the wall carries one.
+                    if (!wi.WallCombo) out_.Add(Mk(wi.Floor, wx, wi.Cy, wz, 0));
                     for (int row = 0; row < wi.WallRows; row++)
-                        out_.Add(Mk(wi.Wall, wx, wi.Cy + row * wi.WallHeight, wz, rots[0]));
+                        out_.Add(Mk(wi.Wall, wx, wi.WallBase + row * wi.WallHeight, wz, rots[0]));
 
                     if (nearOC) DebugLog?.Invoke($"[Phase3-wall] ({wx},{wz}) rot={rots[0]} rows={wi.WallRows}");
                 }
@@ -851,16 +978,16 @@ namespace TaleSpireMapGen.Generation
                     }
                     else if (style == "separate_tile")
                     {
-                        out_.Add(Mk(wi.Floor,  wx, wi.Cy, wz, 0));
-                        out_.Add(Mk(wi.Corner, wx, wi.Cy, wz, rot));
+                        out_.Add(Mk(wi.Floor,  wx, wi.Cy,       wz, 0));
+                        out_.Add(Mk(wi.Corner, wx, wi.WallBase, wz, rot));
                         if (nearOC) DebugLog?.Invoke($"[Phase3-inner-sep] ({wx},{wz}) rot={rot}");
                     }
                     else // filler (default)
                     {
                         float icXOff = rots.Contains(ROT_EAST)  ? 0.5f : 0f;
                         float icZOff = rots.Contains(ROT_SOUTH) ? 0.5f : 0f;
-                        out_.Add(Mk(wi.Floor, wx,          wi.Cy,        wz,          0));
-                        out_.Add(Mk(wi.Inner, wx + icXOff, wi.Cy + 0.5f, wz + icZOff, rot));
+                        out_.Add(Mk(wi.Floor, wx,          wi.Cy,                    wz,          0));
+                        out_.Add(Mk(wi.Inner, wx + icXOff, wi.Cy + wi.FloorThick,    wz + icZOff, rot));
                         if (nearOC) DebugLog?.Invoke($"[Phase3-inner] ({wx},{wz}) rot={rot} offsets=({icXOff},{icZOff})");
                     }
                 }
@@ -881,7 +1008,11 @@ namespace TaleSpireMapGen.Generation
                     int   icRot  = InnerCornerRot(c.XStep, c.ZStep);
                     string style = c.InnerCornerStyle ?? "filler";
 
-                    out_.Add(Mk(c.Floor, icx, c.Cy, icz, 0)); // floor at base always
+                    // The filler styles layer their piece over a floor tile and need one; a
+                    // separate_tile corner on a combo theme brings its own, and stacking a second
+                    // floor under it buries the corner in it.
+                    if (!(c.WallCombo && style == "separate_tile"))
+                        out_.Add(Mk(c.Floor, icx, c.Cy, icz, 0));
 
                     if (style == "none")
                     {
@@ -890,12 +1021,12 @@ namespace TaleSpireMapGen.Generation
                     else if (style == "separate_tile")
                     {
                         for (int row = 0; row < c.WallRows; row++)
-                            out_.Add(Mk(c.Corner, icx, c.Cy + row * c.WallHeight, icz, icRot));
+                            out_.Add(Mk(c.Corner, icx, c.WallBase + row * c.WallHeight, icz, icRot));
                     }
                     else // filler
                     {
                         for (int row = 0; row < c.WallRows; row++)
-                            out_.Add(Mk(c.Inner, icx + icXOff, c.Cy + row * c.WallHeight + 0.5f, icz + icZOff, icRot));
+                            out_.Add(Mk(c.Inner, icx + icXOff, c.Cy + c.FloorThick + row * c.WallHeight, icz + icZOff, icRot));
                     }
                 }
 
@@ -904,30 +1035,15 @@ namespace TaleSpireMapGen.Generation
                 {
                     int ocx = claimOC[i].Value.x, ocz = claimOC[i].Value.z;
                     int rot = OuterCornerRot(c.XStep, c.ZStep);
+                    if (!c.WallCombo) out_.Add(Mk(c.Floor, ocx, c.Cy, ocz, 0));
                     for (int row = 0; row < c.WallRows; row++)
-                        out_.Add(Mk(c.Corner, ocx, c.Cy + row * c.WallHeight, ocz, rot));
+                        out_.Add(Mk(c.Corner, ocx, c.WallBase + row * c.WallHeight, ocz, rot));
 
                     DebugLog?.Invoke($"[Phase4-OC] ({c.X1},{c.Z1})->({c.X2},{c.Z2}) step=({c.XStep},{c.ZStep}) corner=({ocx},{ocz}) rot={rot} rows={c.WallRows}");
                 }
                 else
                 {
                     DebugLog?.Invoke($"[Phase4-OC-skip] straight corridor ({c.X1},{c.Z1})->({c.X2},{c.Z2})");
-                }
-            }
-
-            // ── Tile dump: log all tiles within 3 cells of each outer corner cluster ──
-            foreach (var t in out_)
-            {
-                bool nearOC = (Math.Abs(t.X - 13) <= 3 && Math.Abs(t.Z - 17) <= 3)
-                           || (Math.Abs(t.X - 23) <= 3 && Math.Abs(t.Z - 35) <= 3);
-                if (nearOC)
-                {
-                    string guidHex = BitConverter.ToString(t.Guid).Replace("-","").ToLower();
-                    string role = guidHex.StartsWith("dcc8d3fd") ? "CORNER" :
-                                  guidHex.StartsWith("cec14f2e") ? "INNER " :
-                                  guidHex.StartsWith("ed0ad169") ? "WALL  " :
-                                  guidHex.StartsWith("d5900784") ? "FLOOR " : guidHex.Substring(0,8);
-                    DebugLog?.Invoke($"[TileDump] {role} x={t.X:F1} y={t.Y:F1} z={t.Z:F1} rot={t.RotStep}");
                 }
             }
 
@@ -1071,10 +1187,46 @@ namespace TaleSpireMapGen.Generation
         // ──────────────────────────────────────────────────────────────────────
 
         private static Tile Mk(TileEntry tile, int x, float y, int z, int rot) =>
-            new Tile { Guid = tile.GuidBytes, X = x, Y = y, Z = z, RotStep = rot };
+            Mk(tile, (float)x, y, (float)z, rot);
 
-        private static Tile Mk(TileEntry tile, float x, float y, float z, int rot) =>
-            new Tile { Guid = tile.GuidBytes, X = x, Y = y, Z = z, RotStep = rot };
+        private static Tile Mk(TileEntry tile, float x, float y, float z, int rot)
+        {
+            var hug = EdgeHug(tile, rot);
+            return new Tile
+            {
+                Guid = tile.GuidBytes, Role = tile.Role,
+                X = Q(x + hug.X), Y = Q(y), Z = Q(z + hug.Z), RotStep = rot,
+            };
+        }
+
+        // TaleSpire stores a tile's position as the minimum corner of its *world* bounding box —
+        // TileBuilderBoardTool writes GetWorldSnappedBound().min — so a tile whose footprint is
+        // smaller than its cell settles against the cell's low-x/low-z side however it is turned.
+        // Six of the twenty usable tilesets ship a wall that is 1 x 0.5, and those line the north
+        // and west edges of their cell correctly while sitting half a cell in from the south and
+        // east ones. Which is exactly the "walls disconnected from their floors" report: a combo
+        // wall carries its own floor and so fills the cell, and full-cell tiles come out at zero
+        // here, which is why only the separate-wall sets ever showed it.
+        //
+        // Walls and corners only. A door is deliberately shifted to the half nearest the corridor
+        // and an inner corner is a quarter tile dropped in a chosen pocket; both already pick an
+        // offset that means something else, and would double up with this one.
+        private static (float X, float Z) EdgeHug(TileEntry tile, int rot)
+        {
+            if (tile.Role != TileRole.Wall && tile.Role != TileRole.Corner) return (0f, 0f);
+            var foot = tile.RotatedFootprint(rot);
+            return (rot == ROT_EAST  ? Math.Max(0f, 1f - foot.X) : 0f,
+                    rot == ROT_SOUTH ? Math.Max(0f, 1f - foot.Z) : 0f);
+        }
+
+        // The slab format stores positions as an integer number of centimetres, so snap to that
+        // grid here: a storey height summed out of a 0.2-thick floor lands on 4.1999998, and
+        // without this the validators and the renderer reason about a number the game never sees.
+        private static float Q(float v) => (float)Math.Round(v * 100.0) / 100f;
+
+        /// <summary>Grid cell and exact elevation of a tile, for matching what shares a cell.</summary>
+        private static (int, int, int) Cell(Tile t) =>
+            ((int)Math.Floor(t.X), (int)Math.Round(t.Y * 100), (int)Math.Floor(t.Z));
 
         private static float Clamp(float v, float lo, float hi) =>
             v < lo ? lo : v > hi ? hi : v;

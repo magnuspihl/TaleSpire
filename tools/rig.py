@@ -17,6 +17,7 @@ path that saves board state.
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 import time
@@ -142,8 +143,20 @@ def cmd_shutdown(a):
 
 
 def cmd_click(a):
-    indocker(f"xdotool mousemove {a.x} {a.y} click {a.button}", check=False)
-    print(f"clicked ({a.x},{a.y})")
+    # Three separate calls on purpose. The combined `xdotool mousemove X Y click 1` form is
+    # silently ignored by TaleSpire — the pointer moves and nothing else happens.
+    indocker(f"xdotool mousemove {a.x} {a.y}", check=False)
+    time.sleep(1)
+    indocker(f"xdotool click --delay 150 {a.button}", check=False)
+    print(f"clicked ({a.x},{a.y}) button {a.button}")
+    return 0
+
+
+def cmd_move(a):
+    # A paste preview follows the cursor, and a left-click commits it onto the board. Positioning
+    # the cursor before pasting therefore has to be a move and nothing else.
+    indocker(f"xdotool mousemove {a.x} {a.y}", check=False)
+    print(f"moved to ({a.x},{a.y})")
     return 0
 
 
@@ -153,11 +166,37 @@ def cmd_key(a):
     return 0
 
 
+def grid_args(step, width, height, x0, y0):
+    """Draw labelled screen-coordinate rules over the shot.
+
+    Reading a button's position off a screenshot means guessing the scale it was displayed at,
+    and a guess that is off by a third clicks somewhere plausible and wrong. Labelled rules
+    remove the arithmetic entirely: read the number off the image, click that number."""
+    d = ["-stroke '#00ff00' -strokewidth 1 -fill none"]
+    for x in range(0, width + 1, step):
+        d.append(f"-draw 'line {x},0 {x},{height}'")
+    for y in range(0, height + 1, step):
+        d.append(f"-draw 'line 0,{y} {width},{y}'")
+    d.append("-stroke none -fill '#00ff00' -pointsize 13")
+    for x in range(0, width + 1, step):
+        for y in range(0, height + 1, step):
+            d.append(f"-draw \"text {x + 2},{y + 13} '{x + x0},{y + y0}'\"")
+    return " ".join(d)
+
+
 def cmd_screenshot(a):
     remote = "/tmp/rig-shot.png"
     indocker(f"import -window root {remote}")
+    x0 = y0 = 0
     if a.crop:
         indocker(f"convert {remote} -crop '{a.crop}' +repage {remote}")
+        m = re.match(r"(\d+)x(\d+)\+(\d+)\+(\d+)$", a.crop)
+        if m:
+            x0, y0 = int(m.group(3)), int(m.group(4))
+    if a.grid:
+        # Before the resize, so the labels name real screen pixels and not zoomed ones.
+        w, h = out(indocker(f"identify -format %wx%h {remote}")).split("x")
+        indocker(f"convert {remote} {grid_args(a.grid, int(w), int(h), x0, y0)} {remote}")
     if a.zoom and a.zoom != 1:
         indocker(f"convert {remote} -resize {a.zoom * 100}% {remote}")
     with open(a.out, "wb") as f:
@@ -224,6 +263,8 @@ def main():
     s.add_argument("out")
     s.add_argument("--crop", help="ImageMagick geometry, e.g. 800x600+400+200")
     s.add_argument("--zoom", type=int, default=1, help="upscale factor, for reading small UI text")
+    s.add_argument("--grid", type=int, nargs="?", const=100, metavar="STEP",
+                   help="overlay labelled screen-coordinate rules, to click by reading not guessing")
     s.set_defaults(fn=cmd_screenshot)
 
     k = sub.add_parser("click")
@@ -231,6 +272,11 @@ def main():
     k.add_argument("y", type=int)
     k.add_argument("--button", type=int, default=1)
     k.set_defaults(fn=cmd_click)
+
+    mv = sub.add_parser("move")
+    mv.add_argument("x", type=int)
+    mv.add_argument("y", type=int)
+    mv.set_defaults(fn=cmd_move)
 
     key = sub.add_parser("key")
     key.add_argument("keys", help="xdotool key spec, e.g. ctrl+v or Escape")

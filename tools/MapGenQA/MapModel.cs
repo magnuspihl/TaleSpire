@@ -13,10 +13,14 @@ namespace MapGenQA
         public readonly int Rot;
         public readonly TileRole Role;
         public readonly bool RoleKnown;
+        public readonly string Size;
+        public readonly float Height;
 
-        public Placement(string guid, float x, float y, float z, int rot, TileRole role, bool roleKnown)
+        public Placement(string guid, float x, float y, float z, int rot,
+                         TileRole role, bool roleKnown, string size, float height)
         {
             Guid = guid; X = x; Y = y; Z = z; Rot = rot; Role = role; RoleKnown = roleKnown;
+            Size = size; Height = height;
         }
 
         // Positions are keyed the way the encoder stores them (value * 100, truncated to int),
@@ -27,11 +31,11 @@ namespace MapGenQA
         public override string ToString() => $"({X},{Y},{Z}) rot={Rot} {(RoleKnown ? Role.ToString() : "Unknown")}";
     }
 
-    /// Maps tile GUIDs back to the role they were placed as. Built by walking TileCatalog's
+    /// Maps tile GUIDs back to the entry they were placed as. Built by walking TileCatalog's
     /// public surface, since it does not expose its backing dictionary.
     public static class TileIndex
     {
-        private static readonly Dictionary<string, TileRole> _byGuid = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, TileEntry> _byGuid = new(StringComparer.OrdinalIgnoreCase);
 
         static TileIndex()
         {
@@ -43,12 +47,12 @@ namespace MapGenQA
                     try { e = TileCatalog.Get(theme, role); }
                     catch { continue; }   // role absent for this theme
                     if (!string.IsNullOrEmpty(e.Id))
-                        _byGuid[e.Id] = role;
+                        _byGuid[e.Id] = e;
                 }
             }
         }
 
-        public static bool TryGetRole(string guid, out TileRole role) => _byGuid.TryGetValue(guid, out role);
+        public static bool TryGet(string guid, out TileEntry entry) => _byGuid.TryGetValue(guid, out entry);
     }
 
     /// One generated map: the spec that produced it plus the resolved tile placements.
@@ -57,27 +61,34 @@ namespace MapGenQA
         public int Seed;
         public int Size;
         public string Theme;
+        public string UpperTheme;
         public LayoutSpec Spec;
         public List<Placement> Tiles = new();
 
-        public string Label => $"seed={Seed} size={SizeName(Size)} theme='{Theme}'";
+        public string Label => $"seed={Seed} size={SizeName(Size)} theme='{Theme}'"
+                             + (UpperTheme == null ? "" : $" upper='{UpperTheme}'");
 
         public static string SizeName(int s) => s switch { 0 => "small", 1 => "medium", 2 => "large", _ => s.ToString() };
 
-        public static GeneratedMap Generate(int seed, int size, string theme)
+        public static GeneratedMap Generate(int seed, int size, string theme, string upperTheme = null)
         {
             var spec = new DungeonTemplate().Generate(new TemplateParams
             {
-                Seed = seed, Theme = theme, DungeonSize = size, MinFloors = 1, MaxFloors = 2,
+                Seed = seed, Theme = theme, UpperTheme = upperTheme,
+                DungeonSize = size, MinFloors = 1, MaxFloors = 2,
             });
 
-            var map = new GeneratedMap { Seed = seed, Size = size, Theme = theme, Spec = spec };
+            var map = new GeneratedMap
+            {
+                Seed = seed, Size = size, Theme = theme, UpperTheme = upperTheme, Spec = spec,
+            };
 
             foreach (var (guid, x, y, z, rot) in SlabBuilder.Build(spec))
             {
                 string g = new Guid(guid).ToString();
-                bool known = TileIndex.TryGetRole(g, out var role);
-                map.Tiles.Add(new Placement(g, x, y, z, rot, known ? role : default, known));
+                bool known = TileIndex.TryGet(g, out var e);
+                map.Tiles.Add(new Placement(g, x, y, z, rot, known ? e.Role : default, known,
+                                            known ? e.Size : null, known ? e.Height : 0f));
             }
             return map;
         }

@@ -4,7 +4,7 @@ namespace TaleSpireMapGen.Generation
 {
     public enum TileRole
     {
-        Floor, Wall, Corner, InnerCorner, Stairs, Door, Window, Arch, Roof, Pillar, Prop
+        Floor, Wall, Corner, InnerCorner, Stairs, StairBlock, Door, Window, Arch, Roof, Pillar, Prop
     }
 
     public class TileRef

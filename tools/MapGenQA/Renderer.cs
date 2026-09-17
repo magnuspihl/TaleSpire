@@ -29,6 +29,10 @@ namespace MapGenQA
                           $"stairs={map.Spec.VerticalConnections?.Count ?? 0} " +
                           $"tiles={map.Tiles.Count}");
 
+            int groundArea = (map.Spec.Rooms ?? new List<RoomSpec>())
+                .Where(r => r.OriginY < 0.001f)
+                .Sum(r => Math.Max(r.Width, 3) * Math.Max(r.Depth, 3));
+
             foreach (float y in map.RoomElevations)
             {
                 var cells = new Dictionary<(int, int), (char ch, int rank)>();
@@ -49,8 +53,17 @@ namespace MapGenQA
                 var roomsHere = (map.Spec.Rooms ?? new List<RoomSpec>())
                     .Where(r => Math.Abs(r.OriginY - y) < 0.001f).ToList();
 
+                // Total room footprint, and what fraction of the ground floor's it is. "The upper
+                // floor is too small" is a judgement about this number, and without printing it
+                // there is no way to tell a real improvement from one that moved a different
+                // measure — fill within the storey's own shell, say.
+                int area   = roomsHere.Sum(r => Math.Max(r.Width, 3) * Math.Max(r.Depth, 3));
+                string rel = groundArea > 0 && y > 0.001f
+                    ? $", {100f * area / groundArea:F0}% of ground" : "";
+
                 sb.AppendLine();
-                sb.AppendLine($"── elevation y={y}  ({roomsHere.Count} rooms, x {minX}..{maxX}, z {minZ}..{maxZ}) ──");
+                sb.AppendLine($"── elevation y={y}  ({roomsHere.Count} rooms, {area} cells{rel}, " +
+                              $"x {minX}..{maxX}, z {minZ}..{maxZ}) ──");
                 for (int z = minZ; z <= maxZ; z++)
                 {
                     var line = new StringBuilder();
