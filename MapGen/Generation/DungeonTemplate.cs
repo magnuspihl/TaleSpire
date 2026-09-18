@@ -24,7 +24,19 @@ namespace TaleSpireMapGen.Generation
         private int _maxRoom        = 18;
         private int _maxDepth       = 5;
         private int _maxHubCandidates = 2;
-        private const int Padding   = 2;  // gap between partition edge and room edge
+        private int _loopBudget     = 2;
+        private const int Padding   = 1;  // gap between partition edge and room edge
+
+        // A loop corridor longer than this reads as a second route to somewhere else rather than
+        // a shortcut, so pairs further apart than this are not worth connecting.
+        private const int MaxLoopGap = 14;
+
+        // Fraction of what a partition could hold that a room must reach at minimum.
+        private const float RoomFill = 0.7f;
+
+        // How far a pendant room may sit from the nearest hub carrier and still be given a landing.
+        // A landing further out than this is a room of its own standing alone on the roofline.
+        private const int MaxLandingGap = 8;
 
         // ──────────────────────────────────────────────────────────────────────
         // BSP node
@@ -66,17 +78,159 @@ namespace TaleSpireMapGen.Generation
 
             var spec = new LayoutSpec
             {
-                Theme       = theme,
-                Rooms       = rooms,
-                Connections = connections,
-                Notes       = $"BSP dungeon, seed={p.Seed}, size={sizeName}, rooms={rooms.Count}",
+                Theme          = theme,
+                ClutterDensity = p.ClutterDensity,
+                Seed           = p.Seed,
+                Rooms          = rooms,
+                Connections    = connections,
+                Notes          = $"BSP dungeon, seed={p.Seed}, size={sizeName}, rooms={rooms.Count}",
             };
 
             int minFloors = p.MinFloors > 0 ? p.MinFloors : 1;
             int maxFloors = p.MaxFloors > 0 ? p.MaxFloors : 2;
-            ApplyMultiFloor(spec, rng, minFloors, maxFloors);
+            string upperTheme = string.IsNullOrEmpty(p.UpperTheme) ? theme : p.UpperTheme;
+            ApplyMultiFloor(spec, rng, minFloors, maxFloors, upperTheme);
+            AddLoopConnections(spec, rng);
+
+            // Before purposes, because depth is measured in steps from the way in.
+            EntrancePlacer.Place(spec);
+
+            // Last, because a purpose is decided from the finished shape of the map: which room is
+            // the deepest dead end, which is the best connected, which storey a room ended up on.
+            PurposeAssigner.Assign(spec, p.PurposeQuota, rng);
 
             return spec;
+        }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // Loop connections
+        // ──────────────────────────────────────────────────────────────────────
+
+        // BSP connects each subtree to its sibling exactly once, so the room graph is a spanning
+        // tree: every room but one is a dead end and play degenerates into explore-then-backtrack.
+        // This adds a few chords between rooms that are near in space but far apart in the graph,
+        // which is what turns a branch into a circuit.
+        //
+        // Runs after ApplyMultiFloor on purpose. Multi-floor picks which rooms go upstairs by
+        // looking for pendant rooms (exactly one connection), so adding chords first would starve
+        // it of candidates and cost stairs.
+        private void AddLoopConnections(LayoutSpec spec, Random rng)
+        {
+            if (_loopBudget <= 0 || spec.Rooms == null || spec.Rooms.Count < 4) return;
+
+            for (int added = 0; added < _loopBudget; added++)
+            {
+                var dist = GraphDistances(spec);
+                var best = LoopCandidates(spec)
+                    .Where(c => Detour(dist, c.a.Id, c.b.Id) >= 4)   // below this it is a triangle
+                    .OrderByDescending(c => Detour(dist, c.a.Id, c.b.Id))
+                    .ThenBy(c => c.gap)
+                    .FirstOrDefault();
+
+                if (best.a == null) return;
+                ConnectRooms(best.a, best.b, spec.Connections, rng);
+            }
+        }
+
+        // How far apart two rooms currently are in the room graph. int.MaxValue/2 keeps the
+        // arithmetic safe for rooms on separate components, which multi-floor can produce.
+        private static int Detour(Dictionary<string, Dictionary<string, int>> dist, string a, string b)
+        {
+            if (dist.TryGetValue(a, out var from) && from.TryGetValue(b, out int d)) return d;
+            return int.MaxValue / 2;
+        }
+
+        private static Dictionary<string, Dictionary<string, int>> GraphDistances(LayoutSpec spec)
+        {
+            var adj = new Dictionary<string, List<string>>();
+            void Link(string x, string y)
+            {
+                if (!adj.TryGetValue(x, out var l)) adj[x] = l = new List<string>();
+                if (!l.Contains(y)) l.Add(y);
+            }
+            foreach (var r in spec.Rooms) adj[r.Id] = new List<string>();
+            foreach (var c in spec.Connections ?? new List<Connection>())
+            { Link(c.FromRoomId, c.ToRoomId); Link(c.ToRoomId, c.FromRoomId); }
+            foreach (var v in spec.VerticalConnections ?? new List<VerticalConnection>())
+            { Link(v.LowerRoomId, v.UpperRoomId); Link(v.UpperRoomId, v.LowerRoomId); }
+
+            var all = new Dictionary<string, Dictionary<string, int>>();
+            foreach (var r in spec.Rooms)
+            {
+                var d = new Dictionary<string, int> { [r.Id] = 0 };
+                var q = new Queue<string>();
+                q.Enqueue(r.Id);
+                while (q.Count > 0)
+                {
+                    string cur = q.Dequeue();
+                    foreach (string nb in adj[cur])
+                        if (!d.ContainsKey(nb)) { d[nb] = d[cur] + 1; q.Enqueue(nb); }
+                }
+                all[r.Id] = d;
+            }
+            return all;
+        }
+
+        // Pairs that could take a straight corridor between facing walls: same storey, walls that
+        // overlap enough for a door, a short gap, and nothing in the way.
+        private IEnumerable<(RoomSpec a, RoomSpec b, int gap)> LoopCandidates(LayoutSpec spec)
+        {
+            var linked = new HashSet<(string, string)>();
+            foreach (var c in spec.Connections ?? new List<Connection>())
+            { linked.Add((c.FromRoomId, c.ToRoomId)); linked.Add((c.ToRoomId, c.FromRoomId)); }
+
+            var rooms = spec.Rooms;
+            for (int i = 0; i < rooms.Count; i++)
+            for (int j = i + 1; j < rooms.Count; j++)
+            {
+                var a = rooms[i];
+                var b = rooms[j];
+                if (a.OriginY != b.OriginY) continue;
+                if (linked.Contains((a.Id, b.Id))) continue;
+
+                // ConnectRooms needs three cells of wall to place a door away from the corners.
+                int zOv = Overlap(a.OriginZ, a.Depth, b.OriginZ, b.Depth);
+                int xOv = Overlap(a.OriginX, a.Width, b.OriginX, b.Width);
+
+                if (zOv >= 3)
+                {
+                    var (l, r) = a.OriginX < b.OriginX ? (a, b) : (b, a);
+                    int gap = r.OriginX - (l.OriginX + l.Width);
+                    if (gap >= 1 && gap <= MaxLoopGap &&
+                        !Blocked(spec, a, b, l.OriginX + l.Width, r.OriginX,
+                                 Math.Max(a.OriginZ, b.OriginZ),
+                                 Math.Min(a.OriginZ + a.Depth, b.OriginZ + b.Depth), a.OriginY))
+                        yield return (a, b, gap);
+                }
+                else if (xOv >= 3)
+                {
+                    var (n, s) = a.OriginZ < b.OriginZ ? (a, b) : (b, a);
+                    int gap = s.OriginZ - (n.OriginZ + n.Depth);
+                    if (gap >= 1 && gap <= MaxLoopGap &&
+                        !Blocked(spec, a, b, Math.Max(a.OriginX, b.OriginX),
+                                 Math.Min(a.OriginX + a.Width, b.OriginX + b.Width),
+                                 n.OriginZ + n.Depth, s.OriginZ, a.OriginY))
+                        yield return (a, b, gap);
+                }
+            }
+        }
+
+        private static int Overlap(int aStart, int aLen, int bStart, int bLen) =>
+            Math.Min(aStart + aLen, bStart + bLen) - Math.Max(aStart, bStart);
+
+        // A corridor driven through a third room would breach its wall without a door, which the
+        // enclosure checks treat — correctly — as a leak. Reject the pair instead.
+        private static bool Blocked(LayoutSpec spec, RoomSpec a, RoomSpec b,
+                                    int x0, int x1, int z0, int z1, float y)
+        {
+            foreach (var r in spec.Rooms)
+            {
+                if (r == a || r == b || r.OriginY != y) continue;
+                // Grown by one so a corridor grazing a room's wall ring still counts as blocked.
+                if (r.OriginX - 1 < x1 && r.OriginX + r.Width  + 1 > x0 &&
+                    r.OriginZ - 1 < z1 && r.OriginZ + r.Depth  + 1 > z0) return true;
+            }
+            return false;
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -89,13 +243,13 @@ namespace TaleSpireMapGen.Generation
             {
                 case 0: // Small
                     _gridW = _gridD = 44; _minPartition = 12; _minRoom = 5;
-                    _maxRoom = 14; _maxDepth = 4; _maxHubCandidates = 1; break;
+                    _maxRoom = 14; _maxDepth = 4; _maxHubCandidates = 2; _loopBudget = 2; break;
                 case 2: // Large
                     _gridW = _gridD = 88; _minPartition = 16; _minRoom = 6;
-                    _maxRoom = 22; _maxDepth = 6; _maxHubCandidates = 3; break;
+                    _maxRoom = 22; _maxDepth = 6; _maxHubCandidates = 5; _loopBudget = 5; break;
                 default: // Medium
                     _gridW = _gridD = 64; _minPartition = 14; _minRoom = 6;
-                    _maxRoom = 18; _maxDepth = 5; _maxHubCandidates = 2; break;
+                    _maxRoom = 18; _maxDepth = 5; _maxHubCandidates = 4; _loopBudget = 4; break;
             }
         }
 
@@ -149,8 +303,13 @@ namespace TaleSpireMapGen.Generation
             {
                 int maxW = Math.Min(_maxRoom, node.W - Padding * 2);
                 int maxD = Math.Min(_maxRoom, node.D - Padding * 2);
-                int roomW = rng.Next(_minRoom, Math.Max(_minRoom, maxW) + 1);
-                int roomD = rng.Next(_minRoom, Math.Max(_minRoom, maxD) + 1);
+
+                // Drawing uniformly from _minRoom leaves rooms sitting around the middle of what
+                // their partition can hold, so the exterior shell — which rings the whole bounding
+                // box — ends up enclosing more bare board than room. Raising the floor of the draw
+                // keeps the variation but stops rooms being small inside a large partition.
+                int roomW = rng.Next(LowerBound(maxW), Math.Max(_minRoom, maxW) + 1);
+                int roomD = rng.Next(LowerBound(maxD), Math.Max(_minRoom, maxD) + 1);
 
                 int spaceX = Math.Max(0, node.W - Padding * 2 - roomW);
                 int spaceZ = Math.Max(0, node.D - Padding * 2 - roomD);
@@ -290,11 +449,21 @@ namespace TaleSpireMapGen.Generation
 
         private static int Clamp(int v, int lo, int hi) => v < lo ? lo : v > hi ? hi : v;
 
+        // Smallest room dimension worth drawing for a partition that could hold `max`, never
+        // below _minRoom and never above `max` itself.
+        private int LowerBound(int max) =>
+            Clamp((int)(max * RoomFill), _minRoom, Math.Max(_minRoom, max));
+
         // ──────────────────────────────────────────────────────────────────────
         // Multi-floor pass
         // ──────────────────────────────────────────────────────────────────────
 
-        private void ApplyMultiFloor(LayoutSpec spec, Random rng, int minFloors, int maxFloors)
+        // `upperTheme` may differ from the ground theme — a dungeon basement under a castle keep.
+        // Only the rooms and corridors *on* the upper storey take it. The storey's height is still
+        // measured in the lower theme's tiles, because the stair stands in the lower room; the run
+        // length needs both themes, since it has to arrive on the upper theme's floor surface.
+        private void ApplyMultiFloor(LayoutSpec spec, Random rng, int minFloors, int maxFloors,
+                                     string upperTheme)
         {
             if (maxFloors < 2) return;
 
@@ -305,19 +474,93 @@ namespace TaleSpireMapGen.Generation
             string stairType = profile.StairType ?? "";
             if (stairType != "stackable" && stairType != "mixed") return;
 
-            // ── Phase 1: Hub upper rooms above the largest lower rooms ──
-            // Candidate count scales with dungeon size via _maxHubCandidates.
-            float avgArea = 0f;
-            foreach (var r in spec.Rooms) avgArea += r.Width * r.Depth;
-            avgArea /= spec.Rooms.Count;
+            // Decide against a second storey here rather than in SlabBuilder. Committing to one
+            // and then finding no stair tile to place leaves an upper floor with no way up.
+            if (!TileCatalog.HasTile(theme, TileRole.Stairs)) return;
 
-            var candidates = new List<RoomSpec>();
+            // ── Phase 0: how tall the storey is, and how long that makes the stairs ──
+            // The shortest stack that still clears MinCeilingHeight. Deriving it from the
+            // tallest BSP room instead would raise the whole storey to suit one room, and the
+            // straight stair run needed to reach it would no longer fit inside any of them.
+            // This is a headroom check against the profile's curated figures, deliberately kept
+            // distinct from TileCatalog.StoreyHeight: MinCeilingHeight is curated against the same
+            // curated WallHeight/FloorHeight, so mixing in the placed tile's real height would
+            // compare two different measurements.
+            int upperWallRows = 1;
+            while (upperWallRows * profile.WallHeight + profile.FloorHeight < profile.MinCeilingHeight
+                   && upperWallRows < 8)
+                upperWallRows++;
+
+            // The run occupies one cell per tread, and needs a clear landing cell at each end
+            // inside the wall ring — so wall + landing + run + landing + wall.
+            int stairRun = TileCatalog.StairStepCount(theme, upperWallRows, upperTheme);
+            bool Fits(RoomSpec r) => Math.Max(r.Width, r.Depth) >= stairRun + 4;
+
+            // ── Phase 1: choose which lower rooms will carry an upper room ──
+            // Hubs sit above the largest rooms; landings sit above pendant rooms cut off from
+            // the ground network. Both sets are decided before any geometry is fixed, because
+            // every upper room has to end up on one shared storey (see Phase 2).
+            // Candidate count scales with dungeon size via _maxHubCandidates.
+            // Every room that can hold a stair run is eligible; area only decides which one seeds
+            // the cluster (the sort below). Filtering by area *before* growing starved the cluster:
+            // on a map whose above-average rooms all sit more than MaxLandingGap apart, growth
+            // stopped at the seed and the upper storey came out as one room over a 1751-cell ground
+            // floor — the "upper floor is tiny" symptom.
+            var eligible = new List<RoomSpec>();
             foreach (var r in spec.Rooms)
-                if (r.Width * r.Depth >= avgArea)
-                    candidates.Add(r);
-            candidates.Sort((a, b) => (b.Width * b.Depth).CompareTo(a.Width * a.Depth));
-            if (candidates.Count > _maxHubCandidates) candidates.RemoveRange(_maxHubCandidates, candidates.Count - _maxHubCandidates);
-            if (candidates.Count == 0) return;
+                if (Fits(r))
+                    eligible.Add(r);
+            if (eligible.Count == 0) return;
+
+            // Grow a contiguous patch of carriers outward from the largest eligible room, taking
+            // each next room only if it touches the patch already chosen. Picking the N largest
+            // rooms outright — or even the N nearest the seed — scatters carriers across the map,
+            // and the storey's shell then rings a bounding box that is mostly bare board. Growing
+            // by adjacency keeps the upper floor as one compact, self-contained level standing on
+            // the part of the dungeon beneath it, and stops early rather than reaching for a
+            // distant room just to fill the quota.
+            eligible.Sort((a, b) => (b.Width * b.Depth).CompareTo(a.Width * a.Depth));
+            var candidates = new List<RoomSpec> { BestClusterSeed(eligible) };
+            while (candidates.Count < _maxHubCandidates)
+            {
+                var next = eligible
+                    .Where(r => !candidates.Contains(r))
+                    .Where(r => candidates.Any(c => RoomGap(r, c) <= MaxLandingGap))
+                    .OrderBy(r => candidates.Min(c => RoomDistSq(r, c)))
+                    .FirstOrDefault();
+                if (next == null) break;
+                candidates.Add(next);
+            }
+
+            var hubLowerIds = new HashSet<string>();
+            foreach (var c in candidates) hubLowerIds.Add(c.Id);
+
+            // A landing sits directly above the pendant it isolates, so a pendant on the far side
+            // of the map plants an upper room away from every hub. The corridor out to it then
+            // crosses bare board and the storey's shell has to stretch around both — which is the
+            // rest of why upper floors read as empty. Only pendants inside the hub cluster qualify.
+            var pendants = FindPendantRooms(spec, hubLowerIds)
+                .FindAll(p => Fits(p) && candidates.Any(c => RoomGap(p, c) <= MaxLandingGap));
+            int isolateCount = pendants.Count > 0 ? Math.Min(pendants.Count, rng.Next(1, 3)) : 0;
+            var isolated     = pendants.GetRange(0, isolateCount);
+
+            // ── Phase 2: put the whole upper storey on one elevation ──
+            // Wall rows vary per room, so deriving each upper room's height from its own lower
+            // room scatters them across several elevations. The horizontal corridors joining
+            // them would then span storeys, and SlabBuilder would emit those corridors at the
+            // lower of the two heights — leaving open-ended corridors hanging in mid-air.
+            var carriers = new List<RoomSpec>(candidates);
+            carriers.AddRange(isolated);
+            foreach (var lower in carriers) lower.WallRows = upperWallRows;
+
+            // A ground room taller than the storey gap pushes its top wall row up through the
+            // upper floor, and the corridors that inherit its height do the same wherever they
+            // run. Shorter rooms are left alone — they only fall short of the ceiling.
+            foreach (var r in spec.Rooms)
+                if (r.WallRows > upperWallRows) r.WallRows = upperWallRows;
+
+            // Every BSP room sits at OriginY 0, so this one height serves the whole storey.
+            float upperY = TileCatalog.StoreyHeight(theme, upperWallRows);
 
             int upperIdx  = spec.Rooms.Count;
             var vertConns = new List<VerticalConnection>();
@@ -325,41 +568,42 @@ namespace TaleSpireMapGen.Generation
 
             foreach (var lower in candidates)
             {
-                int lowerWallRows = lower.WallRows > 0 ? lower.WallRows : 1;
-                float floorToFloor = lowerWallRows * profile.WallHeight + profile.FloorHeight;
-                while (floorToFloor < profile.MinCeilingHeight && lowerWallRows < 8)
-                {
-                    lowerWallRows++;
-                    floorToFloor = lowerWallRows * profile.WallHeight + profile.FloorHeight;
-                }
-                lower.WallRows = lowerWallRows;
-
-                float scaleW = 0.6f + (float)rng.NextDouble() * 0.2f;
-                float scaleD = 0.6f + (float)rng.NextDouble() * 0.2f;
+                // Close to the carrier's own footprint. Shrinking hard leaves a small box adrift
+                // in the middle of the storey's shell, which is most of why upper floors read as
+                // empty; it also costs the support the room is standing on.
+                float scaleW = 0.8f + (float)rng.NextDouble() * 0.15f;
+                float scaleD = 0.8f + (float)rng.NextDouble() * 0.15f;
                 int   hubW   = Math.Max(_minRoom, (int)Math.Round(lower.Width  * scaleW));
                 int   hubD   = Math.Max(_minRoom, (int)Math.Round(lower.Depth  * scaleD));
+
+                // The stair surfaces inside this room, so the room has to be long enough on the
+                // climb axis to hold the run plus its two landings. Shrinking the carrier by 80-95%
+                // can undercut that even though the lower room passed Fits.
+                bool climbOnZ = lower.Depth >= lower.Width;
+                if (climbOnZ) hubD = Math.Max(hubD, Math.Min(lower.Depth, stairRun + 4));
+                else          hubW = Math.Max(hubW, Math.Min(lower.Width, stairRun + 4));
+
                 int   hubX   = lower.OriginX + (lower.Width  - hubW) / 2;
                 int   hubZ   = lower.OriginZ + (lower.Depth  - hubD) / 2;
-                float hubY   = lower.OriginY + lowerWallRows * profile.WallHeight + profile.FloorHeight;
 
                 var hubRoom = new RoomSpec
                 {
                     Id       = $"room_{upperIdx++}",
-                    Theme    = lower.Theme,
+                    Theme    = upperTheme,
                     Width    = hubW,
                     Depth    = hubD,
                     OriginX  = hubX,
                     OriginZ  = hubZ,
-                    OriginY  = hubY,
+                    OriginY  = upperY,
                     WallRows = 1,
                 };
                 spec.Rooms.Add(hubRoom);
                 hubRooms.Add(hubRoom);
 
-                string climbDir = lower.Depth >= lower.Width
+                string climbDir = climbOnZ
                     ? (rng.Next(2) == 0 ? "north" : "south")
                     : (rng.Next(2) == 0 ? "east"  : "west");
-                (int sx, int sz) = StairOriginInRoom(lower, climbDir);
+                (int sx, int sz) = StairOriginInRoom(hubRoom, climbDir);
 
                 vertConns.Add(new VerticalConnection
                 {
@@ -375,56 +619,60 @@ namespace TaleSpireMapGen.Generation
             // MinFloors >= 2 forces connection; otherwise 70% chance.
             double hubConnectChance = minFloors >= 2 ? 1.0 : 0.70;
             if (hubRooms.Count >= 2 && rng.NextDouble() < hubConnectChance)
-                ConnectRooms(hubRooms[0], hubRooms[1], spec.Connections, rng);
-
-            // ── Phase 3: Isolated lower rooms (only reachable via upper floor) ──
-            // Find pendant nodes in the BSP connection graph — rooms with exactly one
-            // horizontal neighbour — and disconnect 1–2 of them from the lower network.
-            // Each gets a landing room above it connected back to a hub, making the
-            // only path: main floor → hub stairs → upper corridor → landing → stairs down.
-            var hubLowerIds = new HashSet<string>();
-            foreach (var vc in vertConns) hubLowerIds.Add(vc.LowerRoomId);
-
-            var pendants = FindPendantRooms(spec, hubLowerIds);
-            // At least 1 pendant required; only attempt if there are hub rooms to route through.
-            int isolateCount = (hubRooms.Count > 0 && pendants.Count > 0)
-                ? Math.Min(pendants.Count, rng.Next(1, 3))  // 1 or 2
-                : 0;
-
-            for (int i = 0; i < isolateCount; i++)
             {
-                var lower = pendants[i];
+                // Chain each hub to its nearest already-linked neighbour rather than joining only
+                // the first pair, or the storey ends up as one corridor plus a set of rooms that
+                // can only be reached by going back down the stairs.
+                var linked = new List<RoomSpec> { hubRooms[0] };
+                foreach (var next in hubRooms.Skip(1).OrderBy(h => RoomDistSq(hubRooms[0], h)))
+                {
+                    var nearest = linked.OrderBy(l => RoomDistSq(l, next)).First();
+                    ConnectRooms(nearest, next, spec.Connections, rng);
+                    linked.Add(next);
+                }
+            }
 
+            // ── Phase 4: Isolated lower rooms (only reachable via upper floor) ──
+            // The pendant rooms picked in Phase 1 are cut off from the ground network. Each
+            // gets a landing room above it connected back to a hub, making the only path:
+            // main floor → hub stairs → upper corridor → landing → stairs down.
+            foreach (var lower in isolated)
+            {
                 // Remove all horizontal connections to this room.
                 spec.Connections.RemoveAll(c => c.FromRoomId == lower.Id || c.ToRoomId == lower.Id);
 
                 // Landing room centred above the isolated lower room (50–70% of its footprint).
-                int   lowerWR = lower.WallRows > 0 ? lower.WallRows : 1;
-                float landY   = lower.OriginY + lowerWR * profile.WallHeight + profile.FloorHeight;
                 float sW      = 0.5f + (float)rng.NextDouble() * 0.2f;
                 float sD      = 0.5f + (float)rng.NextDouble() * 0.2f;
                 int   landW   = Math.Max(_minRoom, (int)Math.Round(lower.Width  * sW));
                 int   landD   = Math.Max(_minRoom, (int)Math.Round(lower.Depth  * sD));
+
+                // Same as the hubs: the run surfaces inside the landing, so the landing must be
+                // long enough on the climb axis to hold it.
+                bool climbOnZ = lower.Depth >= lower.Width;
+                if (climbOnZ) landD = Math.Max(landD, Math.Min(lower.Depth, stairRun + 4));
+                else          landW = Math.Max(landW, Math.Min(lower.Width, stairRun + 4));
+
                 int   landX   = lower.OriginX + (lower.Width  - landW) / 2;
                 int   landZ   = lower.OriginZ + (lower.Depth  - landD) / 2;
 
                 var landing = new RoomSpec
                 {
                     Id       = $"room_{upperIdx++}",
-                    Theme    = lower.Theme,
+                    Theme    = upperTheme,
                     Width    = landW,
                     Depth    = landD,
                     OriginX  = landX,
                     OriginZ  = landZ,
-                    OriginY  = landY,
+                    OriginY  = upperY,
                     WallRows = 1,
                 };
                 spec.Rooms.Add(landing);
 
-                string climbDir = lower.Depth >= lower.Width
+                string climbDir = climbOnZ
                     ? (rng.Next(2) == 0 ? "north" : "south")
                     : (rng.Next(2) == 0 ? "east"  : "west");
-                (int sx, int sz) = StairOriginInRoom(lower, climbDir);
+                (int sx, int sz) = StairOriginInRoom(landing, climbDir);
 
                 vertConns.Add(new VerticalConnection
                 {
@@ -474,18 +722,56 @@ namespace TaleSpireMapGen.Generation
             return result;
         }
 
-        // Returns the stair origin inside a room for a given climb direction.
-        // The origin is placed on the interior edge opposite the climb direction so the
-        // stair chain runs toward the wall and doesn't start outside the room.
+        // The bottom tread's cell, given the room the run lives in and how many treads it has.
+        // Measured against the *upper* room: the run surfaces through a stairwell in that room's
+        // floor, so it has to sit inside its interior rather than breach its wall ring.
+        // Inset by two rather than one so a clear landing cell is left at both ends — flush against
+        // the wall, the bottom tread faced straight into it.
         private static (int x, int z) StairOriginInRoom(RoomSpec room, string climbDir)
         {
+            int w = Math.Max(room.Width, 3), d = Math.Max(room.Depth, 3);
+            int cx = room.OriginX + w / 2, cz = room.OriginZ + d / 2;
             switch (climbDir?.ToLowerInvariant())
             {
-                case "north": return (room.OriginX + room.Width / 2, room.OriginZ + room.Depth - 2);
-                case "south": return (room.OriginX + room.Width / 2, room.OriginZ + 1);
-                case "east":  return (room.OriginX + 1,              room.OriginZ + room.Depth / 2);
-                default:      return (room.OriginX + room.Width - 2, room.OriginZ + room.Depth / 2);
+                case "north": return (cx, room.OriginZ + d - 3);
+                case "south": return (cx, room.OriginZ + 2);
+                case "east":  return (room.OriginX + 2,     cz);
+                default:      return (room.OriginX + w - 3, cz);
             }
+        }
+
+        // The largest room of whichever group of mutually reachable rooms can carry the most
+        // upper floor. Seeding from the largest room on the map instead strands the cluster when
+        // that room is the one off in a corner: growth only reaches rooms within MaxLandingGap, so
+        // the storey above comes out as a single room however many carriers were budgeted for.
+        // A group is scored on the carriers it could actually supply, not its total size — three
+        // big rooms beat eight small ones when only four of them will be used.
+        private RoomSpec BestClusterSeed(List<RoomSpec> eligible)
+        {
+            var parent = new int[eligible.Count];
+            for (int i = 0; i < parent.Length; i++) parent[i] = i;
+            int Find(int i) => parent[i] == i ? i : parent[i] = Find(parent[i]);
+
+            for (int i = 0; i < eligible.Count; i++)
+                for (int j = i + 1; j < eligible.Count; j++)
+                    if (RoomGap(eligible[i], eligible[j]) <= MaxLandingGap)
+                        parent[Find(i)] = Find(j);
+
+            var groups = new Dictionary<int, List<RoomSpec>>();
+            for (int i = 0; i < eligible.Count; i++)
+            {
+                int root = Find(i);
+                if (!groups.TryGetValue(root, out var g)) groups[root] = g = new List<RoomSpec>();
+                g.Add(eligible[i]);
+            }
+
+            return groups.Values
+                .OrderByDescending(g => g.Select(r => r.Width * r.Depth)
+                                         .OrderByDescending(a => a)
+                                         .Take(_maxHubCandidates).Sum())
+                .First()
+                .OrderByDescending(r => r.Width * r.Depth)
+                .First();
         }
 
         private static float RoomDistSq(RoomSpec a, RoomSpec b)
@@ -493,6 +779,17 @@ namespace TaleSpireMapGen.Generation
             float dx = (a.OriginX + a.Width  / 2f) - (b.OriginX + b.Width  / 2f);
             float dz = (a.OriginZ + a.Depth  / 2f) - (b.OriginZ + b.Depth  / 2f);
             return dx * dx + dz * dz;
+        }
+
+        // Gap between two footprints along the axis they are furthest apart on; 0 if they overlap.
+        // Matches how the exterior shell decides which rooms share a ring.
+        private static int RoomGap(RoomSpec a, RoomSpec b)
+        {
+            int dx = Math.Max(0, Math.Max(a.OriginX - (b.OriginX + b.Width),
+                                          b.OriginX - (a.OriginX + a.Width)));
+            int dz = Math.Max(0, Math.Max(a.OriginZ - (b.OriginZ + b.Depth),
+                                          b.OriginZ - (a.OriginZ + a.Depth)));
+            return Math.Max(dx, dz);
         }
     }
 }

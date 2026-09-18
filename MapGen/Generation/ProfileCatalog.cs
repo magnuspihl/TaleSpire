@@ -10,6 +10,20 @@ namespace TaleSpireMapGen.Generation
     {
         [JsonProperty("id")]
         public string Id;
+        [JsonProperty("name")]
+        public string Name;
+        // "1x1", "2x1", "2x2", ... MapGen places on a 1x1 grid, so anything else is unusable.
+        [JsonProperty("size")]
+        public string Size;
+        [JsonProperty("height")]
+        public float Height;
+        // [x, z] size of the tile's collider bounds, in cells. Absent means assume a full cell.
+        [JsonProperty("footprint")]
+        public float[] Footprint;
+
+        public bool IsUnit => Size == "1x1";
+        public float FootprintX => Footprint != null && Footprint.Length == 2 ? Footprint[0] : 1f;
+        public float FootprintZ => Footprint != null && Footprint.Length == 2 ? Footprint[1] : 1f;
     }
 
     public class TilesetProfile
@@ -32,8 +46,42 @@ namespace TaleSpireMapGen.Generation
         public float MinCeilingHeight;
         [JsonProperty("minTileDimension")]
         public int MinTileDimension;
+        // True once the theme has been looked at in game on the rig, not merely compiled.
+        [JsonProperty("verified")]
+        public bool Verified;
+        // Set for a tileset that satisfies every structural check and still cannot build a room:
+        // its wall art is a post or an arch, so a ring of them never closes. Absent means fine,
+        // so a profile written before this flag existed stays offered.
+        [JsonProperty("excluded")]
+        public bool Excluded;
         [JsonProperty("tilesByRole")]
         public Dictionary<string, List<TileProfileEntry>> TilesByRole;
+
+        // Candidates are stored best-first by tools/build-mapgen-profiles.py, so the first 1x1
+        // entry is the intended pick. Non-1x1 tiles are kept in the file — a role can look
+        // populated and still be unusable, and that distinction is worth being able to see.
+        public TileProfileEntry Pick(string role)
+        {
+            if (TilesByRole == null || !TilesByRole.TryGetValue(role, out var entries) || entries == null)
+                return null;
+            foreach (var e in entries)
+                if (e != null && e.IsUnit) return e;
+            return null;
+        }
+
+        /// <summary>Best 1x1 candidate of that height, or the plain best if none matches.</summary>
+        // Five tilesets list a corner that is half a unit taller than their wall — Facility's
+        // best-ranked corner is 2.5 against a 2.0 wall — and a ring stacked at the wall's pitch
+        // then buries every corner above the first. Each of the five also carries a matching
+        // candidate further down its list, so this is a pick problem rather than a curation gap.
+        public TileProfileEntry PickOfHeight(string role, float height)
+        {
+            if (TilesByRole == null || !TilesByRole.TryGetValue(role, out var entries) || entries == null)
+                return null;
+            foreach (var e in entries)
+                if (e != null && e.IsUnit && Math.Abs(e.Height - height) < 0.001f) return e;
+            return Pick(role);
+        }
     }
 
     public static class ProfileCatalog
@@ -60,7 +108,13 @@ namespace TaleSpireMapGen.Generation
                 try
                 {
                     // JSON shape: { "profiles": { "Pack Name": { "Folder Name": {...}, ... } } }
-                    var root = JsonConvert.DeserializeObject<ProfilesRoot>(json);
+                    // Curated profiles legitimately leave numeric fields null where a tileset has
+                    // no sensible value. Without Ignore, the first such null aborts the whole file
+                    // and every profile is lost, not just the incomplete one.
+                    var root = JsonConvert.DeserializeObject<ProfilesRoot>(json, new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                    });
                     if (root?.Profiles == null) return;
 
                     foreach (var pack in root.Profiles)
@@ -127,15 +181,47 @@ namespace TaleSpireMapGen.Generation
             return null;
         }
 
+        // Themes that can actually build a map: 1x1 tiles for the three structural roles, on a
+        // tileset whose tiles are 1x1 to begin with. Verified themes come first — the rest
+        // generate, but their tile picks are a heuristic nobody has looked at yet.
+        public static List<string> BuildableThemes()
+        {
+            EnsureLoaded();
+            var verified = new List<string>();
+            var rest     = new List<string>();
+
+            foreach (var pack in _profiles.Values)
+            foreach (var kv in pack)
+            {
+                var p = kv.Value;
+                if (p.Excluded) continue;
+                if (p.MinTileDimension > 1) continue;
+                if (p.Pick("wall") == null || p.Pick("floor") == null || p.Pick("corner") == null)
+                    continue;
+                (p.Verified ? verified : rest).Add(kv.Key);
+            }
+
+            verified.Sort(StringComparer.OrdinalIgnoreCase);
+            rest.Sort(StringComparer.OrdinalIgnoreCase);
+            verified.AddRange(rest);
+            return verified;
+        }
+
         // Shim so callers always get usable values, even with no profile on disk.
         public static (float wallHeight, float floorHeight, bool wallCombo, string icStyle, string stairType, float minCeilingHeight)
             GetData(string theme)
         {
             var p = GetProfile(theme);
             if (p != null)
-                return (p.WallHeight, p.FloorHeight, p.HasIntegratedFloorWall,
-                        p.InnerCornerStyle ?? "filler", p.StairType ?? "stackable", p.MinCeilingHeight);
-            return (2.5f, 0.5f, TileCatalog.WallIncludesFloor(theme), "filler", "stackable", 2.5f);
+                // A profile may omit any numeric field. Zero wall height would stack every wall row
+                // at one elevation, so fall back rather than trusting an absent value.
+                return (p.WallHeight > 0 ? p.WallHeight : 2.5f,
+                        p.FloorHeight > 0 ? p.FloorHeight : 0.5f,
+                        p.HasIntegratedFloorWall,
+                        p.InnerCornerStyle ?? "filler",
+                        p.StairType ?? "stackable",
+                        p.MinCeilingHeight > 0 ? p.MinCeilingHeight : 2.5f);
+            return (2.5f, 0.5f, false, "filler", "stackable", 2.5f);
         }
 
         private class ProfilesRoot

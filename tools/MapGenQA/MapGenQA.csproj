@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <AssemblyName>MapGenQA</AssemblyName>
+    <RootNamespace>MapGenQA</RootNamespace>
+  </PropertyGroup>
+
+  <!-- The generator is compiled into this harness from source rather than referenced as a
+       built assembly: MapGen targets net48 against the game's Unity DLLs, which cannot load
+       here. Linking the sources means QA exercises the code that actually ships. -->
+  <ItemGroup>
+    <Compile Include="../../MapGen/Generation/*.cs" />
+  </ItemGroup>
+
+  <!-- Same logical name the mod uses, because ProfileCatalog resolves profiles out of its own
+       assembly. Without this the harness loads an empty catalog and the multi-floor validators
+       pass vacuously — no profiles means no stairs to find fault with. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../../MapGen/tileset_profiles.json">
+      <LogicalName>TaleSpireMapGen.tileset_profiles.json</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="../../MapGen/prop_catalog.json">
+      <LogicalName>TaleSpireMapGen.prop_catalog.json</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="../../MapGen/prop_recipes.json">
+      <LogicalName>TaleSpireMapGen.prop_recipes.json</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

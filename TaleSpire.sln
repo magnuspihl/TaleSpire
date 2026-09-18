@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C3545AAD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inspect", "tools\Inspect\Inspect.csproj", "{15D36A90-E329-4620-9AD8-C658A34713E6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapGenQA", "tools\MapGenQA\MapGenQA.csproj", "{012ACF34-4BA6-4525-985C-80DB0EEBA30A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,8 +34,13 @@ Global
 		{15D36A90-E329-4620-9AD8-C658A34713E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15D36A90-E329-4620-9AD8-C658A34713E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15D36A90-E329-4620-9AD8-C658A34713E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{012ACF34-4BA6-4525-985C-80DB0EEBA30A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{012ACF34-4BA6-4525-985C-80DB0EEBA30A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{012ACF34-4BA6-4525-985C-80DB0EEBA30A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{012ACF34-4BA6-4525-985C-80DB0EEBA30A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{15D36A90-E329-4620-9AD8-C658A34713E6} = {C3545AAD-70B3-4A6A-BF8A-77B54AF0A6E1}
+		{012ACF34-4BA6-4525-985C-80DB0EEBA30A} = {C3545AAD-70B3-4A6A-BF8A-77B54AF0A6E1}
 	EndGlobalSection
 EndGlobal

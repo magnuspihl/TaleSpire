@@ -4,3 +4,6 @@ dist/
 *.dll
 *.pdb
 *.user
+
+# Python bytecode from the tools/ scripts
+__pycache__/

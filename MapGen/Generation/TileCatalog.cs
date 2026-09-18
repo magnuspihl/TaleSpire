@@ -9,93 +9,200 @@ namespace TaleSpireMapGen.Generation
         public readonly string Name;
         public readonly TileRole Role;
         public readonly string Size;
+        public readonly float Height;
+        // Collider bounds in cells, unrotated. Half the tilesets ship a wall that is 1 x 0.5.
+        public readonly float FootX;
+        public readonly float FootZ;
 
-        public TileEntry(string id, string name, TileRole role, string size)
-        { Id = id; Name = name; Role = role; Size = size; }
+        public TileEntry(string id, string name, TileRole role, string size, float height,
+                         float footX = 1f, float footZ = 1f)
+        {
+            Id = id; Name = name; Role = role; Size = size; Height = height;
+            FootX = footX; FootZ = footZ;
+        }
 
         public byte[] GuidBytes => Guid.Parse(Id).ToByteArray();
+        public bool IsUnit => Size == "1x1";
+
+        /// <summary>
+        /// Extent perpendicular to the edge the piece lines. A wall is always turned to lie along
+        /// its edge, so whichever of its two dimensions is smaller is the one that sticks inward.
+        /// </summary>
+        public float Thin => Math.Min(FootX, FootZ);
+
+        /// <summary>
+        /// Correction from the tile's own authored facing onto the north-facing convention
+        /// rotStep encodes. A wall panel occupies the half of its cell that its face looks out of,
+        /// so one thinner in x than in z was authored looking west, and rotStep 0 would leave a
+        /// ring of it turned a quarter circle wrong on all four sides. A quarter turn runs
+        /// N→W→S→E, so it takes three of them to bring west round to north.
+        /// </summary>
+        public int AuthoredRotBias => FootX < FootZ - 0.01f ? 18 : 0;
+
+        /// <summary>Footprint after a quarter-turn rotation, as (x, z).</summary>
+        public (float X, float Z) RotatedFootprint(int rotStep)
+        {
+            bool quarterTurn = ((rotStep / 6) & 1) == 1;
+            return quarterTurn ? (FootZ, FootX) : (FootX, FootZ);
+        }
     }
 
     /// <summary>
-    /// Hardcoded tile catalog for known TaleSpire themes.
-    /// GUIDs sourced from /home/coder/TaleSpire/tools/tile_catalog.json.
-    /// Rotation semantics: each theme's Wall and Corner tiles are 1x1 combos —
-    ///   rotStep 0=North-face, 6=East-face, 12=South-face, 18=West-face.
+    /// Resolves a theme + role to the tile to place, out of the curated profiles.
+    /// Rotation semantics: Wall and Corner are 1x1 combos —
+    ///   rotStep 0=North-face, 6=West-face, 12=South-face, 18=East-face,
+    /// matching SlabBuilder's ROT_ constants — a quarter turn runs N→W→S→E.
     /// </summary>
     public static class TileCatalog
     {
-        private static readonly Dictionary<string, Dictionary<TileRole, TileEntry>> _themes
-            = new Dictionary<string, Dictionary<TileRole, TileEntry>>(StringComparer.OrdinalIgnoreCase);
+        public const string DefaultTheme = "Dungeon Cellar";
 
-        static TileCatalog()
+        // Profile role names. "cornerFiller" is the inner pocket piece; "corner" is the outer one.
+        private static readonly Dictionary<TileRole, string> RoleNames
+            = new Dictionary<TileRole, string>
+            {
+                { TileRole.Floor,       "floor"        },
+                { TileRole.Wall,        "wall"         },
+                { TileRole.Corner,      "corner"       },
+                { TileRole.InnerCorner, "cornerFiller" },
+                { TileRole.Stairs,      "stairs"       },
+                { TileRole.StairBlock,  "stairBlock"   },
+                { TileRole.Door,        "door"         },
+                { TileRole.Pillar,      "pillar"       },
+            };
+
+        private static readonly Dictionary<(string, TileRole), TileEntry?> _cache
+            = new Dictionary<(string, TileRole), TileEntry?>();
+        private static readonly object _lock = new object();
+
+        private static TileEntry? Resolve(string theme, TileRole role)
         {
-            // Dungeon Cellar — Wall/Floor combo tiles (floor baked into wall/corner).
-            // Floor tile: "Dungeon Floor - Small" (1x1, h=0.5) — the only 1x1 floor in this set.
-            // Wall:       "Dungeon Wall/Floor 01"            (1x1, h=2.5, includes floor).
-            // Corner:     "Dungeon Wall/Floor Corner - Small" (1x1, h=2.5, includes floor).
-            // InnerCorner = floor-level filler tile placed on top of a floor tile (h=2.0, no floor baked in).
-            Add("Dungeon Cellar",
-                (TileRole.Floor,       "d5900784-9510-4cf7-b017-f369448d0d52", "Dungeon Floor - Small",               "1x1"),
-                (TileRole.Wall,        "ed0ad169-3248-411a-9eb0-4aada656fb61", "Dungeon Wall/Floor 01",                "1x1"),
-                (TileRole.Corner,      "fdd3c8dc-9c94-4a63-a7d9-10ae36d07fe7", "Dungeon Wall/Floor Corner - Small",   "1x1"),
-                (TileRole.InnerCorner, "cec14f2e-faf2-4a9a-bd96-909c16b92197", "Dungeon Wall Corner Filler",          "1x1"),
-                (TileRole.Door,        "3151e230-bac7-401e-8fa8-b993bbee17ea", "Door - Dungeon",                      "1x1"),
-                (TileRole.Stairs,      "ed072f00-f245-44e7-9d25-6a1cb498cbaa", "Dungeon Stairs",                      "1x1")
-            );
+            if (string.IsNullOrEmpty(theme)) return null;
+            if (!RoleNames.TryGetValue(role, out string roleName)) return null;
 
-            // MegaDungeon — "pref" variants (role=prop, h=2.5) include a floor base.
-            // Wall without floor: md_wall_1x1_01 (h=2.0).  Wall WITH floor: md_pref_wall_1x1_01 (h=2.5).
-            // Corner without floor: md_wall_corner_1x1_01 (h=2.0).  Corner WITH floor: same name, h=2.5, different GUID.
-            Add("MegaDungeon",
-                (TileRole.Floor,       "940d013f-c982-43e7-922a-0317cc1c74db", "md_floor_1x1_01",                     "1x1"),
-                (TileRole.Wall,        "c8312af8-8bfb-41e1-bb6e-30280686b168", "md_pref_wall_1x1_01",                 "1x1"),
-                (TileRole.Corner,      "0820791e-c1a8-4a1e-b690-f34b0cb276ba", "md_wall_corner_1x1_01 (with floor)",  "1x1"),
-                (TileRole.InnerCorner, "bb8e7378-44da-4556-bac5-92420f766815", "md_corner_filler_01",                 "1x1"),
-                (TileRole.Door,        "3151e230-bac7-401e-8fa8-b993bbee17ea", "Door - Dungeon",                      "1x1"),
-                (TileRole.Stairs,      "0252d209-c23c-4f72-aa8b-51ed0dc09f3a", "md_stairblock_01",                    "1x1")
-            );
+            var profile = ProfileCatalog.GetProfile(theme);
+            // A corner is a wall that turns a right angle, so it has to stack on the same pitch.
+            var pick = role == TileRole.Corner
+                ? profile?.PickOfHeight(roleName, WallPitch(theme))
+                : profile?.Pick(roleName);
+            if (pick == null) return null;
 
-            Add("Sewers",
-                (TileRole.Floor,       "81a8acd3-0685-44ce-b185-cb70c58ae68f", "Sewer Floor 01",                      "1x1"),
-                (TileRole.Wall,        "887d5410-4c59-40a3-b338-8d8c2efaafd3", "Sewer Wall/Floor 01",                 "1x1"),
-                (TileRole.Corner,      "180105d6-8c75-4da0-85ae-251aa3145e98", "Sewer Wall/Floor Corner - Small",     "1x1"),
-                (TileRole.InnerCorner, "d172bb08-175b-495a-bd50-22f4135d5209", "Sewer Corner Filler - Small",         "1x1"),
-                (TileRole.Door,        "3151e230-bac7-401e-8fa8-b993bbee17ea", "Door - Dungeon",                      "1x1"),
-                (TileRole.Stairs,      "ed072f00-f245-44e7-9d25-6a1cb498cbaa", "Dungeon Stairs",                      "1x1")
-            );
-
+            return new TileEntry(pick.Id, pick.Name, role, pick.Size, pick.Height,
+                                 pick.FootprintX, pick.FootprintZ);
         }
 
-        private static void Add(string theme, params (TileRole role, string id, string name, string size)[] entries)
-        {
-            var dict = new Dictionary<TileRole, TileEntry>();
-            foreach (var (role, id, name, size) in entries)
-                dict[role] = new TileEntry(id, name, role, size);
-            _themes[theme] = dict;
-        }
-
-        /// <summary>Returns the best-matching tile for a theme+role, falling back to Dungeon Cellar.</summary>
+        /// <summary>The tile to place for a theme+role, falling back to the default theme.</summary>
         public static TileEntry Get(string theme, TileRole role)
         {
-            if (!string.IsNullOrEmpty(theme)
-                && _themes.TryGetValue(theme, out var d)
-                && d.TryGetValue(role, out var entry))
-                return entry;
+            var key = (theme ?? "", role);
+            lock (_lock)
+            {
+                if (_cache.TryGetValue(key, out var hit))
+                    return hit ?? Fallback(role);
 
-            // Fallback: Dungeon Cellar
-            return _themes["Dungeon Cellar"][role];
+                var resolved = Resolve(theme, role);
+                _cache[key] = resolved;
+                return resolved ?? Fallback(role);
+            }
+        }
+
+        // Most tilesets have no door of their own — only 4 of 38 carry one. Borrowing the dungeon
+        // door across themes is what the generator has always done and is better than leaving the
+        // gap unfilled, but it is the wrong look in, say, a spaceship. Worth revisiting once
+        // doorCompatibility is curated more widely.
+        private static TileEntry Fallback(TileRole role)
+        {
+            var entry = Resolve(DefaultTheme, role);
+            if (entry != null) return entry.Value;
+            throw new InvalidOperationException(
+                $"No tile for role {role} in '{DefaultTheme}' — tileset_profiles.json is missing or incomplete.");
+        }
+
+        public static bool HasTile(string theme, TileRole role) => Resolve(theme, role) != null;
+
+        // Vertical distance between stacked wall rows. The placed tile's own height decides this,
+        // not the profile's curated wallHeight: the two disagree in several tilesets (BellowGloom
+        // lists 2.2 against a 2.5-tall wall), and stacking on the curated figure sinks each row
+        // into the one below it. The profile value is only a fallback for a tile with no height.
+        public static float WallPitch(string theme)
+        {
+            var wall = Resolve(theme, TileRole.Wall);
+            if (wall != null && wall.Value.Height > 0) return wall.Value.Height;
+            return ProfileCatalog.GetData(theme).wallHeight;
+        }
+
+        // Thickness of the floor layer, from the placed floor tile rather than the profile's
+        // curated floorHeight — same argument as WallPitch. Everything that stands *on* the floor
+        // starts here: a wall with no floor of its own, a door, an inner-corner filler, the first
+        // tread of a stair.
+        public static float FloorThickness(string theme)
+        {
+            var floor = Resolve(theme, TileRole.Floor);
+            if (floor != null && floor.Value.Height > 0) return floor.Value.Height;
+            return ProfileCatalog.GetData(theme).floorHeight;
         }
 
         public static bool IsKnownTheme(string theme) =>
-            !string.IsNullOrEmpty(theme) && _themes.ContainsKey(theme);
+            !string.IsNullOrEmpty(theme) && ProfileCatalog.GetProfile(theme) != null;
 
-        // Returns true when the Wall/Corner tiles for a theme already include a floor component.
-        // All three current themes use h=2.5 combo tiles, so no extra floor tile is needed under walls.
+        /// <summary>
+        /// Rise from one storey's floor layer to the next one's — the single rule for how tall a
+        /// storey is. Every caller that needs a storey top must come through here.
+        /// </summary>
+        // A wall that carries its own floor already contains that thickness, so adding floorHeight
+        // on top of the wall stack counts it twice. That is the half-unit gap you could see between
+        // a Dungeon Cellar basement and the keep standing on it: the wall topped out at 2.5 and the
+        // storey above was placed at 3.0, leaving the stair climbing into mid-air.
+        public static float StoreyHeight(string theme, int wallRows)
+        {
+            if (wallRows < 1) wallRows = 1;
+            return (WallIncludesFloor(theme) ? 0f : FloorThickness(theme))
+                 + wallRows * WallPitch(theme);
+        }
+
+        /// <summary>How far one stair tread lifts you — its own height.</summary>
+        public static float StairRise(string theme)
+        {
+            var stairs = Resolve(theme, TileRole.Stairs);
+            if (stairs != null && stairs.Value.Height > 0) return stairs.Value.Height;
+            return 0.5f;
+        }
+
+        /// <summary>Treads needed to climb from one storey's floor surface to the next one's.</summary>
+        // A tread rises by its own height, and every stair tile in the catalog is 1.0 tall. The
+        // builder stepped by a fixed 0.5 instead, so a 2.5 storey got five treads climbing 2.5
+        // cells of ground — they read as a row of separate half-height flights standing side by
+        // side rather than one staircase. Rounded *down*: overshooting leaves the top tread
+        // hanging above the floor it is supposed to deliver you to, which is worse than the
+        // half-step that rounding down can leave.
+        // The run leaves the lower storey's floor surface and has to arrive on the upper storey's.
+        // Those two thicknesses only cancel when both storeys share a tileset — a Marble Palace
+        // basement under a Shogun Palace keep loses 0.31 to the difference, and a run counted
+        // against the lower floor alone then tops out above the landing.
+        // Not defaulted: a caller that does not know which theme is upstairs cannot size a flight,
+        // and a default would let that mistake compile.
+        public static int StairStepCount(string theme, int wallRows, string upperTheme)
+        {
+            float rise = StairRise(theme);
+            if (rise <= 0) return 0;
+            float climb = StoreyHeight(theme, wallRows)
+                        + FloorThickness(string.IsNullOrEmpty(upperTheme) ? theme : upperTheme)
+                        - FloorThickness(theme);
+            return Math.Max(1, (int)Math.Floor(climb / rise + 0.001f));
+        }
+
+        // True when a theme's wall and corner tiles already carry a floor, so no separate floor
+        // tile is needed beneath them. This stays a profile flag rather than something derived
+        // from tile height: the curated wallHeight means the combo height in some tilesets and
+        // the bare height in others, so the two cannot be compared across themes.
         public static bool WallIncludesFloor(string theme) =>
-            string.Equals(theme, "Dungeon Cellar", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(theme, "MegaDungeon",    StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(theme, "Sewers",         StringComparison.OrdinalIgnoreCase);
+            ProfileCatalog.GetProfile(theme)?.HasIntegratedFloorWall ?? false;
 
-        public static readonly string[] KnownThemes = { "Dungeon Cellar", "MegaDungeon", "Sewers" };
+        /// <summary>Themes that can build a map, verified ones first.</summary>
+        public static string[] KnownThemes => ProfileCatalog.BuildableThemes().ToArray();
+
+        /// <summary>True once the theme's tile picks have been checked in game, not just compiled.</summary>
+        public static bool IsVerified(string theme) =>
+            ProfileCatalog.GetProfile(theme)?.Verified ?? false;
     }
 }

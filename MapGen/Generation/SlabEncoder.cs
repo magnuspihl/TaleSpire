@@ -73,10 +73,13 @@ namespace TaleSpireMapGen.Generation
 
         private static ulong PackAsset(float x, float y, float z, int rotStep)
         {
-            // Positions are stored as integer * 100
-            ulong sx = (ulong)(uint)(int)(x * 100f) & 0x3FFFF;  // 18 bits
-            ulong sy = (ulong)(uint)(int)(y * 100f) & 0x3FFFF;  // 18 bits
-            ulong sz = (ulong)(uint)(int)(z * 100f) & 0x3FFFF;  // 18 bits
+            // Positions are stored as integer * 100. Rounded, not truncated: a height that is not
+            // exactly representable as a float — Shogun Palace's 0.19 floor, and every storey
+            // derived from it — lands a hair below its decimal value, and truncating drops the
+            // whole centimetre.
+            ulong sx = (ulong)(uint)(int)Math.Round(x * 100f) & 0x3FFFF;  // 18 bits
+            ulong sy = (ulong)(uint)(int)Math.Round(y * 100f) & 0x3FFFF;  // 18 bits
+            ulong sz = (ulong)(uint)(int)Math.Round(z * 100f) & 0x3FFFF;  // 18 bits
             ulong rot = (ulong)(rotStep & 0x1F);                 // 5 bits
 
             return sx | (sy << 18) | (sz << 36) | (rot << 54);

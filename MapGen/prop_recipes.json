@@ -1,0 +1,195 @@
+{
+  "_README": [
+    "What a room is for, and what that means it holds. Authored by hand — unlike prop_catalog.json,",
+    "nothing here is derived from the packs.",
+    "",
+    "A purpose is eligible for a room when its area and storey constraints pass; among eligible",
+    "rooms it prefers the ones its wants* fields score highest. Each want is -1..1 and reads",
+    "against the map's own spread: wantsArea 1 means 'the biggest rooms on this map', wantsDepth 1",
+    "means 'as far from the entrance as this map goes', wantsDegree -1 means 'a dead end'.",
+    "weight only decides the filler draw once quotas are served, and is damped each time the",
+    "purpose is used so one purpose cannot take a whole dungeon.",
+    "",
+    "minArea/maxArea are plausibility bounds, not the selector — the wants do the selecting, and",
+    "they are relative to the map, so they keep working whatever the sizes are. Room areas differ",
+    "by size preset far more than is obvious (median 100 on small, 154 on medium, 216 on large), so",
+    "an absolute cap tuned by eye against a small map quietly excludes a purpose from large ones",
+    "altogether: maxArea 90 on Cell left 4% of large-map rooms eligible and a quota of two cells",
+    "could not be met. Keep every band above roughly one room in six on all three presets, and",
+    "re-measure rather than reason about it if Padding or RoomFill ever change.",
+    "",
+    "zones name prop groups from prop_catalog.json, which are the pack authors' own GroupTags:",
+    "  wall   — backed against a wall, facing into the room",
+    "  corner — tucked into an interior corner, turned into the angle",
+    "  centre — standing clear of the walls",
+    "A group that resolves to nothing is skipped silently, so naming an absent one costs only the",
+    "variety it would have added. `MapGenQA recipes` prints what each zone actually resolves to.",
+    "",
+    "light is per style rather than per purpose: every furnished room gets lit, at a fixed spacing",
+    "along its walls, whatever it is for."
+  ],
+
+  "styles": {
+    "medieval": {
+      "light": ["torch", "lantern", "brazier", "candle"],
+      "purposes": {
+        "Hall": {
+          "weight": 2, "minArea": 110,
+          "wantsArea": 1.0, "wantsDegree": 0.8, "wantsDepth": -0.3,
+          "zones": {
+            "wall":   ["banners", "painting", "cabinet", "statue", "table"],
+            "corner": ["statue", "pillar", "brazier"],
+            "centre": ["table", "chair", "rugs"]
+          }
+        },
+        "Guardroom": {
+          "weight": 2, "maxArea": 200,
+          "wantsDegree": 0.6, "wantsDepth": -1.0,
+          "zones": {
+            "wall":   ["weapon", "training", "cabinet", "table"],
+            "corner": ["barrel", "crate", "weapon"],
+            "centre": ["table", "chair"]
+          }
+        },
+        "Barracks": {
+          "weight": 3, "minArea": 45,
+          "wantsArea": 0.3,
+          "zones": {
+            "wall":   ["bed", "chest", "cabinet", "weapon", "crate"],
+            "corner": ["barrel", "crate", "sack"],
+            "centre": ["table", "chair", "rugs"]
+          }
+        },
+        "Kitchen": {
+          "weight": 2, "minArea": 45, "maxArea": 260,
+          "wantsDepth": -0.3,
+          "zones": {
+            "wall":   ["fireplace", "cauldron", "cabinet", "dinnerware", "food"],
+            "corner": ["barrel", "sack", "pottery"],
+            "centre": ["table", "food", "drink", "jug"]
+          }
+        },
+        "Storeroom": {
+          "weight": 3,
+          "zones": {
+            "wall":   ["crate", "barrel", "sack", "supplies", "cabinet"],
+            "corner": ["crate", "barrel", "pottery"],
+            "centre": ["crate", "barrel", "basket"]
+          }
+        },
+        "Library": {
+          "weight": 2, "minArea": 60,
+          "wantsDegree": -0.3,
+          "zones": {
+            "wall":   ["book", "cabinet", "paper"],
+            "corner": ["book", "candle", "statue"],
+            "centre": ["table", "chair", "book", "rugs"]
+          }
+        },
+        "Workshop": {
+          "weight": 2, "minArea": 45,
+          "zones": {
+            "wall":   ["smithy", "metal", "laboratory", "cabinet"],
+            "corner": ["crate", "debris", "wood"],
+            "centre": ["table", "smithy", "metal", "pottery"]
+          }
+        },
+        "Shrine": {
+          "weight": 1, "minArea": 45,
+          "wantsDegree": -0.5, "wantsDepth": 0.4,
+          "zones": {
+            "wall":   ["statue", "banners", "grave", "candle"],
+            "corner": ["statue", "candle", "brazier"],
+            "centre": ["statue", "brazier", "rugs"]
+          }
+        },
+        "Cell": {
+          "weight": 2, "maxArea": 150,
+          "wantsArea": -1.0, "wantsDegree": -0.6, "wantsDepth": 0.5,
+          "zones": {
+            "wall":   ["prison", "chains", "bones", "bed"],
+            "corner": ["bones", "debris", "web"],
+            "centre": ["bones", "debris"]
+          }
+        },
+        "Treasury": {
+          "weight": 1, "maxArea": 180,
+          "wantsDegree": -1.0, "wantsDepth": 1.0,
+          "zones": {
+            "wall":   ["chest", "treasure", "crate"],
+            "corner": ["chest", "treasure"],
+            "centre": ["chest", "treasure", "rugs"]
+          }
+        },
+        "Empty": { "weight": 1, "zones": {} }
+      }
+    },
+
+    "modern": {
+      "light": ["lamps"],
+      "purposes": {
+        "Control": {
+          "weight": 2, "minArea": 60,
+          "wantsArea": 0.6, "wantsDegree": 1.0,
+          "zones": {
+            "wall":   ["console", "monitors", "tech", "racks"],
+            "corner": ["console", "tech", "cables"],
+            "centre": ["table", "chair", "console"]
+          }
+        },
+        "Quarters": {
+          "weight": 3, "minArea": 30,
+          "zones": {
+            "wall":   ["bed", "lockers", "closets & drawers", "wall shelves"],
+            "corner": ["box", "case", "bins"],
+            "centre": ["table", "chair", "sofa"]
+          }
+        },
+        "Mess": {
+          "weight": 2, "minArea": 45,
+          "wantsArea": 0.4, "wantsDepth": -0.4,
+          "zones": {
+            "wall":   ["kitchen", "food", "drink", "furniture"],
+            "corner": ["bins", "trash", "cleaning"],
+            "centre": ["table", "chair", "sofa"]
+          }
+        },
+        "Office": {
+          "weight": 2,
+          "zones": {
+            "wall":   ["cubical", "closets & drawers", "wall shelves", "paper"],
+            "corner": ["bins", "box", "decor"],
+            "centre": ["table", "chair", "monitors"]
+          }
+        },
+        "Medbay": {
+          "weight": 1, "minArea": 45,
+          "wantsDegree": -0.3,
+          "zones": {
+            "wall":   ["surgery", "laboratory", "racks", "case"],
+            "corner": ["case", "bins", "cleaning"],
+            "centre": ["surgery", "table", "laboratory"]
+          }
+        },
+        "Engineering": {
+          "weight": 2, "minArea": 45,
+          "wantsDepth": 0.4,
+          "zones": {
+            "wall":   ["machine", "engine", "cables", "metal", "ventilation"],
+            "corner": ["barrel", "toxic waste", "bins"],
+            "centre": ["machine", "engine", "conveyor"]
+          }
+        },
+        "Storage": {
+          "weight": 3,
+          "zones": {
+            "wall":   ["racks", "lockers", "case", "warehouse", "barrel"],
+            "corner": ["barrel", "box", "bins"],
+            "centre": ["case", "box", "barrel", "warehouse"]
+          }
+        },
+        "Empty": { "weight": 1, "zones": {} }
+      }
+    }
+  }
+}
