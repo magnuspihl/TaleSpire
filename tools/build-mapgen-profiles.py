@@ -96,7 +96,10 @@ def build() -> dict:
     apply_picks(data, index)
     stamp_footprints(data, footprints)
     check_combo_flags(data)
+    check_corner_pitch(data)
+    check_wall_footprint(data)
     check_wall_family(data, groups)
+    check_role_collisions(data)
     return data
 
 
@@ -204,6 +207,65 @@ def check_combo_flags(data: dict) -> None:
                       file=sys.stderr)
 
 
+def picked_unit(profile: dict, role: str) -> dict:
+    """The 1x1 tile the generator will actually resolve for a role, or None."""
+    entries = (profile.get("tilesByRole") or {}).get(role) or []
+    return next((e for e in entries if e.get("size") == "1x1"), None)
+
+
+def check_corner_pitch(data: dict) -> None:
+    """Warn where no corner in the set stands as tall as the picked wall.
+
+    A corner is a wall that turns a right angle, so a shorter one leaves a notch in the top of the
+    ring at every corner. MapGen resolves corners through PickOfHeight, which searches the whole
+    candidate list for one matching the wall's pitch and only falls back to the first entry when
+    there is none — so a corner pick out of order is harmless and only a set with nothing of the
+    right height is a fault."""
+    for tilesets in data["profiles"].values():
+        for name, p in tilesets.items():
+            if p.get("excluded"):
+                continue
+            wall = picked_unit(p, "wall")
+            corners = [e for e in ((p.get("tilesByRole") or {}).get("corner") or [])
+                       if e.get("size") == "1x1"]
+            if not wall or not corners:
+                continue
+            if not any(abs(e["height"] - wall["height"]) < 0.01 for e in corners):
+                heights = ", ".join(str(e["height"]) for e in corners)
+                print(f"WARNING: {name} has no corner as tall as its {wall['height']} wall "
+                      f"'{wall['name']}' — corners are {heights}", file=sys.stderr)
+
+
+def check_wall_footprint(data: dict) -> None:
+    """Warn on the two ways a wall pick's collider bounds contradict how it is being placed.
+
+    A wall shallower than its cell cannot also be a floor, so hasIntegratedFloorWall over such a
+    pick makes the builder seat the ring at y=0 with no floor laid — the same fault as bug C,
+    arriving through curation instead of code. A wall deeper in z than in x was authored looking
+    west instead of north; MapGen turns those onto its own convention, but which of the two faces
+    ends up outward is not something the footprint settles, so say so. Desert Village and Shogun
+    Palace have both since been looked at and come out finished-side-out. Neither check is
+    derivable from height or size; both need the footprint."""
+    for tilesets in data["profiles"].values():
+        for name, p in tilesets.items():
+            if p.get("excluded"):
+                continue
+            wall = picked_unit(p, "wall")
+            footprint = wall and wall.get("footprint")
+            if not footprint:
+                continue
+            fx, fz = footprint
+            if p.get("hasIntegratedFloorWall") and fz < 0.99:
+                print(f"WARNING: {name} is hasIntegratedFloorWall but its wall "
+                      f"'{wall['name']}' is only {fz} deep, so it carries no floor",
+                      file=sys.stderr)
+            if fx < fz - 0.01:
+                print(f"NOTE: {name} wall '{wall['name']}' is {fx}x{fz} — authored looking west. "
+                      f"TileEntry.AuthoredRotBias turns it onto the convention, so the ring closes; "
+                      f"what is left is a rig question about which face ends up outward",
+                      file=sys.stderr)
+
+
 def check_wall_family(data: dict, groups: dict) -> None:
     """Warn where a wall from the corner's own family was available and something else was picked.
 
@@ -228,6 +290,29 @@ def check_wall_family(data: dict, groups: dict) -> None:
             names = ", ".join(e["name"] for e in kin)
             print(f"WARNING: {name} wall pick '{walls[0]['name']}' is not from its corner's "
                   f"'{family}' family; available: {names}", file=sys.stderr)
+
+
+def check_role_collisions(data: dict) -> None:
+    """Warn where one theme picks the same tile for two roles.
+
+    Nothing downstream can tell the two apart: the QA harness indexes placements by GUID to
+    recover what role they were placed as, so a shared GUID makes every tile of one role read as
+    the other. Four sets picked their stair *block* as their stairs, and the treads then reported
+    as blocks and the flights as missing entirely."""
+    for tilesets in data["profiles"].values():
+        for name, p in tilesets.items():
+            if p.get("excluded"):
+                continue
+            picked = {}
+            for role in ROLES:
+                entries = (p.get("tilesByRole") or {}).get(role) or []
+                unit = next((e for e in entries if e.get("size") == "1x1"), None)
+                if unit:
+                    picked.setdefault(unit["id"], []).append(role)
+            for guid, roles in picked.items():
+                if len(roles) > 1:
+                    print(f"WARNING: {name} picks one tile for {' and '.join(roles)} ({guid})",
+                          file=sys.stderr)
 
 
 def summarise(data: dict) -> None:

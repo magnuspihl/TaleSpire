@@ -24,6 +24,21 @@ namespace TaleSpireMapGen.Generation
         public byte[] GuidBytes => Guid.Parse(Id).ToByteArray();
         public bool IsUnit => Size == "1x1";
 
+        /// <summary>
+        /// Extent perpendicular to the edge the piece lines. A wall is always turned to lie along
+        /// its edge, so whichever of its two dimensions is smaller is the one that sticks inward.
+        /// </summary>
+        public float Thin => Math.Min(FootX, FootZ);
+
+        /// <summary>
+        /// Correction from the tile's own authored facing onto the north-facing convention
+        /// rotStep encodes. A wall panel occupies the half of its cell that its face looks out of,
+        /// so one thinner in x than in z was authored looking west, and rotStep 0 would leave a
+        /// ring of it turned a quarter circle wrong on all four sides. A quarter turn runs
+        /// N→W→S→E, so it takes three of them to bring west round to north.
+        /// </summary>
+        public int AuthoredRotBias => FootX < FootZ - 0.01f ? 18 : 0;
+
         /// <summary>Footprint after a quarter-turn rotation, as (x, z).</summary>
         public (float X, float Z) RotatedFootprint(int rotStep)
         {
@@ -35,7 +50,8 @@ namespace TaleSpireMapGen.Generation
     /// <summary>
     /// Resolves a theme + role to the tile to place, out of the curated profiles.
     /// Rotation semantics: Wall and Corner are 1x1 combos —
-    ///   rotStep 0=North-face, 6=East-face, 12=South-face, 18=West-face.
+    ///   rotStep 0=North-face, 6=West-face, 12=South-face, 18=East-face,
+    /// matching SlabBuilder's ROT_ constants — a quarter turn runs N→W→S→E.
     /// </summary>
     public static class TileCatalog
     {

@@ -21,7 +21,7 @@ LayoutSpec → SlabBuilder.Build() → List<(guid,x,y,z,rot)> → SlabEncoder.En
 
 **Order matters: this must run after `ApplyMultiFloor`.** Multi-floor chooses which rooms go upstairs by looking for *pendant* rooms (exactly one connection), so adding chords first starves it of candidates and costs stairs.
 
-Two knobs control how much bare ground ends up inside the exterior shell, which rings the whole bounding box of a storey:
+Two knobs control how densely a storey's bounding box is filled with rooms:
 - `Padding` — gap between a partition edge and its room. This is the dominant term, because it applies on **both** sides of every partition boundary: `Padding = 2` put a 4-cell gap between neighbouring rooms and held fill to ~40%. At 1 it is ~51%.
 - `RoomFill` — floor of the room-size draw, as a fraction of what the partition could hold. Drawing uniformly from `_minRoom` leaves small rooms inside large partitions.
 
@@ -29,15 +29,32 @@ Changing either alters every generated map, so re-run the fuzzer rather than ass
 
 ### Upper floors must be one compact cluster
 
-An upper storey is meant to read as a self-contained level standing on the part of the dungeon beneath it. What made upper floors look empty was not room count — it was *spread*. Carriers picked as "the N largest rooms", or even "the N nearest the largest", land all over the map, and the exterior shell then rings a bounding box that is mostly bare board. Measured upper-floor fill was 24-26%; the ground floor is ~50%.
+An upper storey is meant to read as a self-contained level standing on the part of the dungeon beneath it. What made upper floors look empty was not room count — it was *spread*. Carriers picked as "the N largest rooms", or even "the N nearest the largest", land all over the map, so the storey read as scattered outbuildings on a roof. Measured upper-floor fill was 24-26%; the ground floor is ~50%.
 
-Three rules keep the storey together, all in `ApplyMultiFloor` / `BuildExteriorShell`:
+Two rules in `ApplyMultiFloor` keep the storey together:
 
 - **Carriers grow by adjacency.** Start from the largest eligible room and add each next room only if it comes within `MaxLandingGap` of one already chosen. Stop early rather than reaching for a distant room to fill `_maxHubCandidates`. Fewer, closer carriers beat more, scattered ones.
 - **Landings obey the same gap.** A landing sits directly above the pendant room it isolates, so a pendant on the far side of the map plants an upper room away from every hub no matter how well the hubs cluster. Pendants outside the cluster are simply not isolated.
-- **One shell per cluster, not per elevation.** `ClusterRooms` unions rooms within `ShellClusterGap` on both axes, so a storey whose rooms genuinely sit apart gets a ring around each group instead of one enormous wall. It also unions any two rooms joined by a `Connection`, **which is load-bearing**: split a connected pair across two rings and the corridor between them runs through open board, walled by neither. And `blocked` is recomputed inside the cluster loop so a later ring yields to an earlier one — where two rings touch, the second must not put a wall at a different rotation on a cell the first already filled (`StackedWalls`).
 
-`MaxLandingGap` and `ShellClusterGap` are both 8 and are meant to agree: the layout aims for a cluster the shell will then recognise as one. Result is 41-52% upper fill at the cost of roughly one to two upper rooms per map.
+Result is 41-52% upper fill at the cost of roughly one to two upper rooms per map.
+
+### There is no exterior shell, and there was never a reason for one
+
+`BuildExteriorShell` used to ring the whole bounding box of each storey in wall. It was added so a map would look like a building from outside, and the shape it actually produced was a house inside a house: rooms have their own complete wall rings, so the shell was a second, outer wall with bare board between the two.
+
+It carried **no structural load at all** — turning it off and fuzzing 2,400 maps passed all 32 validators — while costing 11-18% of every slab's tiles. It was also the direct cause of bug 12, the wall-theme bug at the end of the next section, and a coupling between `MaxLandingGap` and its own `ShellClusterGap`; and it framed "upper floors look sparse" as a fill-ratio problem for a year, because what looked sparse was the bare board its ring enclosed.
+
+**Do not bring it back as a ring.** The real complaint underneath it — a skinny corridor looks odd seen from outside — is about *corridor* walls, not the building's outline, and a trace of the outermost wall faces would be the fix if it ever matters again. Above-ground silhouettes are the `BuildRoofs` TODO's problem, not a wall ring's.
+
+### The way in
+
+`EntrancePlacer` writes `LayoutSpec.Entrance` and nothing else. It picks the ground-floor room whose wall sits nearest the edge of the map's own bounding box (ties to the larger room, then the lowest id), then searches that wall outward from the middle for an offset that is not already spoken for by a corridor door and whose outward ray clears every ground-floor footprint. `SlabBuilder` then cuts it exactly as it cuts a corridor doorway, by adding it to `doorGaps` — there is no separate code path, and every theme already has a curated `door` pick.
+
+It runs **after** `AddLoopConnections` and **before** `PurposeAssigner`, because depth is measured in graph steps from the way in and the assigner used to have to guess at it. `PurposeAssigner` reads `spec.Entrance.RoomId` and keeps its old "nearest the bounding box edge" rule only as a fallback for a spec that carries no entrance.
+
+Two validators split the question in half, and the split is the point. `EnclosureLeak` **seals the entrance cell** and asks whether everything else still holds — so a second hole somewhere is still a finding rather than being excused by the presence of a legitimate one. `EntranceLeadsOutside` asks about the door itself: that there is one, that a `Door` tile was actually placed at that cell, and that walking out of it reaches open board rather than the back of the next room. All three of its failure modes were demonstrated on deliberately broken builds, and removing `EnclosureLeak`'s seal makes that validator fail on every map — which is the evidence that the door is a real hole in a real wall and not a cosmetic swap.
+
+`render` marks it `@`.
 
 ### Mixing tilesets — one theme per room, not per map
 
@@ -57,12 +74,12 @@ rather than the upper one:
   `WallHeight`/`FloorHeight`, because the rise to be climbed is the lower storey's. The upper
   rooms' own wall pitch still comes from their own tiles, which is what `WallRowOverlap` checks.
 
-The exterior shell hid a bug here for as long as every map had one theme. Its "tallest room wins"
-loop seeded `wallRows` at 1, so on a storey where every room has a single wall row the loop never
-fired and `theme` kept its initial value — the *layout* theme. With one theme everywhere that was
-indistinguishable from correct; with two it ringed the castle keep in dungeon wall. Seed the
-accumulator at 0 so the first room always wins. **Any "pick the best room's X" loop on a storey
-must be seeded so it cannot fall through to a layout-wide default.**
+The now-deleted exterior shell hid a bug here for as long as every map had one theme, and the lesson
+outlives the code. Its "tallest room wins" loop seeded `wallRows` at 1, so on a storey where every
+room has a single wall row the loop never fired and `theme` kept its initial value — the *layout*
+theme. With one theme everywhere that was indistinguishable from correct; with two it ringed the
+castle keep in dungeon wall. **Any "pick the best room's X" loop on a storey must be seeded so it
+cannot fall through to a layout-wide default.**
 
 Fuzz mixed maps with `fuzz --mixed`, which gives every map a different theme upstairs than
 downstairs and rotates the pairing by seed so each theme meets every other across a run.
@@ -284,8 +301,8 @@ Phase 2 suppresses the IC note only for the corridor that *owns* the bend. A sec
 **11. Two corridors bending into the same cell**
 Two corridors leaving the same room wall can elbow into one cell, each wanting its own Phase 4 corner. One corner fills the cell; the `claimed4` set lets the first bend claim it. The `Build()` dedupe does not save you here — its key includes rotation, and the two corners want different rotations.
 
-**12. Exterior shell bricking up corridors**
-`BuildExteriorShell` rings the room bounding box. A corridor can bulge outside that box and land on the ring, which both stacked tiles and walled the corridor off. The ring now skips any cell already occupied in the elevation band it covers.
+**12. Exterior shell bricking up corridors** *(moot — the shell is gone)*
+`BuildExteriorShell` ringed the room bounding box, and a corridor could bulge outside that box and land on the ring, which both stacked tiles and walled the corridor off. Kept as a record because the class is live: **any stage that lays tiles on cells another stage also owns has to yield per cell**, not per stage.
 
 **13. Ground storey poking through the upper floor**
 `ApplyMultiFloor` raised only the *carrier* rooms to `upperWallRows`. A non-carrier BSP room with more wall rows — and every corridor inheriting its height — pushed its top wall row up through the upper storey. All ground rooms are now clamped to `upperWallRows`.
@@ -297,10 +314,10 @@ Two corridors leaving the same room wall can elbow into one cell, each wanting i
 When an L-bend's horizontal leg is a single tile, the cell diagonally outside the bend borders no floor tile and gets no Phase 2 note — but Phase 4 still lays a floor on the inner corner next to it, so the dungeon interior opens straight into the void. Phase 2.6 seals it. This is invisible by eye in-game (you have to walk to that one cell) and was only ever found by the `EnclosureLeak` validator, which is why it survived so long.
 
 **16. A negative coordinate makes the whole slab paste as nothing**
-Slab positions are packed into **unsigned 18-bit** fields, so a tile at x=-1 does not fail loudly — it wraps, and TaleSpire then rejects the entire slab with no message at all. A map that is otherwise perfect simply refuses to paste. Every other check passes, because the tiles themselves are well formed. This bit the contact sheet and the `rooms` command, both of which put a room at the origin and had the exterior shell extend one cell outside it. Lay anything out with a margin of at least one cell; `NegativePosition` catches the rest.
+Slab positions are packed into **unsigned 18-bit** fields, so a tile at x=-1 does not fail loudly — it wraps, and TaleSpire then rejects the entire slab with no message at all. A map that is otherwise perfect simply refuses to paste. Every other check passes, because the tiles themselves are well formed. This bit the contact sheet and the `rooms` command, both of which put a room at the origin and had the (since deleted) exterior shell extend one cell outside it. Lay anything out with a margin of at least one cell; `NegativePosition` catches the rest.
 
 **17. Walls standing half a unit below the floor you walk on**
-`PlaceWall` emitted the floor tile and the wall tile at the same `y`, burying the wall's bottom `FloorThickness`. Invisible on the 11 combo tilesets (they emit no floor under the wall at all) and wrong on all 9 others — the symptom people report is "the walls of <tileset> don't line up with the floor", which sounds like bad curation but is one code bug. The same mistake was in the corridor pipeline (Phases 2.7/3/4) and the exterior shell. `WallRowOverlap` never saw it because it only compared wallish tiles to *other wallish tiles*; `FloorWallOverlap` compares them to floors and is what closes the hole.
+`PlaceWall` emitted the floor tile and the wall tile at the same `y`, burying the wall's bottom `FloorThickness`. Invisible on the 11 combo tilesets (they emit no floor under the wall at all) and wrong on all 9 others — the symptom people report is "the walls of <tileset> don't line up with the floor", which sounds like bad curation but is one code bug. The same mistake was in the corridor pipeline (Phases 2.7/3/4) and in the exterior shell. `WallRowOverlap` never saw it because it only compared wallish tiles to *other wallish tiles*; `FloorWallOverlap` compares them to floors and is what closes the hole.
 
 **18. Storey height double-counting the floor**
 `upperY = wallRows * WallHeight + FloorHeight` counts the floor twice on a combo tileset, whose wall tile already contains one. On Dungeon Cellar the wall tops out at 2.5 and the storey above was placed at 3.0 — the visible half-unit gap between a basement and the keep on top of it, and the reason its staircase ended in mid-air. Use `TileCatalog.StoreyHeight`; no caller should compute a storey top by hand. Note that `ApplyMultiFloor`'s `MinCeilingHeight` loop deliberately still uses the curated figures — it is a headroom check against curated data, not a placement.
@@ -309,7 +326,7 @@ Slab positions are packed into **unsigned 18-bit** fields, so a tile at x=-1 doe
 `BuildStaircase` stepped by a hardcoded `0.5` against tread tiles that are **1.0 tall** and rise by their own height, so a 2.5 storey got five treads climbing 2.5 cells of ground, each floating half-buried in the next. It also started the bottom tread at `OriginY`, sinking it into the floor. And the tread rotation is a quarter turn (**+6 steps**) off the wall-facing convention `DirToRot` encodes: at `DirToRot("west")` the treads incline north while the run climbs west. Confirmed in game on Dungeon Cellar.
 
 **20. The upper floor coming out a fraction of the lower one**
-Two separate causes, and they are easy to confuse. (a) `ApplyMultiFloor` filtered carriers to rooms at or above *average area* before growing the cluster by adjacency, so on a map whose big rooms all sit more than `MaxLandingGap` apart, growth stopped at the seed. Area now only picks the seed. (b) The seed was the largest room on the map, which is often the one in a corner with nothing within reach — `BestClusterSeed` picks the largest room of the best-connected *group* instead. Together these took seed 0 from 17% of the ground floor to 35%, and the worst sampled seed from 11% to 39%. **Report the ratio, don't eyeball it**: `render` prints it per storey, because an earlier attempt at this raised fill *within the storey's shell* while leaving the total footprint untouched, and looked like progress.
+Two separate causes, and they are easy to confuse. (a) `ApplyMultiFloor` filtered carriers to rooms at or above *average area* before growing the cluster by adjacency, so on a map whose big rooms all sit more than `MaxLandingGap` apart, growth stopped at the seed. Area now only picks the seed. (b) The seed was the largest room on the map, which is often the one in a corner with nothing within reach — `BestClusterSeed` picks the largest room of the best-connected *group* instead. Together these took seed 0 from 17% of the ground floor to 35%, and the worst sampled seed from 11% to 39%. **Report the ratio, don't eyeball it**: `render` prints it per storey, because an earlier attempt at this raised fill *within the storey's then-shell* while leaving the total footprint untouched, and looked like progress.
 
 **21. The encoder truncating a centimetre off every position**
 `PackAsset` stored `(int)(worldPos * 100f)`. While every elevation was a multiple of 0.5 that was
@@ -372,6 +389,247 @@ two right) is not something any amount of reasoning about rotation conventions p
 geometry is in question, `Taleweaver/*/index.json` has the real bounds and the game's own assemblies
 in `TaleSpire_Data/Managed` have the real placement rule.**
 
+**26. A wall from the wrong family in the same tileset**
+Castle Fortified came back from the rig as corners that did not match their walls. Both candidate
+walls are 1x1, both 2.0 tall, both 1 x 0.5 — identical on every field the profile carries. The
+discriminator is the pack's own `GroupTag`, which in this set does not name a role but a *family*:
+`wall` and `wall base` each hold a wall and its matching corner, in two different architectural
+styles. The corner pick was from `wall base` and the wall pick from `wall`.
+
+Because every structural pick is pinned in `tileset_picks.json`, correcting it is a data edit and a
+sort tiebreak would have been dead code. What is worth keeping is the check:
+`build-mapgen-profiles.py` now warns whenever a wall from the corner's own family was available and
+something else was picked. It fires only where a pack groups by family rather than by role — most
+put all walls in `wall` and all corners in `corner`, which says nothing — so it is quiet except
+where it means something. It flagged Shogun Palace next, which turned out to be the same fault for
+a different reason — see bug 29 — and is now silent on every buildable set.
+
+**27. Stair treads with nothing under them**
+A tread carries only its own step, so every tread above the first hangs a full rise over open air
+and a flight reads as a row of separate floating steps. The column under each tread is now filled
+solid down to the floor surface. Seven tilesets ship a block for exactly this (Dungeon Cellar's is
+`Dungeon Stair Block`); Ship and Interstellar have an unnamed full-cell solid; every other theme
+fills with its own floor tile, which is solid, always present and the right material.
+
+The fallback is deliberately *not* `TileCatalog.Get`'s usual one. That falls back to the **default
+theme**, which would put dungeon stone under a marble staircase — so `BuildStaircase` asks
+`HasTile` first and drops to the theme's own floor rather than to another theme's block.
+
+Fixing this exposed a curation fault behind it: four sets — BellowGloom, MegaDungeon, Desert Village
+and Industrial — had picked their stair *block* as their `stairs` tile, so their flights were stacks
+of cubes rather than treads, and `stairs` and `stairBlock` resolved to one GUID. That is invisible
+to the generator but fatal to the harness, which indexes placements by GUID to recover the role they
+were placed as: every tread reported as a block and every flight as missing entirely. All four sets
+do ship a sloped tread and now use it. `build-mapgen-profiles.py` warns when one theme picks a
+single tile for two roles, because **a GUID is the only handle anything downstream has on what a
+tile was placed as.**
+
+**28. A wall authored looking west, turned a quarter circle wrong on all four sides**
+Bug 25 established that a tile shallower than its cell hugs the low-x/low-z side, and `EdgeHug`
+pushes it back against the edge its rotation implies. That is only right if the tile's art faces
+the way `rotStep` says it does. Three sets — Desert Village, Shogun Palace, Hull — ship a wall that
+is **0.5 x 1** rather than the usual 1 x 0.5, which is the same panel authored looking *west*: at
+`rotStep 0` it stands square to the wall it is meant to be part of, so a ring of them never closes
+and `EdgeHug` pushes it along the wrong axis on top of that.
+
+`TileEntry.AuthoredRotBias` is the correction, and it is **+18, not +6**. A quarter turn runs
+N→W→S→E (`ROT_NORTH 0, ROT_WEST 6, ROT_SOUTH 12, ROT_EAST 18`), so bringing west round to north
+takes three of them. `TileCatalog`'s own class comment claimed `6=East, 18=West` and was simply
+stale and backwards; it produced a confident wrong answer first time round. **When two places in
+the repo state a convention, the constants are the truth and the prose is a claim.**
+
+`Mk` adds the bias to the caller's rotation *after* computing `EdgeHug`, because the hug is about
+which edge the caller wants lined and the bias is about the tile's own art. `WallSeatedOnEdge`
+takes the bias back off before asking which edge a placed piece lines, and asserts the piece is
+thin *across* that edge and full *along* it — without that second assertion the validator checks
+position given correct rotation and a missing bias passes silently. Forcing the bias to 0 makes it
+fail with 12 findings, which is the evidence it is doing work.
+
+Confirmed in game on Desert Village and Shogun Palace: the finished, detailed face ends up outward
+and the rough back inward. Hull is uncurated and unlooked-at.
+
+**29. A tileset's picks drawn from two incompatible families**
+Bug 26 was one set; the same fault turned out to be systemic, and the shape of the data makes it
+checkable. **Every healthy tileset's wall/corner/cornerFiller picks fall into exactly one of two
+coherent families:**
+
+| | `hasIntegratedFloorWall` | wall | corner | cornerFiller |
+|---|---|---|---|---|
+| **bare**  | false | h2.0, 1 x 0.5 | h2.0, 1 x 1 | h2.0, 0.5 x 0.5 |
+| **combo** | true  | h2.5, 1 x 1   | h2.5, 1 x 1 | — |
+
+Six sets are healthy-bare, eight healthy-combo, and Chamber is a deliberate exception (bare, but
+its caged-tunnel wall genuinely fills the cell). Five sets were mixed across the two, and each
+mixture produced a different visible symptom, which is why they were never recognised as one class:
+
+- **Concrete Building, Industrial** picked a 2.5 combo wall against 2.0 corners — a notch in the
+  top of the ring at every corner, and for Industrial an inner-corner filler from the other family
+  as well. Both are now bare throughout. Industrial has *two* tiles named `industrial_wall_1x1_02`
+  and two named `industrial_corner_filler_01` at different heights, so this is a GUID edit and the
+  names are actively misleading.
+- **Facility, Marble Palace** were flagged `hasIntegratedFloorWall` over a 1 x 0.5 bare wall, so
+  the builder laid no floor and seated the ring at y=0 — bug 17's symptom arriving through
+  curation rather than code. Flag cleared on both.
+- **Shogun Palace** picked the plaster `shogunPlainWall_1x1`, whose own corner `shogunWallCorner1x1`
+  is **2x1** and therefore unplaceable, so it fell back to the only 1x1 corner in the set — a bare
+  timber block from the dig-wall family. On the rig the plaster wall's white cap band ran straight
+  into it at every corner. The whole ring is the dig family now. The plaster wall looks better in
+  isolation and that is exactly the trap: **a wall cannot be judged without the corner it will be
+  paired with.**
+
+Three checks in `build-mapgen-profiles.py` make the class non-recurring, and all three need the
+per-tile `footprint`, which is why none of them existed before bug 25. `check_corner_pitch` warns
+where *no* corner in the set matches the picked wall's height — phrased against the whole candidate
+list rather than the first entry, because `PickOfHeight` searches the list and a corner out of order
+is harmless. `check_wall_footprint` warns on a combo flag over a shallow wall and notes a
+west-authored one. `check_wall_family` (bug 26) warns when a wall from the corner's own `GroupTag`
+family was available and something else was picked.
+
+All five are fixed and the build script is now silent but for three informational NOTEs.
+
+---
+
+### Props are not tiles, and break three conventions at once
+
+Furniture rides the same slab as tiles — the format records no placeable kind, and TaleSpire
+recovers it from the GUID against the installed packs — so `SlabEncoder` needed no changes at all.
+But everything about *where* a prop goes differs from a tile, and mixing the two up is silent:
+
+- **Position is the pivot, not a bounds corner.** `AssetMath` dispatches on `PlaceableKind` and
+  builds prop bounds around the origin as `centre = origin + rotate(pivotOffset)`, where a tile's
+  position is `GetWorldSnappedBound().min`. So none of the tile placement machinery transfers, and
+  `SlabBuilder.EdgeHug` in particular would be actively wrong. `PropEntry.OriginForCentre` solves
+  that relation backwards and is the only place the inversion is written; `MapGenQA`'s
+  `PropAt.Centre` derives it *forwards* on purpose, so a sign error shows up as a disagreement
+  between the two instead of cancelling out.
+- **Snap is the centimetre, not the half cell** (`SnapPosToNearestHundredth`), and any of the 24
+  rotation steps is legal rather than multiples of 6.
+- **Rotation is offset half a turn from a tile's.** Tile art is authored facing −Z, which is why
+  "wall rotation = the direction the wall faces" holds. Prop art is authored facing **+Z**, so a
+  prop at rot 0 faces *south*. `PropPlacer.PropFacingOffset` is that difference, and without it
+  every prop is seated with its back to the room: bookshelves showing a flat panel, beds with the
+  headboard out in the floor and the foot in the wall.
+
+Nothing in `prop_catalog.json` or the packs' `index.json` records the facing offset, so it cannot
+be derived — it was read off the rig from a row of bookshelves at rot 0/6/12/18 with a 3-tile floor
+tab pointing north and a 6-tile one pointing east, because **a screenshot of a furnished room only
+answers "which way is that facing" if the image carries its own compass**. An earlier attempt to
+judge it from a generated room failed twice over: the props against a wall are in its shadow, and
+the board camera's azimuth is whatever the last session left it at. Build the compass into the
+slab.
+
+That the offset is exactly 12 makes the placement rule collapse to `rot = wallRot` — a prop backed
+against a wall carries that wall's rotation unchanged. Do not write it that way. The two halves are
+independent facts and only cancel for this one use; a prop placed by any other rule (centre of the
+room, on a table, hung on a wall plane) needs the offset applied on its own.
+
+`MapGen/prop_catalog.json` is generated by `tools/build-mapgen-props.py` from the packs'
+`index.json` and has a `--check` mode like the profiles script. Unlike tiles, none of it is
+curated: `mount` is derived by comparing a prop's pivot to the bottom of its bounds (`hanging`
+props pivot on the *top* face and drop below it — screens, curtains, wall cuffs — so placing one at
+floor level buries it), and the grouping is the pack author's own `GroupTag`. There is nothing to
+curate against, because **prop folders are functional rather than per-tileset**: there is no
+"Castle Fortified furniture", only a `Furniture` folder shared by every medieval set. The only
+theming the data supports is the coarse medieval/modern split the two pack GUIDs already are, which
+is what `PropPlacer.StyleFor` reads off the profile's `Pack`. `Nature` and `Splats` are skipped
+pending an outdoor pass.
+
+A harness flag is not a user control. Props were placed, validated on 6,000 maps and rig-checked
+before anyone noticed that `MapGenWindow` never set `ClutterDensity` at all, so the whole pass
+short-circuited for the only person who runs the plugin — the harness reaches `LayoutSpec` directly
+and had been exercising a path the UI could not. Anything added to `TemplateParams` has to be wired
+into the window in the same change, and the window's own status line is the cheapest place to prove
+it: it now counts props separately from tiles (recovered from the GUID, as TaleSpire does), so a
+knob that is not reaching the generator reads as `0 props` instead of hiding inside a tile total.
+
+No validator guards facing, deliberately. Geometry is checkable — `PropInsideRoom`, `PropOnFloor`
+and `PropOverlap` each fail on a deliberately broken build — but a checker for rotation could only
+restate the formula it is checking, and would pass either way. This is the same class as the stair
+rotation in bug 19: a convention question the rig answers and the suite cannot.
+
+### What a room is for decides what goes in it
+
+`RoomSpec.Purpose` is a first-class field, and `MapGen/prop_recipes.json` is the whole vocabulary —
+`Hall`, `Guardroom`, `Barracks`, … for medieval, `Control`, `Quarters`, `Mess`, … for modern. There
+is deliberately no enum beside it: nothing in the generator switches on a particular purpose, so an
+enum would just be a second list to keep in step.
+
+`PurposeAssigner` runs **last**, after `ApplyMultiFloor` and `AddLoopConnections`, because every
+property that makes a purpose read as deliberate is *relational*: a treasury is the dead end
+furthest from the entrance, a guardroom is the room you walk through first, a hall is the biggest
+and best connected. None of that is knowable while the BSP is still splitting. It writes nothing
+but `Purpose`.
+
+Each recipe scores itself against three features — area, graph degree, and depth in steps from the
+entrance — through `wantsArea`/`wantsDegree`/`wantsDepth` in −1..1. **The features are normalised
+against the map's own spread, not against absolute numbers**, so "the deepest room" means something
+on a 6-room small map as well as a 30-room large one. There is no entrance in the spec (the dungeon
+has no outside door yet), so it is taken to be the ground-floor room nearest the edge of the
+storey's bounding box; a room the entrance cannot reach is scored as *deeper than the deepest*
+rather than depth 0, which is exactly the pendant behind an upstairs route.
+
+`minArea`/`maxArea` are plausibility bounds and **not** the selector — the wants do the selecting.
+Treating a cap as the selector is how `Cell`'s `maxArea: 90` came to leave 4% of large-map rooms
+eligible, so a quota of two cells could not be met on two of the three size presets. Room areas
+vary by preset far more than is obvious (median 100 small, 154 medium, 216 large), so **a band
+tuned by eye against one preset silently excludes the purpose from another**. Measure before
+touching one, and re-measure if `Padding` or `RoomFill` change, since both move every room size.
+
+**A quota is exact, not a floor.** A purpose the caller names is kept out of the filler draw
+entirely, so "one treasury" means one and `LayoutSpec.PurposeShortfall` stays meaningful — letting
+the filler top it up would make "1 requested, 3 assigned, 0 short" a normal reading, and there
+would then be no number that means anything. Quotas are served tightest-first (fewest eligible
+rooms first), or a purpose only two rooms can take finds them already spent on one that had the
+whole map to choose from. Whatever is left is drawn by weight, damped by `RepeatDamping` each time
+a purpose is used — without the damping a 9-room dungeon comes out as five storerooms, because
+"storeroom fits anywhere" and "storeroom is what this room should be" are the same number to a
+weighted pick.
+
+`PropPlacer` then runs four passes per room over one shared alignment model: `light`, `corner`,
+`wall`, `centre`. Lighting is per *style* rather than per purpose — every furnished room gets lit,
+one fixture kind per room at a fixed spacing along its walls, whatever the room is for. The zone
+names in a recipe are the pack authors' own `GroupTag`s, and **a zone that resolves to nothing is
+skipped silently**, so naming an absent group costs only the variety it would have added. That is
+cheap but invisible, which is what `MapGenQA recipes` is for: it prints what every zone actually
+resolves to and distinguishes a group that is *absent* from one that exists but is
+`0/N hanging-only`. It earned its keep immediately — three authored zones were dead, and
+`modern/Control`'s `screens` was the worst of them, because a group that is 100% hanging props
+looks perfectly reasonable in the file.
+
+Two things guard the room rather than the prop. Doorway approaches and stair runs (plus a landing
+cell at each end, on **both** storeys) are reserved before anything is placed. And `TryPlace`
+claims its cells, re-runs a BFS between the room's ports, and *reverts* if the room came apart —
+because every individual prop can be inside the room, on the floor, clear of the doorways and
+overlapping nothing, and the room still be impassable when a dense draw lines both walls of a
+3-wide room. Removing that guard produces 21,000 findings across a 7,200-map sweep, so it is doing
+real work rather than guarding a hypothetical. The guard is armed only if the room's ports reached
+each other to begin with: a room arriving already cut in two by a stair run spanning it would
+otherwise reject every prop and come out bare, which reads as a broken recipe.
+
+Four validators cover this, taking the suite to 32: `PropNotBlockingDoor`, `PropNotBlockingStairs`,
+`RoomTraversable`, `PurposeQuotaMet`. **Three of them were incapable of ever failing when first
+written**, and only breaking the generator on purpose showed it: they keyed their cell sets on the
+room's `OriginY`, while a prop's stored Y is the floor *surface* a `FloorThickness` above it. Every
+lookup missed by half a unit, nothing ever matched, and all three reported a clean run on maps full
+of furniture standing in doorways. `Validators.PropY100` is now the only place that elevation is
+computed — anything comparing a prop position against a cell derived from a `RoomSpec` must go
+through it.
+
+The window offers every purpose of the ground theme's style **except `Empty`**. `Empty` is a real
+recipe, but it is the bucket a room falls into when nothing else fits and every room suits it, so a
+quota of it is always met and only takes rooms away from what was actually asked for — a knob that
+can never report a shortfall. Rig-checked end to end: a quota of Hall 2 / Guardroom 1 / Cell 2 /
+Treasury 1 on a medium map came out silent, and Cell 9 on the same map reported `No room suited:
+3 Cell` in amber while the prop count moved 586 → 613, which is the evidence that the spinners reach
+the generator rather than merely rendering.
+
+One curation item stands, from looking at a furnished Abandoned Village map on the rig: the four
+`bed sling*` entries in `medieval/bed` are the pack's hammocks and are derived `mount: floor`,
+because their pivot genuinely does sit at the bottom of their bounds — the pivot heuristic cannot
+tell a slung bed from a hammock. They therefore get laid flat on the floor. Four of fourteen members
+of the group, so roughly one bed in four. Whether a `bed sling` is a camp cot or a hammock is a
+question for the rig, not for the data, so they are left in rather than guessed out.
+
 ### Choosing tiles — the catalog is data, not code
 
 `TileCatalog` used to carry a hardcoded table of GUIDs for three themes. It now resolves every
@@ -416,7 +674,15 @@ for judging a *tileset*: a 2.0 wall standing next to a 2.5 corner leaves a hole 
 reads exactly like a set that cannot enclose. Two tilesets were excluded on that mistake and later
 recovered — Desert Village was graded on its 2.5 wall/floor pieces while its plain 2.0 wall closes
 into a continuous buttressed face, and Chamber was graded with a `Chamber hold` wall against a
-caged-tunnel corner. Probe matched sets.
+caged-tunnel corner. Probe matched sets — and know which of the two families in bug 29 you are
+aiming at before you start, because the pool of candidates is small enough that the family settles
+the pick nearly every time and only the leftovers are genuinely a rig question.
+
+The sidecar makes an A/B possible without touching the repo or rebuilding, which matters when a
+long sweep has the harness binary open: write a modified `tileset_profiles.json` next to the
+MapGenQA binary, run `rooms`, delete it. `ProfileCatalog.EnsureLoaded` caches into a static on
+first use, so a process that has been running for minutes has already read its embedded copy and a
+sidecar appearing beside it cannot change what that run sees.
 
 Probing substitutes candidates through a **sidecar `tileset_profiles.json` next to the MapGenQA
 binary** — the same override a user can drop next to `MapGen.dll`. Nothing in the repo is touched,
@@ -432,6 +698,14 @@ in `tileset_picks.json` so the verdict can be re-argued without repeating the ri
 standing: **20 verified, 3 excluded.** CastleRuins is verified deliberately — its walls are broken
 stubs, but that is the set's intent, and the map structure underneath is coherent.
 
+`verified` now means what it says for all twenty: every buildable set has had a plain probe room
+pasted on the rig and looked at, not merely compiled. The eleven that had never been seen were
+checked in one pass, three or four rooms to a screenshot, and ten of them were already right — the
+offline footprint-and-height analysis in bug 29 had found and fixed the faults first, so the rig
+was confirming rather than discovering. **Spend the rig on what only eyes can settle.** The
+questions that genuinely needed it were which face of a west-authored wall ends up outward, and
+whether a corner from another family reads as deliberate (it does not).
+
 The overlay can also override `hasIntegratedFloorWall`, because the reference flag is per-tileset
 while carrying a floor is per-tile: Desert Village's set is flagged true, but the wall actually
 picked is the bare 2.0 one, and left uncorrected the wall ring would stand a floor's thickness below
@@ -445,7 +719,9 @@ and looks like a generator bug rather than a missing pick — so every buildable
 explicitly. The reference data's `doorCompatibility` list is the starting point, but it often names
 only 2x1 pieces (Marble Palace, Castle Fortified, Sewers) and MapGen can only place 1x1, so the
 usable door is frequently one the list never mentions. Shogun Palace likewise contains no stair
-tile at all and borrows the ship's wooden one.
+tile at all and borrows the ship's wooden one — and, for consistency, the ship's block under it.
+**Borrow the stair and its block from the same set**, or the flight and its underside are different
+materials.
 
 **Never grade a theme off a screenshot taken too early.** A thousand-tile map streams into a
 preview over several seconds, and a half-loaded one reads as a scatter of floating panels —
@@ -479,8 +755,16 @@ dotnet run -c Release -- spec   --seed 42 --size medium        # rooms, connecti
 dotnet run -c Release -- cell   --seed 42 --size medium --x 33 --z 32 --radius 2
 dotnet run -c Release -- slab   --seed 42 --size medium        # base64, ready to paste
 dotnet run -c Release -- rooms  --themes "A,B,C" --rows 1      # one plain room per theme, in a row
+dotnet run -c Release -- rooms  --themes "Dungeon Cellar" --w 11 --d 11 --clutter 3   # furnished
+dotnet run -c Release -- rooms  --themes "Sewers" --clutter 3 --purpose Library   # one purpose, pinned
 dotnet run -c Release -- tiles  --themes Facility              # resolved tile per role, + heights
+dotnet run -c Release -- recipes --style medieval              # what every zone resolves to
+dotnet run -c Release -- fuzz   --seeds 1-300 --themes all --clutter 3 --quota "Cell=2,Treasury=1"
 ```
+
+`--clutter 0-3` is off by default on `fuzz`, `render`, `slab` and `rooms`, so the tile
+validators keep being exercised on bare geometry and a prop fault cannot be mistaken for a
+structural one. Turn it on for a run of its own.
 
 Reach for `tiles` first whenever a fault looks like it is about elevation. Bug 22 presented as a
 wall row sunk into the one below it and read like a stacking bug; one line of `tiles` showed the
@@ -521,12 +805,40 @@ themes' floors, so on any map whose storeys share a tileset the error is exactly
 themes pass. **Run both sweeps.** A uniform one cannot fail on a quantity that only exists when the
 storeys differ, and per-floor theming means that quantity is now everywhere.
 
-Because `ProfileCatalog` resolves `tileset_profiles.json` out of *its own assembly*, the harness
-must embed the same file under the same logical name (`TaleSpireMapGen.tileset_profiles.json`) —
-see `MapGenQA.csproj`. Without it the catalog is empty, the generator falls back to hardcoded
-defaults and skips multi-floor, and every stair validator passes because there are no stairs. A
-`Preflight()` in `fuzz` asserts a profile resolves for each theme and refuses to report a green
-run otherwise; keep that check honest if profile loading changes again.
+Bugs 25-27 added `WallSeatedOnEdge` and `StairTreadSupported`, taking the suite to 25. Neither was
+reachable by any sweep before the data they depend on existed — the first needs the per-tile
+`footprint`, the second needs `stairs` and `stairBlock` to be distinct GUIDs. **A validator can only
+see distinctions the data already makes**, which is why several of these bugs survived a green sweep
+for as long as they did.
+
+Props took it to 32 — `PropInsideRoom`, `PropOnFloor`, `PropOverlap`, then `PropNotBlockingDoor`,
+`PropNotBlockingStairs`, `RoomTraversable`, `PurposeQuotaMet`. They walk `map.Props`, not
+`map.Tiles`, and the split is the harness's own: the tile validators reason about grid cells and
+stacking, and a pivot-positioned prop that snaps to the centimetre obeys neither. `GeneratedMap`
+sorts each placement by asking `PropCatalog.TryGet` about its GUID, which is the same question
+TaleSpire itself asks. `EntranceLeadsOutside` then took it to 33.
+
+The prop validators added a third trap to the two below, and it is the one that cost the most:
+**a prop's Y is the floor surface, a `FloorThickness` above the storey base a `RoomSpec` records.**
+Three of the four keyed their cell sets on `room.OriginY`, so every lookup missed by half a unit,
+nothing ever matched, and all three passed on maps with furniture standing in doorways. They were
+only caught by disabling each guard in the generator and expecting a failure that never came —
+`Validators.PropY100` is now the single place that elevation is derived. A validator that compares
+two coordinates has to be shown failing, because agreeing on a wrong key looks identical to
+agreeing on a right one.
+
+Because `ProfileCatalog` and `PropCatalog` resolve their JSON out of *their own assembly*, the
+harness must embed the same files under the same logical names
+(`TaleSpireMapGen.tileset_profiles.json`, `TaleSpireMapGen.prop_catalog.json`,
+`TaleSpireMapGen.prop_recipes.json`) — see
+`MapGenQA.csproj`. Without the profiles the catalog is empty, the generator falls back to hardcoded
+defaults and skips multi-floor, and every stair validator passes because there are no stairs.
+Without the props every prop validator passes because nothing is ever placed, and — worse — the
+harness cannot tell a prop from a tile, so furniture lands in `map.Tiles` and the *tile* validators
+start reporting nonsense. Without the recipes `RecipeCatalog.IsLoaded` is false, every room is
+assigned `Empty`, and the four purpose and prop-placement validators pass on a map with no
+furniture in it at all. A `Preflight()` in `fuzz` asserts a profile resolves for each theme and
+refuses to report a green run otherwise; keep that check honest if resource loading changes again.
 
 Two traps that made validators quietly useless, worth remembering when adding more:
 - **`map.At(y)` is an exact match.** Doors and inner-corner fillers live at `y + 0.5`, so a
@@ -556,7 +868,17 @@ Its `zoom` and `orbit` arguments are **absolute, not deltas** — the camera kee
 the last session left it in, so two identical invocations otherwise frame the board completely
 differently, and a shot taken from inside a wall is indistinguishable from a broken tileset. Zoom
 and pitch are coupled in TaleSpire: scrolling in drops the camera towards ground level, which is
-the only way to look at a wall face rather than the tops of walls.
+the only way to look at a wall face rather than the tops of walls. Calibration, since the argument
+is absolute and guessing it costs a whole paste cycle: **zoom 5-6 frames two or three `rooms`
+probes side by side** at a readable size, and **zoom 1 is what a whole small map needs** — zoom 8
+on a small map fills the screen with four floor tiles. The paste x/y is a one-shot aim because the
+preview is stationary once dropped and WASD does not pan; moving the anchor translates the map 1:1
+in screen pixels, so correcting a bad frame means re-pasting, not nudging.
+
+Read the screenshots by cropping the region of interest out of the full-resolution PNG and
+upscaling it with PIL's LANCZOS before looking — a downscaled whole-screen shot hides exactly the
+thing being judged, which is whether a cap course runs through a corner or stops at it. `numpy` is
+not installed on this box, so do it in pure PIL.
 
 **`tools/encode_slab.py`** — Generate a test slab from hardcoded placements. Includes `lbend_oc`, `single_corner`, `bend1_exact`, `bend2_exact` layouts. Output is a base64 string ready to paste into TaleSpire.
 

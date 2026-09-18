@@ -36,6 +36,7 @@ namespace MapGenQA
             new UpperRoomSupported(),
             new MissingCorner(),
             new EnclosureLeak(),
+            new EntranceLeadsOutside(),
             new FloorWallOverlap(),
             new StoreyAlignment(),
             new StairRiseContinuous(),
@@ -43,7 +44,38 @@ namespace MapGenQA
             new StairWellOpen(),
             new StairTreadSupported(),
             new WallSeatedOnEdge(),
+            new PropInsideRoom(),
+            new PropOnFloor(),
+            new PropOverlap(),
+            new PropNotBlockingDoor(),
+            new PropNotBlockingStairs(),
+            new RoomTraversable(),
+            new PurposeQuotaMet(),
         };
+
+        /// A room's walkable interior as a world rectangle, with the surface props stand on.
+        internal sealed class RoomFloor
+        {
+            public RoomSpec Room;
+            public float Surface, MinX, MinZ, MaxX, MaxZ;
+        }
+
+        internal static List<RoomFloor> RoomFloors(GeneratedMap map)
+        {
+            var list = new List<RoomFloor>();
+            foreach (var r in map.Spec.Rooms ?? new List<RoomSpec>())
+            {
+                int w = Math.Max(r.Width, 3), d = Math.Max(r.Depth, 3);
+                list.Add(new RoomFloor
+                {
+                    Room    = r,
+                    Surface = r.OriginY + TileCatalog.FloorThickness(ThemeOf(map, r)),
+                    MinX    = r.OriginX + 1,       MinZ = r.OriginZ + 1,
+                    MaxX    = r.OriginX + w - 1,   MaxZ = r.OriginZ + d - 1,
+                });
+            }
+            return list;
+        }
 
         internal static bool IsWallish(Placement p) =>
             p.RoleKnown && (p.Role == TileRole.Wall || p.Role == TileRole.Corner || p.Role == TileRole.InnerCorner);
@@ -112,6 +144,61 @@ namespace MapGenQA
                 runs.Add(run);
             }
             return runs;
+        }
+
+        /// Grid cells a prop's collider reaches into, and the storey it stands on.
+        // Derived from the bounds rather than from the placer's own block, so a prop that claimed
+        // two cells and then sprawled across three is visible here.
+        internal static IEnumerable<(int x, int z, int y100)> PropCells(PropAt p)
+        {
+            var b = p.Bounds;
+            int y100 = (int)Math.Round(p.Y * 100);
+            for (int x = (int)Math.Floor(b.MinX + 0.01f); x <= (int)Math.Ceiling(b.MaxX - 0.01f) - 1; x++)
+                for (int z = (int)Math.Floor(b.MinZ + 0.01f); z <= (int)Math.Ceiling(b.MaxZ - 0.01f) - 1; z++)
+                    yield return (x, z, y100);
+        }
+
+        /// The interior cell a party stands on to use a door, per room of each connection.
+        /// The elevation a prop standing in this room is written at: the floor *surface*, a
+        /// FloorThickness above the storey base.
+        // Anything comparing prop positions against cells derived from a RoomSpec has to go through
+        // here. Keying such a set on OriginY instead is silent in exactly the worst way — every
+        // lookup misses by half a unit, nothing ever matches, and the validator reports a clean run
+        // on a map full of furniture standing in doorways. Three of them did.
+        internal static int PropY100(GeneratedMap map, RoomSpec r) =>
+            (int)Math.Round((r.OriginY + TileCatalog.FloorThickness(ThemeOf(map, r))) * 100);
+
+        internal static IEnumerable<(RoomSpec room, (int x, int z) cell)> DoorApproaches(GeneratedMap map)
+        {
+            var byId = (map.Spec.Rooms ?? new List<RoomSpec>()).ToDictionary(r => r.Id);
+            foreach (var c in map.Spec.Connections ?? new List<Connection>())
+            {
+                if (!byId.TryGetValue(c.FromRoomId ?? "", out var r)) continue;
+                var door = GeneratedMap.DoorCell(r, c);
+                if (door == null) continue;
+
+                // Inward is the opposite of the side the door is on.
+                var (dx, dz) = (c.WallSide ?? "").ToLowerInvariant() switch
+                {
+                    "north" => (0, 1),
+                    "south" => (0, -1),
+                    "west"  => (1, 0),
+                    _       => (-1, 0),
+                };
+                yield return (r, (door.Value.x + dx, door.Value.z + dz));
+            }
+
+            // The way in is a doorway like any other for everything that reads this — it is simply
+            // not stored as a Connection, which is the kind of gap that leaves exactly one door in
+            // the map unguarded.
+            var e = map.Spec.Entrance;
+            if (e != null && byId.TryGetValue(e.RoomId ?? "", out var er))
+            {
+                string side = (e.WallSide ?? "").ToLowerInvariant();
+                var (ex, ez) = EntrancePlacer.DoorCell(er, side, e.Offset);
+                var (idx, idz) = EntrancePlacer.Step(side);
+                yield return (er, (ex - idx, ez - idz));
+            }
         }
 
         /// Cells a stair comes up through, keyed by the elevation of the storey it breaks through.
@@ -586,6 +673,13 @@ namespace MapGenQA
                 var blocking = level.Where(t => t.RoleKnown &&
                                    (t.Role == TileRole.Wall || t.Role == TileRole.Corner))
                                .Select(t => t.Cell).ToHashSet();
+
+                // The way in is the one place the interior is *meant* to reach open space, so it is
+                // sealed here rather than excused afterwards: every other leak still has to be
+                // found, and sealing keeps this validator answering exactly one question.
+                // EntranceLeadsOutside is what checks the door itself.
+                var entranceCell = EntranceDoorCell(map, y);
+                if (entranceCell != null) blocking.Add(entranceCell.Value);
                 var walkable = level.Where(t => t.RoleKnown && (t.Role == TileRole.Floor || t.Role == TileRole.InnerCorner))
                                .Select(t => t.Cell).ToHashSet();
                 if (walkable.Count == 0) continue;
@@ -658,6 +752,19 @@ namespace MapGenQA
             }
         }
 
+        /// <summary>Cell of the declared entrance door, if it belongs to this storey.</summary>
+        internal static (int, int)? EntranceDoorCell(GeneratedMap map, float y)
+        {
+            var e = map.Spec?.Entrance;
+            if (e == null) return null;
+
+            var room = (map.Spec.Rooms ?? new List<RoomSpec>())
+                .FirstOrDefault(r => r.Id == e.RoomId);
+            if (room == null || Math.Abs(room.OriginY - y) > 0.001f) return null;
+
+            return EntrancePlacer.DoorCell(room, (e.WallSide ?? "").ToLowerInvariant(), e.Offset);
+        }
+
         /// The two unit directions a corner tile of this rotation walls off.
         /// rot 0 = NW corner (walls face N+W), 18 = NE, 12 = SE, 6 = SW.
         internal static IEnumerable<(int, int)> CornerFacings(int rot)
@@ -668,6 +775,82 @@ namespace MapGenQA
                 case Validators.RotEast:  yield return (0, -1); yield return (1, 0);  break;
                 case Validators.RotSouth: yield return (0, 1);  yield return (1, 0);  break;
                 case Validators.RotWest:  yield return (0, 1);  yield return (-1, 0); break;
+            }
+        }
+    }
+
+    public class EntranceLeadsOutside : IValidator
+    {
+        public string Name => "EntranceLeadsOutside";
+        public string Describes => "the way in from outside being absent, unbuilt, or opening onto another room";
+
+        // EnclosureLeak seals the entrance cell and asks whether everything *else* holds. This is
+        // the other half of that: the door has to actually be there, and walking out of it has to
+        // reach open board rather than the back of the next room along.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            var rooms = map.Spec?.Rooms ?? new List<RoomSpec>();
+            var ground = rooms.Where(r => r.OriginY < 0.001f).ToList();
+            if (ground.Count == 0) yield break;
+
+            var e = map.Spec.Entrance;
+            if (e == null)
+            {
+                yield return $"{ground.Count} ground-floor rooms and no entrance — the dungeon cannot be entered";
+                yield break;
+            }
+
+            var room = rooms.FirstOrDefault(r => r.Id == e.RoomId);
+            if (room == null)
+            {
+                yield return $"entrance names room {e.RoomId}, which is not in the layout";
+                yield break;
+            }
+
+            string side = (e.WallSide ?? "").ToLowerInvariant();
+            var (cx, cz) = EntrancePlacer.DoorCell(room, side, e.Offset);
+            float y = room.OriginY;
+
+            var band = map.Tiles.Where(t => t.Y >= y - 0.001f && t.Y < y + 1f).ToList();
+            bool door = band.Any(t => t.RoleKnown && t.Role == TileRole.Door && t.Cell == (cx, cz));
+            if (!door)
+            {
+                string got = string.Join("+", band.Where(t => t.RoleKnown && t.Cell == (cx, cz))
+                                                  .Select(t => t.Role.ToString()).Distinct());
+                yield return $"entrance at ({cx},{cz}) on the {side} wall of {room.Id} has no door tile" +
+                             (got.Length > 0 ? $" — found {got}" : " — nothing placed there");
+            }
+
+            // Every ground-floor footprint cell, not just the tiles: a room that happens to be bare
+            // in front of the door is still a room, and a door into one is not a way in from outside.
+            var footprint = new HashSet<(int, int)>();
+            foreach (var r in ground)
+                for (int x = r.OriginX; x < r.OriginX + Math.Max(r.Width, 3); x++)
+                    for (int z = r.OriginZ; z < r.OriginZ + Math.Max(r.Depth, 3); z++)
+                        footprint.Add((x, z));
+
+            var (dx, dz) = EntrancePlacer.Step(side);
+            int maxX = ground.Max(r => r.OriginX + Math.Max(r.Width, 3));
+            int maxZ = ground.Max(r => r.OriginZ + Math.Max(r.Depth, 3));
+            int minX = ground.Min(r => r.OriginX), minZ = ground.Min(r => r.OriginZ);
+
+            for (int x = cx + dx, z = cz + dz;
+                 x >= minX - 1 && x <= maxX + 1 && z >= minZ - 1 && z <= maxZ + 1;
+                 x += dx, z += dz)
+            {
+                if (footprint.Contains((x, z)))
+                {
+                    yield return $"entrance on the {side} wall of {room.Id} at ({cx},{cz}) opens onto " +
+                                 $"built ground at ({x},{z}) rather than open board";
+                    yield break;
+                }
+                if (band.Any(t => t.RoleKnown && t.Cell == (x, z) &&
+                                  (t.Role == TileRole.Wall || t.Role == TileRole.Corner)))
+                {
+                    yield return $"entrance on the {side} wall of {room.Id} at ({cx},{cz}) is blocked " +
+                                 $"by a corridor wall at ({x},{z})";
+                    yield break;
+                }
             }
         }
     }
@@ -891,16 +1074,297 @@ namespace MapGenQA
                 if (t.Rot % 6 != 0) continue;
                 if (!TileIndex.TryGet(t.Guid, out var entry)) continue;
 
+                // The stored rotation is the facing the builder wanted turned onto the tile's own
+                // authored one, so take the bias back off before asking which edge this piece
+                // lines. Without that a west-authored wall reads as facing a side it is not on.
+                int facing = (t.Rot - entry.AuthoredRotBias + 24) % 24;
+                if (facing % 6 != 0) continue;
+                bool linesZEdge = facing == Validators.RotNorth || facing == Validators.RotSouth;
                 var foot = entry.RotatedFootprint(t.Rot);
-                float far = t.Rot == Validators.RotEast ? t.X + foot.X
-                          : t.Rot == Validators.RotSouth ? t.Z + foot.Z
+
+                // A wall lies along the edge it lines, so as placed it must be the thin way across
+                // that edge and fill the cell along it. Getting this wrong is what an authored
+                // facing the builder has not compensated for looks like: the panel stands square
+                // to the wall it is supposed to be part of.
+                float across = linesZEdge ? foot.Z : foot.X;
+                float along  = linesZEdge ? foot.X : foot.Z;
+                if (across > entry.Thin + 0.01f || along < 0.99f)
+                {
+                    yield return $"{entry.Name} {t} is {foot.X:0.##}x{foot.Z:0.##} as placed, " +
+                                 $"turned across the edge it lines rather than along it";
+                    continue;
+                }
+
+                float far = facing == Validators.RotEast ? t.X + foot.X
+                          : facing == Validators.RotSouth ? t.Z + foot.Z
                           : float.NaN;
                 if (float.IsNaN(far)) continue;
 
-                float cell = t.Rot == Validators.RotEast ? (float)Math.Floor(t.X) : (float)Math.Floor(t.Z);
+                float cell = facing == Validators.RotEast ? (float)Math.Floor(t.X) : (float)Math.Floor(t.Z);
                 if (Math.Abs(far - (cell + 1f)) > 0.01f)
                     yield return $"{entry.Name} {t} stops at {far:0.##}, {cell + 1f - far:0.##} short of the cell edge";
             }
+        }
+    }
+
+    public class PropInsideRoom : IValidator
+    {
+        public string Name => "PropInsideRoom";
+        public string Describes => "a prop sticking out through a wall, or standing outside any room";
+
+        // The whole prop, not just its origin. A prop's stored position is its pivot, which for a
+        // third of the catalog is not even inside its own bounds — so a prop can sit well within a
+        // room by position and still have half a bed in the corridor next door.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            var floors = Validators.RoomFloors(map);
+
+            foreach (var p in map.Props)
+            {
+                var (cx, cz) = p.Centre;
+                var room = floors.FirstOrDefault(f =>
+                    Math.Abs(f.Surface - p.Y) < 0.01f &&
+                    cx >= f.MinX && cx <= f.MaxX && cz >= f.MinZ && cz <= f.MaxZ);
+
+                if (room == null)
+                {
+                    yield return $"{p} centres on ({cx:0.##},{cz:0.##}) which is in no room's interior at y={p.Y}";
+                    continue;
+                }
+
+                var b = p.Bounds;
+                if (b.MinX < room.MinX - 0.01f || b.MaxX > room.MaxX + 0.01f ||
+                    b.MinZ < room.MinZ - 0.01f || b.MaxZ > room.MaxZ + 0.01f)
+                    yield return $"{p} spans ({b.MinX:0.##},{b.MinZ:0.##})-({b.MaxX:0.##},{b.MaxZ:0.##}), "
+                               + $"outside {room.Room.Id} ({room.MinX},{room.MinZ})-({room.MaxX},{room.MaxZ})";
+            }
+        }
+    }
+
+    public class PropOnFloor : IValidator
+    {
+        public string Name => "PropOnFloor";
+        public string Describes => "a prop buried in the floor or floating above it";
+
+        // 89% of props are pivoted on their bottom face, so placing one at the floor surface
+        // stands it there. The other 11% are pivoted on top and hang below — screens, curtains,
+        // wall cuffs — and the same placement sinks them out of sight.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            var surfaces = Validators.RoomFloors(map).Select(f => f.Surface).Distinct().ToList();
+
+            foreach (var p in map.Props)
+            {
+                if (!p.Entry.IsFloorMounted)
+                    yield return $"{p} is '{p.Entry.Mount}'-mounted but was placed as though it stands on the floor";
+                else if (!surfaces.Any(s => Math.Abs(s - p.Y) < 0.01f))
+                    yield return $"{p} sits at y={p.Y}, which is no room's floor surface "
+                               + $"({string.Join(", ", surfaces.OrderBy(s => s))})";
+            }
+        }
+    }
+
+    public class PropOverlap : IValidator
+    {
+        public string Name => "PropOverlap";
+        public string Describes => "two props interpenetrating";
+
+        // Compared as bounds rather than as grid cells: props do not sit on the grid, and two that
+        // each claim one cell can still overlap if either is placed off-centre in it.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            var byLevel = map.Props.GroupBy(p => (int)Math.Round(p.Y * 100));
+
+            foreach (var level in byLevel)
+            {
+                var list = level.Select(p => (Prop: p, B: p.Bounds)).ToList();
+                for (int i = 0; i < list.Count; i++)
+                    for (int j = i + 1; j < list.Count; j++)
+                    {
+                        var (a, b) = (list[i].B, list[j].B);
+                        if (a.MinX < b.MaxX - 0.01f && b.MinX < a.MaxX - 0.01f &&
+                            a.MinZ < b.MaxZ - 0.01f && b.MinZ < a.MaxZ - 0.01f)
+                            yield return $"{list[i].Prop} overlaps {list[j].Prop}";
+                    }
+            }
+        }
+    }
+
+    public class PropNotBlockingDoor : IValidator
+    {
+        public string Name => "PropNotBlockingDoor";
+        public string Describes => "a prop standing in the cell you have to walk through to use a door";
+
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            if (map.Props.Count == 0) yield break;
+
+            var approaches = new Dictionary<(int, int, int), string>();
+            foreach (var (room, cell) in Validators.DoorApproaches(map))
+                approaches[(cell.x, cell.z, Validators.PropY100(map, room))] = room.Id;
+
+            foreach (var p in map.Props)
+                foreach (var c in Validators.PropCells(p))
+                    if (approaches.TryGetValue(c, out string roomId))
+                    {
+                        yield return $"{p} covers the doorway approach of {roomId} at ({c.x},{c.z})";
+                        break;
+                    }
+        }
+    }
+
+    public class PropNotBlockingStairs : IValidator
+    {
+        public string Name => "PropNotBlockingStairs";
+        public string Describes => "a prop standing on a stair tread or its landing";
+
+        // Both ends and both storeys. The run itself is obvious; the landing cell beyond the top
+        // tread is the one that is easy to miss, because on the upper storey it is ordinary floor
+        // in the middle of a room and nothing about it looks reserved.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            if (map.Props.Count == 0) yield break;
+
+            var blocked = new HashSet<(int, int, int)>();
+            foreach (var run in Validators.StairRuns(map))
+            {
+                if (run.Cells.Count == 0) continue;
+                var (dx, dz) = Validators.Step(run.Conn.ClimbDirection);
+                int lowY = Validators.PropY100(map, run.Lower);
+                int upY  = Validators.PropY100(map, run.Upper);
+
+                var cells = new List<(int x, int z)>(run.Cells)
+                {
+                    (run.Cells[0].x - dx, run.Cells[0].z - dz),
+                    (run.Cells[^1].x + dx, run.Cells[^1].z + dz),
+                };
+                foreach (var c in cells) { blocked.Add((c.x, c.z, lowY)); blocked.Add((c.x, c.z, upY)); }
+            }
+
+            foreach (var p in map.Props)
+                foreach (var c in Validators.PropCells(p))
+                    if (blocked.Contains(c))
+                    {
+                        yield return $"{p} stands on the staircase at ({c.x},{c.z})";
+                        break;
+                    }
+        }
+    }
+
+    public class RoomTraversable : IValidator
+    {
+        public string Name => "RoomTraversable";
+        public string Describes => "furniture cutting a room's doors and stairs off from each other";
+
+        // The failure clutter can actually cause. Every individual prop can be inside the room, on
+        // the floor, clear of the doorways and overlapping nothing, and the room still be impassable
+        // — a dense draw lines both walls and meets in the middle of a 3-wide room. Nothing
+        // downstream can move a prop afterwards, so a map like that is simply broken.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            if (map.Props.Count == 0) yield break;
+
+            var occupied = new HashSet<(int, int, int)>();
+            foreach (var p in map.Props)
+                foreach (var c in Validators.PropCells(p)) occupied.Add(c);
+
+            var ports = new Dictionary<string, List<(int x, int z)>>();
+            void Port(RoomSpec r, (int x, int z) cell)
+            {
+                if (!GeneratedMap.Interior(r).Contains(cell)) return;
+                if (!ports.TryGetValue(r.Id, out var l)) ports[r.Id] = l = new List<(int, int)>();
+                if (!l.Contains(cell)) l.Add(cell);
+            }
+            foreach (var (room, cell) in Validators.DoorApproaches(map)) Port(room, cell);
+            foreach (var run in Validators.StairRuns(map))
+            {
+                foreach (var c in run.Cells) { Port(run.Lower, c); Port(run.Upper, c); }
+                if (run.Cells.Count == 0) continue;
+                var (dx, dz) = Validators.Step(run.Conn.ClimbDirection);
+                Port(run.Upper, (run.Cells[^1].x + dx, run.Cells[^1].z + dz));
+            }
+
+            foreach (var room in map.Spec.Rooms ?? new List<RoomSpec>())
+            {
+                if (!ports.TryGetValue(room.Id, out var list) || list.Count < 2) continue;
+                int y100 = Validators.PropY100(map, room);
+
+                var interior = GeneratedMap.Interior(room).ToHashSet();
+                var seen  = new HashSet<(int, int)> { list[0] };
+                var queue = new Queue<(int x, int z)>();
+                queue.Enqueue(list[0]);
+                while (queue.Count > 0)
+                {
+                    var c = queue.Dequeue();
+                    foreach (var n in CorridorReachesDoor.Neighbours(c))
+                    {
+                        if (!interior.Contains(n) || occupied.Contains((n.Item1, n.Item2, y100))) continue;
+                        if (seen.Add(n)) queue.Enqueue(n);
+                    }
+                }
+
+                var cut = list.Where(c => !seen.Contains(c)).ToList();
+                if (cut.Count > 0)
+                    yield return $"{room.Id} has {cut.Count}/{list.Count} doorways or stair landings "
+                               + $"walled off by furniture, e.g. ({cut[0].x},{cut[0].z})";
+            }
+        }
+    }
+
+    public class PurposeQuotaMet : IValidator
+    {
+        public string Name => "PurposeQuotaMet";
+        public string Describes => "a purpose quota silently not honoured, or a room left with no purpose";
+
+        // The quota is exact: the assigner serves it first and then keeps those purposes out of the
+        // filler draw, so requested == assigned + shortfall must hold for every purpose named. And
+        // a shortfall is only honest if the rooms really were unavailable — every room eligible for
+        // a short purpose has to have been spent on another *quota* purpose, because the filler runs
+        // afterwards and never touches a quota purpose's rooms.
+        public IEnumerable<string> Check(GeneratedMap map)
+        {
+            var rooms = map.Spec.Rooms ?? new List<RoomSpec>();
+            if (rooms.Count == 0 || !RecipeCatalog.IsLoaded) yield break;
+
+            foreach (var r in rooms)
+                if (string.IsNullOrEmpty(r.Purpose))
+                {
+                    yield return $"{r.Id} was never given a purpose";
+                    yield break;   // the assigner did not run at all; the rest says nothing
+                }
+
+            var quota = map.Spec.PurposeQuota;
+            if (quota == null) yield break;
+
+            var shortfall = map.Spec.PurposeShortfall ?? new Dictionary<string, int>();
+            var quotaNames = new HashSet<string>(quota.Keys);
+
+            foreach (var (purpose, want) in quota.Select(kv => (kv.Key, kv.Value)))
+            {
+                int assigned = rooms.Count(r => r.Purpose == purpose);
+                int short_   = shortfall.TryGetValue(purpose, out int s) ? s : 0;
+
+                if (assigned + short_ != want)
+                    yield return $"{purpose}: {want} requested but {assigned} assigned and {short_} "
+                               + $"reported short";
+
+                if (short_ == 0) continue;
+                foreach (var r in rooms)
+                {
+                    if (!EligibleFor(map, r, purpose)) continue;
+                    if (quotaNames.Contains(r.Purpose)) continue;
+                    yield return $"{purpose} reported {short_} short, but {r.Id} could have taken it "
+                               + $"and was filled with {r.Purpose} instead";
+                    break;
+                }
+            }
+        }
+
+        private static bool EligibleFor(GeneratedMap map, RoomSpec r, string purpose)
+        {
+            var recipe = RecipeCatalog.Get(RecipeCatalog.StyleFor(Validators.ThemeOf(map, r)), purpose);
+            int area = Math.Max(r.Width, 3) * Math.Max(r.Depth, 3);
+            return recipe != null && recipe.Fits(area, r.OriginY > 0.001f);
         }
     }
 }

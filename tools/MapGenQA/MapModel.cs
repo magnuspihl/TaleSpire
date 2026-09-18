@@ -31,6 +31,48 @@ namespace MapGenQA
         public override string ToString() => $"({X},{Y},{Z}) rot={Rot} {(RoleKnown ? Role.ToString() : "Unknown")}";
     }
 
+    /// A furnishing prop placement, with the catalog entry behind it.
+    public readonly struct PropAt
+    {
+        public readonly string Guid;
+        // What the slab stores: the prop's *pivot*, not a corner of its bounds.
+        public readonly float X, Y, Z;
+        public readonly int Rot;
+        public readonly PropEntry Entry;
+
+        public PropAt(string guid, float x, float y, float z, int rot, PropEntry entry)
+        {
+            Guid = guid; X = x; Y = y; Z = z; Rot = rot; Entry = entry;
+        }
+
+        // Derived forwards — centre = pivot + rotate(offset) — where PropPlacer solves the same
+        // relation backwards for the pivot. A sign error in either direction shows up as a
+        // disagreement here rather than cancelling out.
+        public (float X, float Z) Centre
+        {
+            get
+            {
+                double a = Rot * Math.PI / 12.0;
+                float c = (float)Math.Cos(a), s = (float)Math.Sin(a);
+                return (X + s * Entry.PivotZ + c * Entry.PivotX,
+                        Z + c * Entry.PivotZ - s * Entry.PivotX);
+            }
+        }
+
+        /// Axis-aligned XZ extremes of the prop's collider, in world cells.
+        public (float MinX, float MinZ, float MaxX, float MaxZ) Bounds
+        {
+            get
+            {
+                var (cx, cz) = Centre;
+                var (fx, fz) = Entry.RotatedFootprint(Rot);
+                return (cx - fx / 2f, cz - fz / 2f, cx + fx / 2f, cz + fz / 2f);
+            }
+        }
+
+        public override string ToString() => $"'{Entry.Name}' pivot=({X},{Y},{Z}) rot={Rot}";
+    }
+
     /// Maps tile GUIDs back to the entry they were placed as. Built by walking TileCatalog's
     /// public surface, since it does not expose its backing dictionary.
     public static class TileIndex
@@ -64,18 +106,23 @@ namespace MapGenQA
         public string UpperTheme;
         public LayoutSpec Spec;
         public List<Placement> Tiles = new();
+        // Props are kept out of Tiles on purpose: the 25 tile validators walk that list and reason
+        // about grid cells and stacking, none of which a pivot-positioned prop obeys.
+        public List<PropAt> Props = new();
 
         public string Label => $"seed={Seed} size={SizeName(Size)} theme='{Theme}'"
                              + (UpperTheme == null ? "" : $" upper='{UpperTheme}'");
 
         public static string SizeName(int s) => s switch { 0 => "small", 1 => "medium", 2 => "large", _ => s.ToString() };
 
-        public static GeneratedMap Generate(int seed, int size, string theme, string upperTheme = null)
+        public static GeneratedMap Generate(int seed, int size, string theme, string upperTheme = null,
+                                            int clutter = 0, Dictionary<string, int> quota = null)
         {
             var spec = new DungeonTemplate().Generate(new TemplateParams
             {
                 Seed = seed, Theme = theme, UpperTheme = upperTheme,
                 DungeonSize = size, MinFloors = 1, MaxFloors = 2,
+                ClutterDensity = clutter, PurposeQuota = quota,
             });
 
             var map = new GeneratedMap
@@ -86,6 +133,11 @@ namespace MapGenQA
             foreach (var (guid, x, y, z, rot) in SlabBuilder.Build(spec))
             {
                 string g = new Guid(guid).ToString();
+                if (PropCatalog.TryGet(g, out var prop))
+                {
+                    map.Props.Add(new PropAt(g, x, y, z, rot, prop));
+                    continue;
+                }
                 bool known = TileIndex.TryGet(g, out var e);
                 map.Tiles.Add(new Placement(g, x, y, z, rot, known ? e.Role : default, known,
                                             known ? e.Size : null, known ? e.Height : 0f));

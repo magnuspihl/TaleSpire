@@ -34,9 +34,8 @@ namespace TaleSpireMapGen.Generation
         // Fraction of what a partition could hold that a room must reach at minimum.
         private const float RoomFill = 0.7f;
 
-        // How far a pendant room may sit from the nearest hub carrier and still be given a
-        // landing. Matches SlabBuilder's ShellClusterGap so the whole upper storey ends up under
-        // one shell.
+        // How far a pendant room may sit from the nearest hub carrier and still be given a landing.
+        // A landing further out than this is a room of its own standing alone on the roofline.
         private const int MaxLandingGap = 8;
 
         // ──────────────────────────────────────────────────────────────────────
@@ -79,10 +78,12 @@ namespace TaleSpireMapGen.Generation
 
             var spec = new LayoutSpec
             {
-                Theme       = theme,
-                Rooms       = rooms,
-                Connections = connections,
-                Notes       = $"BSP dungeon, seed={p.Seed}, size={sizeName}, rooms={rooms.Count}",
+                Theme          = theme,
+                ClutterDensity = p.ClutterDensity,
+                Seed           = p.Seed,
+                Rooms          = rooms,
+                Connections    = connections,
+                Notes          = $"BSP dungeon, seed={p.Seed}, size={sizeName}, rooms={rooms.Count}",
             };
 
             int minFloors = p.MinFloors > 0 ? p.MinFloors : 1;
@@ -90,6 +91,13 @@ namespace TaleSpireMapGen.Generation
             string upperTheme = string.IsNullOrEmpty(p.UpperTheme) ? theme : p.UpperTheme;
             ApplyMultiFloor(spec, rng, minFloors, maxFloors, upperTheme);
             AddLoopConnections(spec, rng);
+
+            // Before purposes, because depth is measured in steps from the way in.
+            EntrancePlacer.Place(spec);
+
+            // Last, because a purpose is decided from the finished shape of the map: which room is
+            // the deepest dead end, which is the best connected, which storey a room ended up on.
+            PurposeAssigner.Assign(spec, p.PurposeQuota, rng);
 
             return spec;
         }

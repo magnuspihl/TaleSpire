@@ -9,6 +9,12 @@
     <EmbeddedResource Include="tileset_profiles.json">
       <LogicalName>TaleSpireMapGen.tileset_profiles.json</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="prop_catalog.json">
+      <LogicalName>TaleSpireMapGen.prop_catalog.json</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="prop_recipes.json">
+      <LogicalName>TaleSpireMapGen.prop_recipes.json</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

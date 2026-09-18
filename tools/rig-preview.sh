@@ -14,7 +14,16 @@
 #
 # orbit is a count of Q (negative) or E (positive) presses, which swing the camera around the
 # board. From directly above, a door reads as a gap in a line of wall tops and nothing more — the
-# face it sits in has to be turned towards the camera before it can be judged at all.
+# face it sits in has to be turned towards the camera before it can be judged at all. A press is
+# only a degree or two, so a quarter turn wants tens of them, not a handful.
+#
+# What this cannot do: frame a whole map, or aim at a chosen cell. The zoom-out is clamped at
+# roughly the screen width of one `small` map's diamond, x/y is the only aim control, and the
+# preview is *stationary* once pasted — moving the mouse afterwards does not slide it, so the
+# paste position is the single shot you get. Anchor movement does translate the map 1:1 in screen
+# pixels, which is enough to walk along an edge but not to reach a cell tens of cells inland.
+# To judge one specific tile, build a slab that contains little else; to judge a tile in a full
+# map, find a tile the generator places by the same code path and judge that instead.
 set -eu
 
 SLAB=$1
@@ -27,8 +36,11 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 
 rig() { python3 "$HERE/rig.py" "$@" > /dev/null; }
 
-rig key Escape; sleep 1
-rig key b;      sleep 2
+# Clear any paste left pending by a previous run with button 3 rather than Escape: Escape cancels a
+# paste too, but with nothing pending it opens the pause menu instead, and the menu then swallows
+# every key that follows — including the b that re-enters build mode.
+rig click "$X" "$Y" --button 3; sleep 1
+rig key b;                      sleep 2
 rig clipboard --file "$SLAB"
 rig move "$X" "$Y"
 rig paste

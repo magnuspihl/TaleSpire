@@ -456,8 +456,8 @@
           ],
           "stairs": [
             {
-              "id": "239dad98-4a2e-4460-9c01-401a58431f14",
-              "name": "bg_stairblock_01",
+              "id": "b7bfe16c-8731-424b-a880-5c0e09280bf8",
+              "name": "bg_stairs_01",
               "size": "1x1",
               "height": 1.0,
               "footprint": [
@@ -466,8 +466,8 @@
               ]
             },
             {
-              "id": "b7bfe16c-8731-424b-a880-5c0e09280bf8",
-              "name": "bg_stairs_01",
+              "id": "239dad98-4a2e-4460-9c01-401a58431f14",
+              "name": "bg_stairblock_01",
               "size": "1x1",
               "height": 1.0,
               "footprint": [
@@ -1707,8 +1707,8 @@
           ],
           "stairs": [
             {
-              "id": "d4317fa6-cdfb-4533-8f7e-bed1c8839585",
-              "name": "Desert stair block",
+              "id": "f76d22ad-70af-4c37-b222-0d8944b59733",
+              "name": "Desert Stair",
               "size": "1x1",
               "height": 1.0,
               "footprint": [
@@ -1717,8 +1717,8 @@
               ]
             },
             {
-              "id": "f76d22ad-70af-4c37-b222-0d8944b59733",
-              "name": "Desert Stair",
+              "id": "d4317fa6-cdfb-4533-8f7e-bed1c8839585",
+              "name": "Desert stair block",
               "size": "1x1",
               "height": 1.0,
               "footprint": [
@@ -2494,7 +2494,7 @@
         "hasDoor": false,
         "variantStrategy": "rich",
         "tileCount": 83,
-        "hasIntegratedFloorWall": true,
+        "hasIntegratedFloorWall": false,
         "stairType": "stackable",
         "minCeilingHeight": 2.5,
         "rotationQuirks": null,
@@ -2899,6 +2899,16 @@
           ],
           "stairs": [
             {
+              "id": "f4a32f18-e4ce-4dd3-baec-cdd3da36c28e",
+              "name": "md_stairs_01",
+              "size": "1x1",
+              "height": 1.0,
+              "footprint": [
+                1.0,
+                1.0
+              ]
+            },
+            {
               "id": "0252d209-c23c-4f72-aa8b-51ed0dc09f3a",
               "name": "md_stairblock_01",
               "size": "1x1",
@@ -2911,16 +2921,6 @@
             {
               "id": "76c70419-899f-4c6b-944b-8c208713a985",
               "name": "md_stairblock_02",
-              "size": "1x1",
-              "height": 1.0,
-              "footprint": [
-                1.0,
-                1.0
-              ]
-            },
-            {
-              "id": "f4a32f18-e4ce-4dd3-baec-cdd3da36c28e",
-              "name": "md_stairs_01",
               "size": "1x1",
               "height": 1.0,
               "footprint": [
@@ -4221,6 +4221,16 @@
         "tilesByRole": {
           "wall": [
             {
+              "id": "6a7f5070-8743-484d-af1a-5dfe3c926eb4",
+              "name": "digWall_1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                1.0
+              ]
+            },
+            {
               "id": "6746008a-54bc-4e30-8f29-27bb788fd994",
               "name": "shogunPlainWall_1x1",
               "size": "1x1",
@@ -4259,16 +4269,6 @@
                 0.5,
                 1.0
               ]
-            },
-            {
-              "id": "6a7f5070-8743-484d-af1a-5dfe3c926eb4",
-              "name": "digWall_1x1",
-              "size": "1x1",
-              "height": 2.0,
-              "footprint": [
-                0.5,
-                1.0
-              ]
             }
           ],
           "corner": [
@@ -4295,6 +4295,16 @@
           ],
           "cornerFiller": [
             {
+              "id": "cdf7070a-d452-4dff-ac83-9f91b9042c06",
+              "name": "shogun_digWallInnerCorner_1x1",
+              "size": "1x1",
+              "height": 2.0,
+              "footprint": [
+                0.5,
+                0.5
+              ]
+            },
+            {
               "id": "1ec10fce-7266-4568-81bd-87ca50df03e3",
               "name": "shugunWallInnerCorner",
               "size": "1x1",
@@ -4307,16 +4317,6 @@
             {
               "id": "99cee227-f32a-4a8b-a02d-d7789dcfea90",
               "name": "shugunRockWallInnerCorner_1x1",
-              "size": "1x1",
-              "height": 2.0,
-              "footprint": [
-                0.5,
-                0.5
-              ]
-            },
-            {
-              "id": "cdf7070a-d452-4dff-ac83-9f91b9042c06",
-              "name": "shogun_digWallInnerCorner_1x1",
               "size": "1x1",
               "height": 2.0,
               "footprint": [
@@ -4991,7 +4991,7 @@
         "hasDoor": false,
         "variantStrategy": "rich",
         "tileCount": 30,
-        "hasIntegratedFloorWall": true,
+        "hasIntegratedFloorWall": false,
         "stairType": "stackable",
         "minCeilingHeight": 2.5,
         "rotationQuirks": null,
@@ -5002,16 +5002,6 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "7371a3cc-0716-4a03-b39e-68852d08a43e",
-              "name": "concrete wall 1x1 full",
-              "size": "1x1",
-              "height": 2.5,
-              "footprint": [
-                1.0,
-                1.0
-              ]
-            },
-            {
               "id": "2c675ab5-9a46-444a-bf20-78fb9d6fee74",
               "name": "concrete wall 1x1 plane",
               "size": "1x1",
@@ -5019,6 +5009,16 @@
               "footprint": [
                 1.0,
                 0.5
+              ]
+            },
+            {
+              "id": "7371a3cc-0716-4a03-b39e-68852d08a43e",
+              "name": "concrete wall 1x1 full",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
               ]
             },
             {
@@ -5430,7 +5430,7 @@
         "hasDoor": false,
         "variantStrategy": "rich",
         "tileCount": 71,
-        "hasIntegratedFloorWall": true,
+        "hasIntegratedFloorWall": false,
         "stairType": "stackable",
         "minCeilingHeight": 2.5,
         "rotationQuirks": null,
@@ -5867,7 +5867,7 @@
         "hasDoor": false,
         "variantStrategy": "rich",
         "tileCount": 26,
-        "hasIntegratedFloorWall": true,
+        "hasIntegratedFloorWall": false,
         "stairType": "stackable",
         "minCeilingHeight": 2.5,
         "rotationQuirks": null,
@@ -5881,16 +5881,6 @@
         "tilesByRole": {
           "wall": [
             {
-              "id": "2c59d205-6f56-4b2e-b3c5-df12e33601f2",
-              "name": "industrial_wall_1x1_02",
-              "size": "1x1",
-              "height": 2.5,
-              "footprint": [
-                1.0,
-                1.0
-              ]
-            },
-            {
               "id": "0dcdfd2b-b26d-4b9f-8ca5-1077e9dac528",
               "name": "industrial_wall_1x1_01",
               "size": "1x1",
@@ -5898,6 +5888,16 @@
               "footprint": [
                 1.0,
                 0.5
+              ]
+            },
+            {
+              "id": "2c59d205-6f56-4b2e-b3c5-df12e33601f2",
+              "name": "industrial_wall_1x1_02",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
               ]
             },
             {
@@ -5945,16 +5945,6 @@
           ],
           "cornerFiller": [
             {
-              "id": "52f98016-e075-4737-9b0d-d2496a61fa62",
-              "name": "industrial_corner_filler_01",
-              "size": "1x1",
-              "height": 2.5,
-              "footprint": [
-                1.0,
-                1.0
-              ]
-            },
-            {
               "id": "e019571d-518d-4237-9e06-a7619b6e5ed8",
               "name": "industrial_corner_filler_01",
               "size": "1x1",
@@ -5962,6 +5952,16 @@
               "footprint": [
                 0.5,
                 0.5
+              ]
+            },
+            {
+              "id": "52f98016-e075-4737-9b0d-d2496a61fa62",
+              "name": "industrial_corner_filler_01",
+              "size": "1x1",
+              "height": 2.5,
+              "footprint": [
+                1.0,
+                1.0
               ]
             }
           ],
@@ -5979,8 +5979,8 @@
           ],
           "stairs": [
             {
-              "id": "2a3dd6a5-774c-4633-ad8a-7f0553c5cda2",
-              "name": "industrial_stairblock_01",
+              "id": "462ca61d-f36d-4405-9a98-f2e4c5adff18",
+              "name": "industrial_stairs_01",
               "size": "1x1",
               "height": 1.0,
               "footprint": [
@@ -5989,8 +5989,8 @@
               ]
             },
             {
-              "id": "462ca61d-f36d-4405-9a98-f2e4c5adff18",
-              "name": "industrial_stairs_01",
+              "id": "2a3dd6a5-774c-4633-ad8a-7f0553c5cda2",
+              "name": "industrial_stairblock_01",
               "size": "1x1",
               "height": 1.0,
               "footprint": [

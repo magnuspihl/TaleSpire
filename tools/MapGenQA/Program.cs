@@ -23,6 +23,7 @@ namespace MapGenQA
                     "spec"   => Spec(opt),
                     "cell"   => Cell(opt),
                     "tiles"  => Tiles(opt),
+                    "recipes" => Recipes(opt),
                     _        => Unknown(args[0]),
                 };
             }
@@ -44,23 +45,36 @@ namespace MapGenQA
             MapGenQA — headless QA for the MapGen generator
 
               fuzz   [--seeds 1-200] [--sizes small,medium,large] [--themes all] [--examples 3]
-                     [--mixed]
+                     [--mixed] [--clutter 0-3] [--quota "Cell=2,Treasury=1"]
                      Generate every combination and run all validators. Exit 1 if any fail.
                      --mixed gives each map a different theme upstairs than downstairs.
+                     --clutter furnishes the rooms; 0 is bare and is the default.
+                     --quota demands that many rooms of each named purpose.
 
               render [--seed 42] [--size medium] [--theme "Dungeon Cellar"] [--upper "Castle Fortified"]
+                     [--clutter 0-3] [--quota "Cell=2"]
                      Print ASCII floor plans for one map.
 
               slab   [--seed 42] [--size medium] [--theme "Dungeon Cellar"] [--upper "Castle Fortified"]
+                     [--clutter 0-3] [--quota "Cell=2"]
                      Print the base64 slab for one map, ready to paste into TaleSpire.
 
-              rooms  --themes "A,B,C" [--w 5] [--d 5] [--rows 2] [--doors]
+              rooms  --themes "A,B,C" [--w 5] [--d 5] [--rows 2] [--doors] [--clutter 0-3]
+                     [--purpose Barracks]
                      Print one base64 slab holding one plain room per theme, side by side, for
                      comparing tile picks in game. --doors joins neighbouring rooms so each one
                      gets a door, which is the only way the door role becomes visible.
+                     --clutter furnishes them, for judging how props sit against a wall;
+                     --purpose pins what they are furnished as, instead of drawing one.
 
-              spec   [--seed 42] [--size medium] [--theme "Dungeon Cellar"]
-                     Print the room / connection / stair spec behind one map.
+              spec   [--seed 42] [--size medium] [--theme "Dungeon Cellar"] [--quota "Cell=2"]
+                     Print the room / connection / stair spec behind one map, with the purpose
+                     assigned to each room and how the quota was served.
+
+              recipes [--style medieval]
+                     Print every purpose the recipe file defines and how many floor-standing
+                     props each of its zones actually resolves to. A zone that resolves to
+                     nothing is skipped silently at generation time; this is where to see it.
 
               cell   [--seed 42] [--size medium] --x 54 --z 6 [--radius 1]
                      Print every tile near one cell, and which room footprint covers it.
@@ -104,6 +118,21 @@ namespace MapGenQA
             _ => int.TryParse(s, out int v) ? v : 1,
         };
 
+        /// "Cell=2,Treasury=1" — how many rooms of each purpose the map must have.
+        private static Dictionary<string, int> ParseQuota(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return null;
+            var q = new Dictionary<string, int>();
+            foreach (var part in s.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var kv = part.Split('=', 2);
+                if (kv.Length != 2 || !int.TryParse(kv[1], out int n))
+                    throw new ArgumentException($"bad quota entry '{part}' — expected Purpose=count");
+                q[kv[0].Trim()] = n;
+            }
+            return q.Count > 0 ? q : null;
+        }
+
         private static string[] ParseThemes(string s) =>
             s.Equals("all", StringComparison.OrdinalIgnoreCase)
                 ? TileCatalog.KnownThemes
@@ -139,6 +168,11 @@ namespace MapGenQA
             // heights, two stair pitches and two door sets in one map.
             bool mixed = o.ContainsKey("mixed");
 
+            // Clutter is off unless asked for, so the tile validators keep being exercised on the
+            // geometry alone and a prop bug cannot be mistaken for a structural one.
+            int clutter = int.TryParse(Get(o, "clutter", "0"), out var cl) ? cl : 0;
+            var quota   = ParseQuota(Get(o, "quota", null));
+
             if (!Preflight()) return 1;
 
             Console.WriteLine($"fuzzing {seeds.Count} seeds x {sizes.Count} sizes x {themes.Length} themes " +
@@ -160,7 +194,7 @@ namespace MapGenQA
                     : null;
 
                 GeneratedMap map;
-                try { map = GeneratedMap.Generate(seed, size, theme, upper); generated++; }
+                try { map = GeneratedMap.Generate(seed, size, theme, upper, clutter, quota); generated++; }
                 catch (Exception ex)
                 {
                     crashed++;
@@ -205,12 +239,26 @@ namespace MapGenQA
                 int.TryParse(Get(o, "seed", "42"), out var s) ? s : 42,
                 ParseSize(Get(o, "size", "medium")),
                 Get(o, "theme", "Dungeon Cellar"),
-                Get(o, "upper", null));
+                Get(o, "upper", null),
+                int.TryParse(Get(o, "clutter", "0"), out var c) ? c : 0,
+                ParseQuota(Get(o, "quota", null)));
 
         private static int Render(Dictionary<string, string> o)
         {
             var map = One(o);
             Console.WriteLine(Renderer.Render(map));
+
+            // The number to judge clutter by. The floor plan cannot show it — a prop does not sit
+            // on the grid the plan is drawn on — so print it rather than leaving "did that do
+            // anything?" to a paste.
+            if (map.Spec.ClutterDensity > 0)
+            {
+                Console.WriteLine($"clutter={map.Spec.ClutterDensity}: {map.Props.Count} props "
+                                + $"over {map.Spec.Rooms.Count} rooms");
+                foreach (var g in map.Spec.Rooms.GroupBy(r => r.Purpose ?? "-")
+                                                .OrderByDescending(g => g.Count()))
+                    Console.WriteLine($"  {g.Count(),3} x {g.Key}");
+            }
 
             var found = Validators.All
                 .SelectMany(v => v.Check(map).Take(3).Select(f => $"  {v.Name}: {f}")).ToList();
@@ -251,6 +299,54 @@ namespace MapGenQA
             return 0;
         }
 
+        // A recipe names prop groups by the pack authors' own GroupTags, and a group that does not
+        // exist is skipped silently at generation time — the room simply comes out barer than it
+        // should, which is indistinguishable from a sparse draw. This is where a typo is visible:
+        // a zone that resolves to 0 props never contributes anything.
+        private static int Recipes(Dictionary<string, string> o)
+        {
+            var styles = Get(o, "style", null) is string s
+                ? new[] { s }
+                : new[] { "medieval", "modern" };
+
+            foreach (string style in styles)
+            {
+                var lights = RecipeCatalog.Light(style);
+                Console.WriteLine($"── {style}   light: {Zone(style, lights)}");
+
+                foreach (var recipe in RecipeCatalog.Purposes(style))
+                {
+                    Console.WriteLine($"   {recipe.Name,-12} weight={recipe.Weight} " +
+                                      $"area={recipe.MinArea}..{(recipe.MaxArea == 0 ? "∞" : recipe.MaxArea.ToString())} " +
+                                      $"storey={recipe.Storey} " +
+                                      $"wants(area={recipe.WantsArea},degree={recipe.WantsDegree},depth={recipe.WantsDepth})");
+                    foreach (string zone in new[] { RecipeCatalog.ZoneWall, RecipeCatalog.ZoneCorner,
+                                                    RecipeCatalog.ZoneCentre })
+                    {
+                        var groups = recipe.Zone(zone);
+                        if (groups.Count == 0) continue;
+                        Console.WriteLine($"        {zone,-7} {Zone(style, groups)}");
+                    }
+                }
+            }
+            return 0;
+        }
+
+        /// Each group name with the number of floor-standing props it resolves to.
+        private static string Zone(string style, IReadOnlyList<string> groups) =>
+            groups.Count == 0
+                ? "(none)"
+                : string.Join(", ", groups.Select(g =>
+                    {
+                        var all = PropCatalog.Group(style, g);
+                        int n = all.Count(p => p.IsFloorMounted);
+                        // The two ways a zone contributes nothing read very differently: a typo in
+                        // the recipe, or a group that exists but is entirely wall-hung, which is a
+                        // note for the phase that places on the wall plane rather than a mistake.
+                        if (all.Count == 0) return $"{g}=MISSING";
+                        return n == 0 ? $"{g}=0/{all.Count} hanging-only" : $"{g}={n}";
+                    }));
+
         private static int Cell(Dictionary<string, string> o)
         {
             var map = One(o);
@@ -280,13 +376,26 @@ namespace MapGenQA
 
             foreach (var r in (map.Spec.Rooms ?? new List<RoomSpec>()).OrderBy(r => r.OriginY).ThenBy(r => r.Id))
                 Console.WriteLine($"  room {r.Id,-9} origin=({r.OriginX},{r.OriginY},{r.OriginZ}) " +
-                                  $"size={r.Width}x{r.Depth} wallRows={r.WallRows}");
+                                  $"size={r.Width}x{r.Depth} wallRows={r.WallRows} " +
+                                  $"purpose={r.Purpose ?? "-"}");
 
             foreach (var c in map.Spec.Connections ?? new List<Connection>())
                 Console.WriteLine($"  conn {c.FromRoomId} -> {c.ToRoomId} via {c.WallSide}+{c.Offset}");
 
             foreach (var v in map.Spec.VerticalConnections ?? new List<VerticalConnection>())
                 Console.WriteLine($"  stair {v.LowerRoomId} -> {v.UpperRoomId} at ({v.StairOriginX},{v.StairOriginZ}) climbing {v.ClimbDirection}");
+
+            // What the caller asked for against what the map could hold. Kept beside the rooms
+            // rather than left to the assigner, because "you asked for two treasuries and this map
+            // has room for one" is the answer to a quota that looks ignored.
+            if (map.Spec.PurposeQuota != null)
+                foreach (var (purpose, want) in map.Spec.PurposeQuota.Select(kv => (kv.Key, kv.Value)))
+                {
+                    int got = (map.Spec.Rooms ?? new List<RoomSpec>()).Count(r => r.Purpose == purpose);
+                    int shortBy = map.Spec.PurposeShortfall != null &&
+                                  map.Spec.PurposeShortfall.TryGetValue(purpose, out int s) ? s : 0;
+                    Console.WriteLine($"  quota {purpose,-12} requested={want} assigned={got} short={shortBy}");
+                }
 
             var dupes = (map.Spec.Connections ?? new List<Connection>())
                 .GroupBy(c => (c.FromRoomId, c.ToRoomId, c.WallSide, c.Offset))
@@ -310,7 +419,12 @@ namespace MapGenQA
             int d    = int.TryParse(Get(o, "d", "5"), out var dd) ? dd : 5;
             int rows = int.TryParse(Get(o, "rows", "2"), out var rr) ? rr : 2;
 
-            var spec = new LayoutSpec { Rooms = new List<RoomSpec>() };
+            var spec = new LayoutSpec
+            {
+                Rooms = new List<RoomSpec>(),
+                ClutterDensity = int.TryParse(Get(o, "clutter", "0"), out var cl) ? cl : 0,
+                Seed = int.TryParse(Get(o, "seed", "0"), out var sd) ? sd : 0,
+            };
             for (int i = 0; i < themes.Length; i++)
                 spec.Rooms.Add(new RoomSpec
                 {
@@ -344,6 +458,14 @@ namespace MapGenQA
                 }
             }
 
+            // A hand-built spec never went through the generator, so nothing has given these rooms
+            // a purpose and every one of them would come out furnished as Empty. Pin one if asked,
+            // otherwise let the assigner draw — a row of rooms is also a fine way to look at what
+            // the recipes do.
+            string pinned = Get(o, "purpose", null);
+            if (pinned != null) foreach (var r in spec.Rooms) r.Purpose = pinned;
+            else PurposeAssigner.Assign(spec, null, new Random(spec.Seed));
+
             Console.WriteLine(SlabEncoder.Encode(SlabBuilder.Build(spec)));
             return 0;
         }
@@ -351,8 +473,12 @@ namespace MapGenQA
         private static int Slab(Dictionary<string, string> o)
         {
             var map = One(o);
-            Console.WriteLine(SlabEncoder.Encode(
-                map.Tiles.Select(t => (new Guid(t.Guid).ToByteArray(), t.X, t.Y, t.Z, t.Rot)).ToList()));
+            // Tiles and props go back into one list: the slab format records no placeable kind,
+            // and the game resolves it from the GUID. The split is the harness's, not TaleSpire's.
+            Console.WriteLine(SlabEncoder.Encode(map.Tiles
+                .Select(t => (new Guid(t.Guid).ToByteArray(), t.X, t.Y, t.Z, t.Rot))
+                .Concat(map.Props.Select(p => (new Guid(p.Guid).ToByteArray(), p.X, p.Y, p.Z, p.Rot)))
+                .ToList()));
             return 0;
         }
 

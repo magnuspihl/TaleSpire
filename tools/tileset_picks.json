@@ -64,12 +64,12 @@
   },
   "BellowGloom": {
     "verified": true,
-    "note": "Combo wall h=2.5 against a curated wallHeight of 2.2 — rows are pitched off the tile, not the profile. No door compatibility is recorded for this set, so it keeps the dungeon door.",
+    "note": "Combo wall h=2.5 against a curated wallHeight of 2.2 — rows are pitched off the tile, not the profile. No door compatibility is recorded for this set, so it keeps the dungeon door. The stairs pick was this set's stair *block*, so a flight was a row of stacked cubes; it is the sloped 'bg_stairs_01' now and the block moved to stairBlock where it belongs.",
     "wall": "3c34f2f9-ba5e-4d75-95b5-17e6b7bc4ee2",
     "floor": "83b31a56-ea61-4246-82b0-07692527ac76",
     "corner": "27bf03a4-a0e0-4dbe-b955-ce5460c614b4",
     "cornerFiller": "02e0bfd1-af67-4de9-a2e7-9af942852615",
-    "stairs": "239dad98-4a2e-4460-9c01-401a58431f14",
+    "stairs": "b7bfe16c-8731-424b-a880-5c0e09280bf8",
     "stairBlock": "239dad98-4a2e-4460-9c01-401a58431f14",
     "door": "3151e230-bac7-401e-8fa8-b993bbee17ea"
   },
@@ -105,13 +105,14 @@
   },
   "Concrete Building": {
     "verified": true,
-    "note": "Solid concrete walls.",
-    "wall": "7371a3cc-0716-4a03-b39e-68852d08a43e",
+    "note": "Solid concrete walls. Both corners are 2.0 and bare-shaped, so the 2.5 'concrete wall 1x1 full' combo could never be cornered without a notch at every turn; wall, corner and filler are the matched bare 2.0 set now.",
+    "wall": "2c675ab5-9a46-444a-bf20-78fb9d6fee74",
     "floor": "ce61ee2e-4133-4dc9-91ad-42ad771e1900",
     "corner": "ace4d698-3ddd-42dc-919e-04ef36268817",
     "cornerFiller": "a76680c2-e0b6-4599-b29f-67946c047670",
     "stairs": "d73acf50-b2c4-4e8b-9b41-7f096bbdd9ad",
-    "door": "ee954d42-7b4e-47c6-86d8-f0a1652cbf81"
+    "door": "ee954d42-7b4e-47c6-86d8-f0a1652cbf81",
+    "hasIntegratedFloorWall": false
   },
   "Dungeon Cellar": {
     "verified": true,
@@ -126,24 +127,26 @@
   },
   "Facility": {
     "verified": true,
-    "note": "Pale panelled walls; some column and stair props look loose but the shell is solid.",
+    "note": "Pale panelled walls; some column and stair props look loose but the shell is solid. Flagged hasIntegratedFloorWall despite every 1x1 wall being a 1 x 0.5 panel — the set has combo *corners* but no combo wall — so the ring was seated at y=0 with no floor.",
     "wall": "09f8bec6-263d-4e96-bef5-eba63f27a114",
     "floor": "88696045-fa1f-416f-b94c-143f7f9ad229",
     "corner": "26f266c3-4b74-4ccd-8564-661a75e5c85a",
     "cornerFiller": "594a5799-cbff-4708-b192-be0b7a34ce2f",
     "stairs": "4a407436-9e02-4e7a-9291-efd58c673b82",
-    "door": "b619afa5-139c-42b4-9e95-070f8d67db41"
+    "door": "b619afa5-139c-42b4-9e95-070f8d67db41",
+    "hasIntegratedFloorWall": false
   },
   "Industrial": {
     "verified": true,
-    "note": "Solid plated walls.",
-    "wall": "2c59d205-6f56-4b2e-b3c5-df12e33601f2",
+    "note": "Solid plated walls. Both corners are 2.0, so the 2.5 combo wall left a notch at every turn; wall and filler are the matched bare 2.0 set now. The stairs pick was this set's stair *block*, so a flight was a row of stacked cubes; it is the sloped 'industrial_stairs_01' now and the block moved to stairBlock where it belongs.",
+    "wall": "0dcdfd2b-b26d-4b9f-8ca5-1077e9dac528",
     "floor": "8146433f-6b5f-44f2-bc49-35cd0cd47c36",
     "corner": "0a561ea9-133d-4e1e-91e7-158439e653bd",
-    "cornerFiller": "52f98016-e075-4737-9b0d-d2496a61fa62",
-    "stairs": "2a3dd6a5-774c-4633-ad8a-7f0553c5cda2",
+    "cornerFiller": "e019571d-518d-4237-9e06-a7619b6e5ed8",
+    "stairs": "462ca61d-f36d-4405-9a98-f2e4c5adff18",
     "stairBlock": "2a3dd6a5-774c-4633-ad8a-7f0553c5cda2",
-    "door": "e5b992ca-f6c7-4909-9835-9e2188b85621"
+    "door": "e5b992ca-f6c7-4909-9835-9e2188b85621",
+    "hasIntegratedFloorWall": false
   },
   "Interstellar": {
     "verified": true,
@@ -158,22 +161,23 @@
   },
   "Marble Palace": {
     "verified": true,
-    "note": "Solid marble walls with a chequered floor — the clearest-reading set of all. doorCompatibility names only the 2x1 Palace Marble Gold, so the door falls back to the 1x1 'Door - Fancy'.",
+    "note": "Solid marble walls with a chequered floor — the clearest-reading set of all. Its only 1x1 wall is a 1 x 0.5 panel, so hasIntegratedFloorWall was seating the ring at y=0 with no floor under it. doorCompatibility names only the 2x1 Palace Marble Gold, so the door falls back to the 1x1 'Door - Fancy'.",
     "wall": "20911967-c5df-450e-b9f6-388d70983553",
     "floor": "2cfe78b2-e95e-4739-b050-ab22ef2c31af",
     "corner": "f96be2eb-2443-4686-97b6-08490ef14e43",
     "cornerFiller": "ec854329-507b-4923-a6c9-14cb8864e369",
     "stairs": "c8c4350f-67c2-405e-934a-a8feba442e0f",
-    "door": "78c166cc-8b34-4940-ae95-120f6a7d1942"
+    "door": "78c166cc-8b34-4940-ae95-120f6a7d1942",
+    "hasIntegratedFloorWall": false
   },
   "MegaDungeon": {
     "verified": true,
-    "note": "The 'pref' variants (h=2.5) carry a floor; plain md_wall_1x1_01 (h=2.0) does not. Neither pref tile is in the curated list, so both are inserted here.",
+    "note": "The 'pref' variants (h=2.5) carry a floor; plain md_wall_1x1_01 (h=2.0) does not. Neither pref tile is in the curated list, so both are inserted here. The stairs pick was this set's stair *block*, so a flight was a row of stacked cubes; it is the sloped 'md_stairs_01' now and the block moved to stairBlock where it belongs.",
     "wall": "c8312af8-8bfb-41e1-bb6e-30280686b168",
     "floor": "940d013f-c982-43e7-922a-0317cc1c74db",
     "corner": "0820791e-c1a8-4a1e-b690-f34b0cb276ba",
     "cornerFiller": "bb8e7378-44da-4556-bac5-92420f766815",
-    "stairs": "0252d209-c23c-4f72-aa8b-51ed0dc09f3a",
+    "stairs": "f4a32f18-e4ce-4dd3-baec-cdd3da36c28e",
     "stairBlock": "0252d209-c23c-4f72-aa8b-51ed0dc09f3a",
     "door": "3151e230-bac7-401e-8fa8-b993bbee17ea"
   },
@@ -222,11 +226,11 @@
   },
   "Shogun Palace": {
     "verified": true,
-    "note": "Plain white walls over tatami; corner is named digWallCorner_1x1 but is genuinely in this set. The set has no stair tile at all, so it borrows the ship's wooden stair.",
-    "wall": "6746008a-54bc-4e30-8f29-27bb788fd994",
+    "note": "The whole ring is the digWall family: it is the only one in the set with a 1x1 corner. The plaster shogunPlainWall_1x1 was picked first and looks far better on its own, but its corner shogunWallCorner1x1 is 2x1 and MapGen cannot place it, so on the rig the plaster wall's white cap band ran into a bare timber block at every corner. The dig wall is 0.5 deep and authored looking west; TileEntry.AuthoredRotBias turns it, which this set is the second in-game confirmation of. No stair tile at all, so it borrows the ship's wooden stair.",
+    "wall": "6a7f5070-8743-484d-af1a-5dfe3c926eb4",
     "floor": "8ddbaf79-b471-40a9-bd38-54a25b00d772",
     "corner": "b5df84da-f1bb-4203-8576-c7851b766e06",
-    "cornerFiller": "1ec10fce-7266-4568-81bd-87ca50df03e3",
+    "cornerFiller": "cdf7070a-d452-4dff-ac83-9f91b9042c06",
     "door": "6432f1d9-9677-4db8-8a97-171b142ad556",
     "stairs": "4d1b4a50-11c2-409c-aa3c-42d5798fe8fc",
     "stairBlock": "95d7e8ce-a2dc-46e4-9e0b-4a7b07c53094"
@@ -243,13 +247,13 @@
   },
   "Desert Village": {
     "verified": true,
-    "note": "The buttressed 'Desert wall 02' closes into a continuous mudbrick face. An earlier pass judged the set on its 2.5-tall wall/floor pieces, which are narrow blocks that leave daylight between cells, and excluded it on that evidence. Wall, corner and inner corner are the matched 2.0 set. No door in the set, so it takes the Abandoned Village town door.",
+    "note": "The buttressed 'Desert wall 02' closes into a continuous mudbrick face. An earlier pass judged the set on its 2.5-tall wall/floor pieces, which are narrow blocks that leave daylight between cells, and excluded it on that evidence. Wall, corner and inner corner are the matched 2.0 set. No door in the set, so it takes the Abandoned Village town door. The stairs pick was this set's stair *block*, so a flight was a row of stacked cubes; it is the sloped 'Desert Stair' now and the block moved to stairBlock where it belongs.",
     "hasIntegratedFloorWall": false,
     "wall": "d3313868-0459-4e00-be2d-7ed99fbe7f72",
     "corner": "05e77997-3382-48e2-b09f-114b40894e19",
     "cornerFiller": "b89a6234-5f9a-4351-8bee-a9e2d611e28e",
     "floor": "35a4af95-4afc-45a8-a657-a5601f4ad879",
-    "stairs": "d4317fa6-cdfb-4533-8f7e-bed1c8839585",
+    "stairs": "f76d22ad-70af-4c37-b222-0d8944b59733",
     "stairBlock": "d4317fa6-cdfb-4533-8f7e-bed1c8839585",
     "door": "0569aaca-0f0a-4386-a469-e5c9925e262f"
   },

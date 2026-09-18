@@ -61,6 +61,13 @@ namespace TaleSpireMapGen.Generation
             foreach (var conn in spec.Connections ?? Enumerable.Empty<Connection>())
                 doorGaps.Add((conn.FromRoomId, conn.WallSide.ToLowerInvariant(), conn.Offset));
 
+            // The way in from outside is the same cut as a corridor doorway; the only difference is
+            // that nothing is built on the far side of it.
+            if (spec.Entrance != null)
+                doorGaps.Add((spec.Entrance.RoomId,
+                              (spec.Entrance.WallSide ?? "").ToLowerInvariant(),
+                              spec.Entrance.Offset));
+
             string layoutTheme = spec.Theme ?? "Dungeon Cellar";
 
             // Where a stair breaks through the floor above it. Worked out before anything is
@@ -79,7 +86,6 @@ namespace TaleSpireMapGen.Generation
                     BuildStaircase(vc, roomById, layoutTheme, tiles);
 
             BuildBalconies(spec, roomById, layoutTheme, stairWells, tiles);
-            BuildExteriorShell(spec, layoutTheme, tiles);
 
             // TODO: BuildRoofs(spec, roomById, layoutTheme, tiles)
             // A room needs a roof when no other room's XZ footprint overlaps it at a higher Y.
@@ -112,9 +118,17 @@ namespace TaleSpireMapGen.Generation
                 if (t.Role == TileRole.Wall || t.Role == TileRole.Corner)
                     carried.Add(Cell(t));
 
-            return unique
+            var placements = unique
                 .Where(t => t.Role != TileRole.Floor || !carried.Contains(Cell(t)))
                 .Select(t => (t.Guid, t.X, t.Y, t.Z, t.RotStep)).ToList();
+
+            // Furniture goes on last and never feeds back into the geometry. Props ride the same
+            // slab as tiles — the format stores no kind, and TaleSpire recovers it from the GUID —
+            // so they are appended to the one list rather than needing a channel of their own.
+            foreach (var p in PropPlacer.Place(spec, layoutTheme))
+                placements.Add((p.Guid, p.X, p.Y, p.Z, p.RotStep));
+
+            return placements;
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -449,179 +463,6 @@ namespace TaleSpireMapGen.Generation
                     }
                 }
             }
-        }
-
-        // ──────────────────────────────────────────────────────────────────────
-        // Exterior shell — one cell outside each floor level's combined footprint,
-        // closing the perimeter so the dungeon reads as a solid block from outside.
-        // Space between this shell and inner room walls is hidden; no fill needed.
-        // ──────────────────────────────────────────────────────────────────────
-
-        private static void BuildExteriorShell(
-            LayoutSpec spec,
-            string layoutTheme,
-            List<Tile> out_)
-        {
-            if (spec.Rooms == null || spec.Rooms.Count == 0) return;
-
-            // Group rooms by floor Y; the shell is one rectangle per Y level so all
-            // rooms at the same elevation read as one contiguous block from outside.
-            var roomsByY = new Dictionary<float, List<RoomSpec>>();
-            foreach (var room in spec.Rooms)
-            {
-                if (!roomsByY.TryGetValue(room.OriginY, out var list))
-                    roomsByY[room.OriginY] = list = new List<RoomSpec>();
-                list.Add(room);
-            }
-
-            foreach (var kvp in roomsByY)
-            {
-                float y      = kvp.Key;
-                var   yRooms = kvp.Value;
-
-                // Tallest room at this elevation decides the ring's height, and the ring takes that
-                // room's theme. Seeding wallRows at 0 rather than 1 matters: every room carries at
-                // least one row, so the first one always wins and the theme always comes from a room
-                // *on this storey*. Seeded at 1 the loop never fired for a storey of single-row
-                // rooms, and the ring silently fell back to the layout theme — invisible while every
-                // room shared one theme, but a dungeon wall around a castle keep once they differ.
-                int    wallRows = 0;
-                string theme    = layoutTheme;
-                foreach (var room in yRooms)
-                {
-                    int wr = room.WallRows > 0 ? room.WallRows : 1;
-                    if (wr > wallRows)
-                    {
-                        wallRows = wr;
-                        theme    = !string.IsNullOrEmpty(room.Theme) ? room.Theme : layoutTheme;
-                    }
-                }
-                float wallHeight = TileCatalog.WallPitch(theme);
-                float floorThick = TileCatalog.FloorThickness(theme);
-                bool  wallCombo  = TileCatalog.WallIncludesFloor(theme);
-                var wallTile   = TileCatalog.Get(theme, TileRole.Wall);
-                var cornerTile = TileCatalog.Get(theme, TileRole.Corner);
-                var floorTile  = TileCatalog.Get(theme, TileRole.Floor);
-
-                // One ring per *cluster* of nearby rooms, not one per elevation. A storey whose
-                // rooms are spread out — typically an upper floor, where rooms sit above whichever
-                // lower rooms were chosen to carry them — would otherwise get a single enormous
-                // wall around mostly bare board. A dense storey still clusters into one group, so
-                // ground floors are unaffected.
-                float bandTop = y + TileCatalog.StoreyHeight(theme, wallRows);
-
-                foreach (var cluster in ClusterRooms(yRooms, spec))
-                {
-                    int minX = int.MaxValue, maxX = int.MinValue;
-                    int minZ = int.MaxValue, maxZ = int.MinValue;
-                    foreach (var room in cluster)
-                    {
-                        int rx = room.OriginX, rz = room.OriginZ;
-                        int rw = Math.Max(room.Width, 3), rd = Math.Max(room.Depth, 3);
-                        if (rx          < minX) minX = rx;
-                        if (rx + rw - 1 > maxX) maxX = rx + rw - 1;
-                        if (rz          < minZ) minZ = rz;
-                        if (rz + rd - 1 > maxZ) maxZ = rz + rd - 1;
-                    }
-                    if (minX == int.MaxValue) continue;
-
-                    // Shell ring: 1 cell outside the room bounding box.
-                    // Blank space between shell and inner room walls is hidden from outside.
-                    int sx0 = minX - 1, sx1 = maxX + 1;
-                    int sz0 = minZ - 1, sz1 = maxZ + 1;
-
-                    // A corridor can bulge outside the bounding box and so land on the ring.
-                    // Shelling over it both stacks tiles and bricks up the corridor, so the ring
-                    // yields to anything already standing in the elevation band it occupies. This
-                    // is recomputed per cluster so a later ring also yields to an earlier one —
-                    // where two rings touch, the second must not add a wall at a different
-                    // rotation on a cell the first already filled.
-                    var blocked = new HashSet<(int, int)>();
-                    foreach (var t in out_)
-                        if (t.Y >= y - 0.01f && t.Y < bandTop - 0.01f)
-                            blocked.Add(((int)Math.Floor(t.X), (int)Math.Floor(t.Z)));
-
-                    // A shell wall stands on the same footing as a room wall: on top of a floor tile
-                    // when the theme's wall does not carry one, so the ring's base lines up with the
-                    // storey's walkable surface instead of sinking into it.
-                    float ringBase = wallCombo ? 0f : floorThick;
-
-                    void Ring(TileEntry tile, int x, int row, int z, int rot)
-                    {
-                        if (blocked.Contains((x, z))) return;
-                        if (row == 0 && !wallCombo) out_.Add(Mk(floorTile, x, y, z, 0));
-                        out_.Add(Mk(tile, x, y + ringBase + row * wallHeight, z, rot));
-                    }
-
-                    for (int row = 0; row < wallRows; row++)
-                    {
-                        // North edge (z = sz0) — NW corner, north walls, NE corner.
-                        Ring(cornerTile, sx0, row, sz0, ROT_NORTH);
-                        for (int x = sx0 + 1; x < sx1; x++)
-                            Ring(wallTile, x, row, sz0, ROT_NORTH);
-                        Ring(cornerTile, sx1, row, sz0, ROT_EAST);
-
-                        // South edge (z = sz1) — SW corner, south walls, SE corner.
-                        Ring(cornerTile, sx0, row, sz1, ROT_WEST);
-                        for (int x = sx0 + 1; x < sx1; x++)
-                            Ring(wallTile, x, row, sz1, ROT_SOUTH);
-                        Ring(cornerTile, sx1, row, sz1, ROT_SOUTH);
-
-                        // West edge (x = sx0) — between the two corners.
-                        for (int z = sz0 + 1; z < sz1; z++)
-                            Ring(wallTile, sx0, row, z, ROT_WEST);
-
-                        // East edge (x = sx1) — between the two corners.
-                        for (int z = sz0 + 1; z < sz1; z++)
-                            Ring(wallTile, sx1, row, z, ROT_EAST);
-                    }
-                }
-            }
-        }
-
-        // Rooms closer than this on both axes belong under one shell. Wide enough that a normally
-        // packed storey stays a single ring, narrow enough to separate rooms that only share a
-        // storey because they were placed above scattered carriers.
-        private const int ShellClusterGap = 8;
-
-        private static List<List<RoomSpec>> ClusterRooms(List<RoomSpec> rooms, LayoutSpec spec)
-        {
-            var parent = new int[rooms.Count];
-            for (int i = 0; i < parent.Length; i++) parent[i] = i;
-
-            int Find(int i) => parent[i] == i ? i : parent[i] = Find(parent[i]);
-
-            for (int i = 0; i < rooms.Count; i++)
-            for (int j = i + 1; j < rooms.Count; j++)
-            {
-                var a = rooms[i];
-                var b = rooms[j];
-                int dx = Math.Max(0, Math.Max(a.OriginX - (b.OriginX + b.Width),
-                                              b.OriginX - (a.OriginX + a.Width)));
-                int dz = Math.Max(0, Math.Max(a.OriginZ - (b.OriginZ + b.Depth),
-                                              b.OriginZ - (a.OriginZ + a.Depth)));
-                if (dx <= ShellClusterGap && dz <= ShellClusterGap)
-                    parent[Find(i)] = Find(j);
-            }
-
-            // Two rooms joined by a corridor must share a shell whatever the distance between
-            // them. Split them and the corridor runs between the two rings through open board,
-            // walled by neither.
-            var index = new Dictionary<string, int>();
-            for (int i = 0; i < rooms.Count; i++) index[rooms[i].Id] = i;
-            foreach (var c in spec.Connections ?? new List<Connection>())
-                if (index.TryGetValue(c.FromRoomId, out int fi) &&
-                    index.TryGetValue(c.ToRoomId,   out int ti))
-                    parent[Find(fi)] = Find(ti);
-
-            var groups = new Dictionary<int, List<RoomSpec>>();
-            for (int i = 0; i < rooms.Count; i++)
-            {
-                int root = Find(i);
-                if (!groups.TryGetValue(root, out var g)) groups[root] = g = new List<RoomSpec>();
-                g.Add(rooms[i]);
-            }
-            return groups.Values.ToList();
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -1191,11 +1032,15 @@ namespace TaleSpireMapGen.Generation
 
         private static Tile Mk(TileEntry tile, float x, float y, float z, int rot)
         {
+            // rot is the facing the caller wants; what the game is told is that facing turned onto
+            // the tile's own authored one. The two differ only for a wall authored looking west,
+            // and the hug below has to stay on the caller's facing, not the turned one.
             var hug = EdgeHug(tile, rot);
             return new Tile
             {
                 Guid = tile.GuidBytes, Role = tile.Role,
-                X = Q(x + hug.X), Y = Q(y), Z = Q(z + hug.Z), RotStep = rot,
+                X = Q(x + hug.X), Y = Q(y), Z = Q(z + hug.Z),
+                RotStep = (rot + tile.AuthoredRotBias) % 24,
             };
         }
 
@@ -1214,9 +1059,9 @@ namespace TaleSpireMapGen.Generation
         private static (float X, float Z) EdgeHug(TileEntry tile, int rot)
         {
             if (tile.Role != TileRole.Wall && tile.Role != TileRole.Corner) return (0f, 0f);
-            var foot = tile.RotatedFootprint(rot);
-            return (rot == ROT_EAST  ? Math.Max(0f, 1f - foot.X) : 0f,
-                    rot == ROT_SOUTH ? Math.Max(0f, 1f - foot.Z) : 0f);
+            float inward = Math.Max(0f, 1f - tile.Thin);
+            return (rot == ROT_EAST  ? inward : 0f,
+                    rot == ROT_SOUTH ? inward : 0f);
         }
 
         // The slab format stores positions as an integer number of centimetres, so snap to that

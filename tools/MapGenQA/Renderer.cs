@@ -47,6 +47,11 @@ namespace MapGenQA
                 }
                 if (cells.Count == 0) continue;
 
+                // The way in is a door like any other and would otherwise be indistinguishable from
+                // the dozen corridor doorways around it, which is precisely the thing to eyeball.
+                var entrance = EnclosureLeak.EntranceDoorCell(map, y);
+                if (entrance != null) cells[entrance.Value] = ('@', 99);
+
                 int minX = cells.Keys.Min(c => c.Item1), maxX = cells.Keys.Max(c => c.Item1);
                 int minZ = cells.Keys.Min(c => c.Item2), maxZ = cells.Keys.Max(c => c.Item2);
 
@@ -74,7 +79,7 @@ namespace MapGenQA
             }
 
             sb.AppendLine();
-            sb.AppendLine("legend: . floor  # wall  + corner  i inner-corner  D door  S stairs");
+            sb.AppendLine("legend: . floor  # wall  + corner  i inner-corner  D door  S stairs  @ way in");
             return sb.ToString();
         }
     }
