@@ -38,6 +38,8 @@ namespace LineOfSight
         private ConfigEntry<KeyboardShortcut> _boardVolumePurgeKey;
         private ConfigEntry<KeyboardShortcut> _gmBlockPlaceKey;
         private ConfigEntry<KeyboardShortcut> _gmBlockCensusKey;
+        private ConfigEntry<bool> _warnAboutClients;
+        private ConfigEntry<float> _warnGraceSeconds;
 
         private Harmony _harmony;
 
@@ -45,6 +47,8 @@ namespace LineOfSight
         private static bool _losTrackingActive;
         private static HideVolumeManager _cachedHvManager;
         private static BepInEx.Logging.ManualLogSource _log;
+
+        internal static BepInEx.Logging.ManualLogSource Log => _log;
 
         private static short3 _creatureZoneCoord;
 
@@ -71,6 +75,7 @@ namespace LineOfSight
         private float _nextFogSave;
 
         private static int _rebuildLogCount;
+        private static int _hideFailures;
         private int _pendingInitialRefresh;
         private int _lastBoardEventCounter;
         private const float REMOTE_CHANGE_DEBOUNCE = 0.25f;
@@ -159,6 +164,18 @@ namespace LineOfSight
                 + "hides those by its own line of sight. What has been seen is saved per board "
                 + "under BepInEx/LineOfSight and restored on the next session.");
 
+            _warnAboutClients = Config.Bind("Warnings", "WarnAboutClients", true,
+                "While you are in GM mode on a board that has line of sight switched on, warn you "
+                + "about clients that are not hiding terrain — because they have no plugin, because "
+                + "theirs is not applying it, or because theirs hit an error. Only the GM sees this.");
+
+            _warnGraceSeconds = Config.Bind("Warnings", "GraceSeconds", 120f,
+                "How long a client may go without reporting that it is hiding terrain before you are "
+                + "warned about it. A client without the plugin says nothing at all, so silence is the "
+                + "only signal there is — this has to outlast a slow board load or players who are "
+                + "merely still loading get reported. Errors a client does report are shown at once, "
+                + "regardless of this.");
+
             _autoStartTracking = Config.Bind("Diagnostics", "AutoStartTracking", false,
                 "Start LoS tracking automatically once a board is loaded, without needing a keypress. "
                 + "Intended for headless/automated testing.");
@@ -218,9 +235,18 @@ namespace LineOfSight
                     BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
 
                 Logger.LogInfo($"[LineOfSight] FogMask reflection: GetTaskObject={_getTaskObjectMethod != null} _taskQueue={_taskQueueField != null} RemoveFogUsingView={_removeFogUsingViewMethod != null} ViewMapRefStillValid={_viewMapRefStillValidMethod != null}");
+
+                // Without these the plugin loads, reports itself present, and then quietly hides
+                // nothing at all — the worst failure to leave a GM guessing about, so it is worth
+                // saying up front rather than waiting for someone to notice the map is readable.
+                if (_fmtUpdateMaskField == null || _getTaskObjectMethod == null || _taskQueueField == null)
+                    ClientStatusBeacon.ReportFault(
+                        "does not fit this build of TaleSpire — it cannot hide anything",
+                        permanent: true);
             }
             catch (Exception ex)
             {
+                ClientStatusBeacon.ReportFault("could not attach to TaleSpire's fog system", ex);
                 Logger.LogWarning($"[LineOfSight] SetupFogMaskReflection: {ex}");
             }
         }
@@ -359,6 +385,7 @@ namespace LineOfSight
             }
             catch (Exception ex)
             {
+                ClientStatusBeacon.ReportFault("could not read TaleSpire's line-of-sight result", ex);
                 _log?.LogWarning($"[LineOfSight] FogTaskUpdateProcessPostfix: {ex}");
             }
         }
@@ -449,6 +476,7 @@ namespace LineOfSight
                     SaveFogMemory();
                     RemoveAllZoneHideVolumes();
                     if (switchClientMode) SwitchToGMMode();
+                    ClientStatusBeacon.SetActive(false);
                     Logger.LogInfo($"[LineOfSight] [LoS] Tracking OFF — hide volumes removed{(switchClientMode ? ", restored GM mode" : "")}.");
                 }
                 else
@@ -463,12 +491,14 @@ namespace LineOfSight
                     _lastBoardEventCounter = BoardSessionManager.Board?.SyncworthyGameEventsCounter ?? 0;
                     LoadFogMemory();
                     if (switchClientMode) SwitchToPlayerMode();
+                    ClientStatusBeacon.SetActive(true);
                     Logger.LogInfo($"[LineOfSight] [LoS] Tracking ON{(switchClientMode ? " — switched to player view" : "")} for LoS tile hiding.");
                     _pendingInitialRefresh = 10;
                 }
             }
             catch (Exception ex)
             {
+                ClientStatusBeacon.ReportFault("could not start hiding terrain", ex);
                 Logger.LogWarning($"[LineOfSight] [LoS] Toggle: {ex}");
             }
         }
@@ -748,6 +778,7 @@ namespace LineOfSight
             var enqueueMethod = taskQueue?.GetType().GetMethod("Enqueue");
             if (taskQueue == null || enqueueMethod == null)
             {
+                ClientStatusBeacon.ReportFault("cannot reach TaleSpire's fog task queue", permanent: true);
                 _log?.LogWarning("[LineOfSight] _taskQueue or Enqueue not accessible");
                 return;
             }
@@ -773,6 +804,7 @@ namespace LineOfSight
                 }
                 catch (Exception ex)
                 {
+                    ClientStatusBeacon.ReportFault("could not queue a line-of-sight pass", ex);
                     _log?.LogWarning($"[LineOfSight] GetTaskObject zone={coord}: {ex.Message}");
                     break;
                 }
@@ -798,6 +830,8 @@ namespace LineOfSight
 
             PollBoardIdentity();
             PollModeGmBlock();
+            ClientStatusBeacon.Publish();
+            GmClientWatch.Poll(_boardRequiresLos, _warnAboutClients.Value, _warnGraceSeconds.Value);
 
             if (!_autoStartDone && _autoStartTracking.Value && !_losTrackingActive
                 && BoardSessionManager.Board != null)
@@ -835,6 +869,9 @@ namespace LineOfSight
             SaveFogMemory();
             _fogBoardKey = key;
             RemoveAllZoneHideVolumes();
+            // Who is in the room and what each of them has already been warned about both
+            // belong to the board that was just left.
+            GmClientWatch.Reset();
             if (_losTrackingActive) LoadFogMemory();
         }
 
@@ -889,6 +926,9 @@ namespace LineOfSight
         // Set while a GM block dictates the mode, so the board's setting wins over the local one.
         private static bool? _boardRememberOverride;
         private bool _boardDrivenTracking;
+        // The board setting on its own, before the local client's mode is folded in: a GM in GM
+        // mode does not track, but still needs to know that everyone else is supposed to.
+        private bool _boardRequiresLos;
         private bool _haveResetGeneration;
         private uint _lastResetGeneration;
         private float _nextGmBlockPoll;
@@ -937,7 +977,7 @@ namespace LineOfSight
             if (Time.time < _nextGmBlockPoll) return;
             _nextGmBlockPoll = Time.time + 0.5f;
 
-            if (BoardSessionManager.Board == null) return;
+            if (BoardSessionManager.Board == null) { _boardRequiresLos = false; return; }
 
             bool found = TryGetLineOfSightBlock(out _, out var flags);
             _boardRememberOverride = found ? (bool?)((flags & GM_FLAG_REMEMBER) != 0) : null;
@@ -966,7 +1006,9 @@ namespace LineOfSight
 
             // A GM in GM mode is meant to see everything, so the board setting only binds
             // clients that are actually playing.
-            bool shouldTrack = found && (flags & GM_FLAG_LOS) != 0 && !LocalClient.IsInGmMode;
+            _boardRequiresLos = found && (flags & GM_FLAG_LOS) != 0;
+
+            bool shouldTrack = _boardRequiresLos && !LocalClient.IsInGmMode;
             if (shouldTrack == _boardDrivenTracking) return;
 
             _boardDrivenTracking = shouldTrack;
@@ -1280,6 +1322,7 @@ namespace LineOfSight
             if (board == null) return;
 
             int boxTotal = 0;
+            int failuresBefore = _hideFailures;
             foreach (var coord in dirty)
             {
                 if (!board.TryGetZone(coord, out var zone)) continue;
@@ -1292,6 +1335,8 @@ namespace LineOfSight
 
                 boxTotal += RebuildZoneHideVolumes(coord, zone, _maskScratch);
             }
+
+            if (_hideFailures == failuresBefore) ClientStatusBeacon.NoteRecovered();
 
             if (_rebuildLogCount < 12)
             {
@@ -1366,6 +1411,8 @@ namespace LineOfSight
                         }
                         catch (Exception ex)
                         {
+                            _hideFailures++;
+                            ClientStatusBeacon.ReportFault("could not hide terrain", ex);
                             _log?.LogWarning($"[LineOfSight] SetHideVolume {coord} {bounds}: {ex.Message}");
                         }
                     }
